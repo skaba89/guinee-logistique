@@ -44,6 +44,9 @@ import {
   FileSignature,
   ListTodo,
   CalendarDays,
+  Leaf,
+  MessageSquare,
+  ScanLine,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,6 +110,7 @@ const navGroups: NavGroup[] = [
       { id: 'insurance', label: 'Assurance', icon: Shield },
       { id: 'incoterms', label: 'Incoterms', icon: Calculator },
       { id: 'claims', label: 'Réclamations', icon: AlertCircle },
+      { id: 'scanner', label: 'Scanner', icon: ScanLine },
     ],
   },
   {
@@ -117,6 +121,7 @@ const navGroups: NavGroup[] = [
       { id: 'partners', label: 'Partenaires', icon: Handshake },
       { id: 'billing', label: 'Facturation', icon: Receipt },
       { id: 'contracts', label: 'Contrats', icon: FileSignature },
+      { id: 'rates', label: 'Tarifs', icon: Calculator },
     ],
   },
   {
@@ -132,8 +137,27 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: 'Communication',
+    items: [
+      { id: 'chat', label: 'Messagerie', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'Conformité',
+    items: [
+      { id: 'sustainability', label: 'Durabilité & RSE', icon: Leaf },
+    ],
+  },
+  {
+    label: 'Portail',
+    items: [
+      { id: 'customer-portal', label: 'Portail Client', icon: Users },
+    ],
+  },
+  {
     label: 'Système',
     items: [
+      { id: 'users', label: 'Utilisateurs & Rôles', icon: Users },
       { id: 'integrations', label: 'Intégrations', icon: Plug },
       { id: 'settings', label: 'Paramètres', icon: Settings },
     ],
@@ -168,6 +192,12 @@ const pageNameMap: Record<PageType, string> = {
   contracts: 'Contrats Transporteurs',
   tasks: 'Centre de Tâches',
   calendar: 'Calendrier',
+  sustainability: 'Durabilité & RSE',
+  rates: 'Gestion des Tarifs',
+  'customer-portal': 'Portail Client',
+  users: 'Utilisateurs & Rôles',
+  chat: 'Messagerie',
+  scanner: 'Scanner',
 };
 
 // Notification data

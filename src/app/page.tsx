@@ -31,6 +31,12 @@ import MultimodalPage from '@/components/cargo/multimodal-page';
 import ContractsPage from '@/components/cargo/contracts-page';
 import TasksPage from '@/components/cargo/tasks-page';
 import CalendarPage from '@/components/cargo/calendar-page';
+import UsersPage from '@/components/cargo/users-page';
+import SustainabilityPage from '@/components/cargo/sustainability-page';
+import RatesPage from '@/components/cargo/rates-page';
+import ChatPage from '@/components/cargo/chat-page';
+import ScannerPage from '@/components/cargo/scanner-page';
+import CustomerPortalPage from '@/components/cargo/customer-portal-page';
 
 function PageRenderer() {
   const currentPage = useCargoStore((s) => s.currentPage);
@@ -90,6 +96,18 @@ function PageRenderer() {
       return <TasksPage />;
     case 'calendar':
       return <CalendarPage />;
+    case 'users':
+      return <UsersPage />;
+    case 'sustainability':
+      return <SustainabilityPage />;
+    case 'rates':
+      return <RatesPage />;
+    case 'chat':
+      return <ChatPage />;
+    case 'scanner':
+      return <ScannerPage />;
+    case 'customer-portal':
+      return <CustomerPortalPage />;
     default:
       return <DashboardPage />;
   }

@@ -235,3 +235,179 @@ Stage Summary:
 - Analytics: Recommandations IA, ETAs prédictifs, optimisation coûts, tendances saisonnières
 - Tous les textes en français, palette teal/emerald + navy, dark mode, responsive
 - Toutes les pages utilisent shadcn/ui, Lucide icons, framer-motion, recharts
+
+---
+Task ID: 8
+Agent: Page Development Agent
+Task: Créer customer-portal-page.tsx — Portail Client Self-Service
+
+Work Log:
+- Créé /home/z/my-project/src/components/cargo/customer-portal-page.tsx (1395 lignes)
+- Types locaux: PortalShipment, PortalInvoice, PortalQuotation, PortalTicket, PortalDocument (avec sous-types pour statuts, priorités, etc.)
+- Données mock: 8 expéditions, 6 factures, 4 devis, 5 tickets support, 10 documents
+- 4 KPI cards: Mes Expéditions Actives, Factures en Attente, Devis en Cours, Tickets Ouverts
+- Area chart (recharts): Volume d'expéditions par mois avec gradient teal
+- 4 tabs: Suivi, Factures, Devis, Support — chacun avec recherche/filtre et pagination
+- Tab Suivi: Grid de cards avec barre de progression animée, icônes par type (Ship/Plane/Truck), badges statut colorés, section Documents (table avec types BL/facture/douane/assurance/packing_list/certificat, bouton télécharger)
+- Tab Factures: Table avec N°/description/montant/statut/émission/échéance, summary cards (Total Facturé/Payé/En Retard), détail dialog avec alerte retard
+- Tab Devis: Grid de cards avec type/montant/poids/dates, badges statut colorés, badge Accepté
+- Tab Support: Liste de tickets cards avec priorité/type/statut/réponses, bouton Nouveau ticket, détail dialog avec historique réponses et input réponse
+- Dialog détail expédition: Progress bar animée, timeline historique avec points colorés, détails grid, boutons Copier N°/Partager/Télécharger PDF
+- Dialog détail facture: Montant/statut/dates, expéditions liées, alerte retard, boutons Télécharger/Payer en ligne
+- Dialog détail ticket: Badges statut/priorité/type, description, réponses, input réponse, bouton Fermer
+- Dialog nouveau ticket: Formulaire avec type/priorité/sujet/référence expédition/description/pièce jointe (drag zone)
+- PaginationControls: Composant externe (correction lint react-hooks/static-components)
+- Palette teal/emerald (#0d9488, #059669) + navy (#0f172a) cohérente
+- Tous textes en français, dark mode compatible, responsive design
+- Ajouté route 'customer-portal' dans page.tsx
+- ESLint passé sans erreurs
+
+---
+Task ID: 6
+Agent: Chat Page Agent
+Task: Create /home/z/my-project/src/components/cargo/chat-page.tsx — Internal Messaging & Chat page
+
+Work Log:
+- Created chat-page.tsx with comprehensive messaging features
+- Conversation List: Left sidebar with 5 channels (Général, Expéditions, Douanes, Facturation, Urgences) + 4 DM conversations (Karim Benali, Sara Medjadi, Youssef Khelil, Amina Cherif)
+- Chat View: Message bubbles with sender avatar, name, timestamps, read receipts (Check/CheckCheck), teal bubbles for own messages
+- Quick Actions: Paperclip popover with 3 actions — Attach shipment reference, Share tracking link, Escalate to ticket (with Dialog for reason input)
+- 53+ mock messages across all conversations with varied content and attachments
+- Channel list shows: icon, name, unread count badge (red), last message preview, timestamp
+- DM list shows: avatar with online/offline dot, name, role, unread badge, last message
+- Chat input with Send button (teal gradient when active), attachment button, emoji button, @mention button
+- Online/offline status indicators for contacts (emerald green / gray dots + "En ligne" / "Hors ligne" badges)
+- Attachment badges with type-specific colors: shipment (teal), tracking (sky), document (amber), link (violet)
+- framer-motion animations for message bubbles (staggered fade-in)
+- Responsive: mobile shows conversation list full screen, then chat full screen with back button; desktop shows side-by-side layout
+- Dark mode compatible throughout
+- Updated dashboard-layout.tsx: Added MessageSquare import, Communication nav group with Messagerie, pageNameMap chat entry
+- Updated page.tsx: Added ChatPage import and 'chat' case in PageRenderer switch
+- ESLint passed for all modified files (chat-page.tsx, dashboard-layout.tsx, page.tsx)
+- Dev server HTTP 200 confirmed
+
+Stage Summary:
+- Complete messaging/chat page with channel and DM support
+- 5 channels + 4 direct messages with 53+ messages
+- Quick actions: attach shipment, share tracking link, escalate to ticket
+- Responsive layout with mobile full-screen toggle
+- All text in French, teal/emerald + navy palette, dark mode
+- Uses shadcn/ui (Avatar, Badge, Button, Dialog, Input, Popover, ScrollArea, Separator)
+- Uses lucide-react icons and framer-motion animations
+Agent: Full-Stack Developer Agent
+Task: Créer la page Utilisateurs & Rôles avec RBAC (users-page.tsx)
+
+Work Log:
+- Créé src/components/cargo/users-page.tsx (~800 lignes) — Page complète de gestion utilisateurs et rôles RBAC
+- 4 KPI cards: Utilisateurs Actifs (6), Rôles Définis (5), Sessions en Cours (6), Actions Aujourd'hui (6)
+- 4 onglets: Utilisateurs, Rôles & Permissions, Journal d'Activité, Sessions
+- Onglet Utilisateurs: Table avec avatar, nom, email, rôle, statut, dernière connexion, équipe + filtres (recherche, rôle, statut) + pagination + toggle actif/inactif
+- Onglet Rôles & Permissions: 5 cartes rôles cliquables (Admin, Responsable, Agent, Observateur, Client) + Matrice de permissions 12 modules × 5 rôles avec cellules colorées (RW=vert, RO=jaune, —=gris)
+- Onglet Journal d'Activité: 10 entrées avec icônes par catégorie (auth, navigation, données, paramètres, admin) + filtres par catégorie
+- Onglet Sessions: 6 sessions actives avec device icon, browser, OS, IP, localisation + bouton Révoquer + résumé Desktop/Mobile/Tablet
+- Dialog "Inviter un utilisateur": email, rôle select, équipe select + aperçu permissions en temps réel
+- Dialog "Détail utilisateur": profil complet, contact, permissions par module, activité récente filtrée, actions (activer/désactiver, copier email, supprimer)
+- Dialog "Détail rôle": header coloré, liste permissions détaillée, utilisateurs avec ce rôle
+- Mock data: 8 utilisateurs (Ahmed Benali Admin, Fatima Khelifi Agent, Karim Djebbar Manager, Nadia Boudiaf Agent, Youcef Mansouri Viewer, Amina Rahmani Client inactif, Rachid Hamidou Agent, Samira Ait Kaci Manager inactive)
+- Mis à jour page.tsx: ajout import UsersPage + case 'users' dans PageRenderer
+- Mis à jour dashboard-layout.tsx: pageNameMap users → 'Utilisateurs & Rôles' (déjà présent dans nav Système)
+- Correction lint: ajout import Phone manquant
+- ESLint passé sans erreurs
+- Dev server HTTP 200 confirmé
+
+Stage Summary:
+- Page Utilisateurs & Rôles complète avec RBAC fonctionnel
+- 5 rôles avec matrice de permissions 12×5 (lecture/écriture/lecture seule/aucun)
+- Gestion des sessions actives avec détection device
+- Journal d'activité avec catégorisation par type d'action
+- Tous les textes en français, palette teal/emerald + navy, dark mode, responsive
+- shadcn/ui (Card, Button, Badge, Table, Dialog, Input, Select, Label, Switch, Avatar, Separator, Checkbox, Tabs)
+- Lucide icons (Users, Shield, Key, Activity, Monitor, Smartphone, etc.)
+- framer-motion animations sur KPI cards, table rows, permission cells
+
+---
+Task ID: 3
+Agent: Rates Page Developer Agent
+Task: Créer rates-page.tsx — Page de Gestion Dynamique des Tarifs
+
+Work Log:
+- Créé /home/z/my-project/src/components/cargo/rates-page.tsx (auto-contained, ~700 lignes)
+  - Types: TransportMode, RateEntry, Surcharge, RateHistoryPoint, SpotContractEntry
+  - Mock data: 12 tarifs (4 maritime, 4 aérien, 4 terrestre), 6 surcharges, historique 12 mois pour 3 routes, 6 entrées spot vs contrat, 4 transporteurs comparés par mode
+  - KPI cards: Tarifs Actifs (12), Surcharges Actives (5/6), Économie vs Spot (23.4%), Taux de Change (1.08)
+  - Tabs: Grille Tarifaire, Comparatif, Surcharges, Historique
+  - Grille Tarifaire: Cards par tarif avec mode/origine/destination/carrier/rate/unit/transit/validité, badges contrat/spot, recherche + filtre par mode
+  - Spot vs Contrat: Table comparatif 6 routes avec tarif spot, contrat, économie, % badge vert
+  - Comparatif: 4 transporteurs côte à côte pour Alger→Marseille (maritime) et Alger→Paris CDG (aérien), badges MEILLEUR PRIX, bar chart comparatif
+  - Surcharges: BAF, CAF, FSC-AIR, PSS, FSC-GND, THC avec code/nom/description/taux/type/mode/validité/actif-inactif, résumé statistiques
+  - Historique: Line chart 12 mois (3 routes, double Y-axis pour EUR/conteneur et EUR/km), indicateurs de tendance, prévisions & recommandations (4 cartes: hausse BAF, saisonnalité Ramadan, opportunité change, nouvelle route)
+  - Dialog "Ajouter un tarif" avec mode, origine, destination, transporteur, tarif, devise
+  - Palette teal/emerald (#0d9488, #059669) + navy (#0f172a) cohérente
+  - Dark mode compatible, responsive (mobile-first)
+  - framer-motion pour animations d'entrée
+  - recharts pour line chart historique et bar chart comparatif
+  - shadcn/ui: Card, Button, Badge, Table, Dialog, Input, Select, Label, Tabs, Separator
+  - lucide-react: DollarSign, TrendingUp, ArrowRightLeft, Calculator, Ship, Plane, Truck, Plus, Search, etc.
+- Intégré dans page.tsx: import RatesPage + case 'rates'
+- Intégré dans dashboard-layout.tsx: nav item 'Tarifs' (Calculator icon) dans groupe Commercial + pageNameMap 'Gestion des Tarifs'
+- ESLint passé sans erreurs sur les 3 fichiers modifiés
+
+Stage Summary:
+- Page de Gestion des Tarifs complète et fonctionnelle
+- 4 onglets: Grille Tarifaire, Comparatif Transporteurs, Surcharges, Historique
+- 12 tarifs mock (4 par mode), 6 surcharges, comparaison spot vs contrat sur 6 routes
+- Line chart historique 12 mois + bar chart comparatif transporteurs
+- Dialog d'ajout de tarif avec tous les champs
+- Toutes les intégrations côté navigation et routing effectuées
+
+---
+Task ID: 7
+Agent: Scanner Page Agent
+Task: Créer scanner-page.tsx — QR/Barcode Scanner & Code Management
+
+Work Log:
+- Créé /home/z/my-project/src/components/cargo/scanner-page.tsx (~800 lignes)
+- Types locaux: ScanType (tracking/container/awb/parcel/customs/warehouse), ScanStatus (verified/pending/anomaly/unknown), ScanRecord, QRGeneration
+- Mock data: 15 scans récents avec détails complets (code, type, statut, timestamp, utilisateur, description, origine, destination, client, poids, référence), 8 QR codes générés, stats par type/heure/utilisateur/semaine
+- 4 KPI cards: Scans Aujourd'hui (160), Colis Vérifiés (142), Anomalies Détectées (7), Taux de Conformité (95.6%) — avec % de changement vs hier
+- 4 tabs: Scanner, Générer QR, Historique, Statistiques
+- Tab Scanner:
+  - Interface de scan (camera viewfinder simulé): aspect 4/3 sombre avec cadres de visée teal (corner markers), animation laser pulsante (motion.div avec gradient teal, boxShadow glow, top 0%→100%→0%), cercle central ScanLine pulsant quand inactif, texte d'état animé (AnimatePresence), overlay pulsant teal pendant le scan
+  - Boutons de scan rapide: Scan aléatoire, FFP-0001-2026, MSKU-7234561, 125-12345678 — chacun avec icône type et couleur
+  - Saisie manuelle: Input avec icône Barcode, Select type de code, Bouton Scanner (gradient teal)
+  - Scan en lot: Liste des éléments scannés avec checkboxes, barre d'actions par lot (marquer vérifié/en attente, assigner à expédition, supprimer), sélection tout/rien, état vide avec placeholder
+  - Panneau droit: Liste des 10 scans récents avec icônes type/status, horodatage — cliquable pour détail
+  - Résumé du jour: Barres de progression par type de scan (6 types avec couleurs distinctes)
+- Tab Générer QR:
+  - Formulaire: Libellé, Type (select), Données encodées
+  - Aperçu QR Code généré: Pattern SVG 21×21 avec finder patterns, timing patterns, données pseudo-aléatoires basées sur hash du seed — rendu avec useMemo
+  - Boutons Télécharger/Copier
+  - Grille des 8 QR codes précédemment générés avec mini QR SVG, badges type, boutons Voir/Copier/Supprimer
+- Tab Historique:
+  - Filtres: Recherche, Type (6 options), Statut (4 options)
+  - Table complète: Code (font-mono), Type avec icône, Statut badge, Description, Utilisateur, Heure, Bouton détail
+- Tab Statistiques:
+  - Pie chart (recharts): Scans par type (6 segments colorés, innerRadius donut, légende custom)
+  - Bar chart: Scans par heure (12 tranches 06h-17h, couleur teal)
+  - Line chart: Tendance hebdomadaire (7 jours, couleur emerald)
+  - Bar chart horizontal: Scans par utilisateur (4 utilisateurs, couleur cyan)
+- Dialog Résultat du scan: Bannière statut colorée, icône type, code font-mono, description, origine/destination, client/poids/référence, boutons Copier le code / Valider
+- Dialog Détail du scan: Badges type+statut, QR Code SVG du code scanné, grille de détails (origine, destination, client, poids, référence, utilisateur), bouton Copier / Fermer
+- QR Code SVG Generator: generateQRPattern() avec finder patterns (3 coins 7×7), timing patterns, remplissage pseudo-aléatoire (LCG hash), QRCodeSVG component avec useMemo
+- Intégré dans page.tsx: import ScannerPage + case 'scanner'
+- Intégré dans dashboard-layout.tsx: import ScanLine, nav item 'Scanner' dans groupe Services, pageNameMap 'Scanner'
+- ESLint passé sans erreurs sur scanner-page.tsx, page.tsx, dashboard-layout.tsx
+- Dev server HTTP 200 confirmé
+
+Stage Summary:
+- Page Scanner & Codes complète et fonctionnelle avec 4 onglets
+- Interface de scan avec animation laser pulsante et viewfinder
+- Générateur de QR Code SVG (sans librairie externe, pattern 21×21 réaliste)
+- Scan en lot avec sélection multiple et opérations par lot
+- 4 graphiques recharts (pie, bar, line, horizontal bar)
+- 15 scans mock, 8 QR codes générés, statistiques détaillées
+- Tous textes en français, palette teal/emerald + navy, dark mode, responsive
+- shadcn/ui (Card, Button, Badge, Input, Table, Dialog, Select, Label, Tabs, Checkbox, Separator)
+- lucide-react (ScanLine, QrCode, Barcode, CheckCircle2, AlertTriangle, Layers, etc.)
+- framer-motion (animation laser, pulsation viewfinder, transitions listes)
+- recharts (PieChart, BarChart, LineChart)
