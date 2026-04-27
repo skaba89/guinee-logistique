@@ -31,6 +31,8 @@ import {
   Puzzle,
   ToggleLeft,
   ToggleRight,
+  Printer,
+  Tag,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -145,6 +147,31 @@ export default function SettingsPage() {
   });
 
   const [saved, setSaved] = useState(false);
+
+  // Zebra Printers (from localStorage or defaults)
+  const [zebraPrinters] = useState<Array<{
+    id: string; name: string; model: string; connection: string; ipAddress?: string; port?: number; usbPort?: string;
+    dpi: number; defaultLabelFormat: string; status: string; labelsPrinted: number; isDefault: boolean;
+    darkness: number; speed: number; mediaType: string;
+  }>>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('freightflow-printers');
+      if (raw) return JSON.parse(raw);
+    } catch { /* ignore */ }
+    return [
+      { id: 'printer-1', name: 'Zebra ZD421', model: 'ZD421t', connection: 'network', ipAddress: '192.168.1.50', port: 9100, dpi: 300, defaultLabelFormat: '4x6', status: 'online', labelsPrinted: 1247, isDefault: true, darkness: 15, speed: 6, mediaType: 'Autocollant 100x150mm' },
+      { id: 'printer-2', name: 'Zebra ZT411', model: 'ZT411', connection: 'network', ipAddress: '192.168.1.51', port: 9100, dpi: 300, defaultLabelFormat: '4x8', status: 'idle', labelsPrinted: 3521, isDefault: false, darkness: 18, speed: 8, mediaType: 'Autocollant 100x200mm' },
+      { id: 'printer-3', name: 'Zebra GK420d', model: 'GK420d', connection: 'usb', usbPort: 'USB001', dpi: 203, defaultLabelFormat: '2-4x4', status: 'offline', labelsPrinted: 856, isDefault: false, darkness: 12, speed: 4, mediaType: 'Autocollant 62x100mm' },
+    ];
+  });
+
+  const printerStatusDot: Record<string, string> = {
+    online: 'bg-green-500', offline: 'bg-gray-400', error: 'bg-red-500', idle: 'bg-amber-500', printing: 'bg-blue-500 animate-pulse',
+  };
+  const printerStatusText: Record<string, string> = {
+    online: 'En ligne', offline: 'Hors ligne', error: 'Erreur', idle: 'En veille', printing: 'Impression',
+  };
 
   // API Keys
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([
@@ -1011,6 +1038,69 @@ export default function SettingsPage() {
                   onCheckedChange={(v) => setNotifications({ ...notifications, smsDelivery: v })}
                 />
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Zebra Printer Configuration ─── */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Printer className="w-5 h-5 text-teal-500" />
+            Imprimantes Zebra & Étiquettes
+          </CardTitle>
+          <CardDescription>Configurez vos imprimantes d&apos;étiquettes autocollantes et les formats par défaut</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-4">
+          {/* Printer list */}
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Imprimantes configurées pour l&apos;impression d&apos;étiquettes ZPL</p>
+            {zebraPrinters.map(printer => (
+              <div key={printer.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border ${printer.isDefault ? 'border-teal-300 dark:border-teal-700 bg-teal-50/30 dark:bg-teal-900/10' : 'border-gray-200 dark:border-gray-700'}`}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="relative flex-shrink-0">
+                    <Printer className="w-6 h-6 text-gray-600 dark:text-gray-300" />
+                    <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-gray-950 ${printerStatusDot[printer.status] ?? 'bg-gray-400'}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{printer.name}</p>
+                      {printer.isDefault && <Badge className="text-[9px] bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 px-1 py-0">Défaut</Badge>}
+                    </div>
+                    <p className="text-xs text-gray-400">{printer.model} — {printer.dpi} DPI — {printer.mediaType}</p>
+                    <p className="text-[10px] text-gray-400">{printer.connection === 'network' ? `IP: ${printer.ipAddress}:${printer.port}` : `Port: ${printer.usbPort}`} | Noircir: {printer.darkness} | Vitesse: {printer.speed}&quot;/s | {printer.labelsPrinted} étiquettes</p>
+                  </div>
+                </div>
+                <Badge className={`text-[10px] ${printer.status === 'online' || printer.status === 'idle' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                  {printerStatusText[printer.status] ?? printer.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+
+          {/* Label format info */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Formats d&apos;étiquettes autocollantes disponibles</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { name: '4" x 6" (100x150mm)', desc: 'Standard expédition — le plus courant', type: 'Zebra' },
+                { name: '4" x 4" (100x100mm)', desc: 'Compact pour petits colis', type: 'Zebra' },
+                { name: '4" x 8" (100x200mm)', desc: 'Grand format avec détails complets', type: 'Zebra' },
+                { name: '2.4" x 4" (62x100mm)', desc: 'Étiquette étroite DHL/FedEx', type: 'Zebra' },
+                { name: '2" x 1" (50x25mm)', desc: 'Barcode/QR compact', type: 'Zebra' },
+                { name: '6" x 4" (150x100mm)', desc: 'Paysage — palette et fret', type: 'Zebra' },
+                { name: 'A4 (210x297mm)', desc: 'Papier standard avec prédécoupes', type: 'Laser' },
+              ].map(fmt => (
+                <div key={fmt.name} className="flex items-center gap-2 p-2 rounded border border-gray-200 dark:border-gray-700">
+                  <Tag className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-medium text-gray-900 dark:text-white">{fmt.name}</p>
+                    <p className="text-[10px] text-gray-400">{fmt.desc}</p>
+                  </div>
+                  <Badge className="text-[8px] ml-auto bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 px-1 py-0">{fmt.type}</Badge>
+                </div>
+              ))}
             </div>
           </div>
         </CardContent>
