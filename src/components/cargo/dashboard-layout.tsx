@@ -77,92 +77,7 @@ import {
 } from '@/components/ui/command';
 import { useCargoStore, type PageType } from '@/lib/cargo-store';
 import { shipments, containers, flights, parcels, customsDeclarations, clients } from '@/lib/test-data';
-
-interface NavGroup {
-  label: string;
-  items: { id: PageType; label: string; icon: React.ElementType }[];
-}
-
-const navGroups: NavGroup[] = [
-  {
-    label: 'Principal',
-    items: [
-      { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-      { id: 'shipments', label: 'Expéditions', icon: Package },
-      { id: 'tracking', label: 'Suivi', icon: MapPin },
-    ],
-  },
-  {
-    label: 'Fret',
-    items: [
-      { id: 'maritime', label: 'Maritime', icon: Ship },
-      { id: 'air-freight', label: 'Aérien', icon: Plane },
-      { id: 'ground-transport', label: 'Terrestre', icon: Truck },
-      { id: 'multimodal', label: 'Multi-Modal', icon: GitMerge },
-    ],
-  },
-  {
-    label: 'Services',
-    items: [
-      { id: 'parcels', label: 'Colis & Courier', icon: PackageCheck },
-      { id: 'customs', label: 'Douanes', icon: FileCheck },
-      { id: 'warehouse', label: 'Entrepôt', icon: Warehouse },
-      { id: 'insurance', label: 'Assurance', icon: Shield },
-      { id: 'incoterms', label: 'Incoterms', icon: Calculator },
-      { id: 'claims', label: 'Réclamations', icon: AlertCircle },
-      { id: 'scanner', label: 'Scanner', icon: ScanLine },
-    ],
-  },
-  {
-    label: 'Commercial',
-    items: [
-      { id: 'quotations', label: 'Devis', icon: FileText },
-      { id: 'clients', label: 'Clients', icon: Users },
-      { id: 'partners', label: 'Partenaires', icon: Handshake },
-      { id: 'billing', label: 'Facturation', icon: Receipt },
-      { id: 'contracts', label: 'Contrats', icon: FileSignature },
-      { id: 'rates', label: 'Tarifs', icon: Calculator },
-    ],
-  },
-  {
-    label: 'Gestion',
-    items: [
-      { id: 'fleet', label: 'Flotte', icon: Container },
-      { id: 'drivers', label: 'Conducteurs', icon: UserCheck },
-      { id: 'documents', label: 'Documents', icon: FolderOpen },
-      { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-      { id: 'reports', label: 'Rapports', icon: FileSpreadsheet },
-      { id: 'tasks', label: 'Tâches', icon: ListTodo },
-      { id: 'calendar', label: 'Calendrier', icon: CalendarDays },
-    ],
-  },
-  {
-    label: 'Communication',
-    items: [
-      { id: 'chat', label: 'Messagerie', icon: MessageSquare },
-    ],
-  },
-  {
-    label: 'Conformité',
-    items: [
-      { id: 'sustainability', label: 'Durabilité & RSE', icon: Leaf },
-    ],
-  },
-  {
-    label: 'Portail',
-    items: [
-      { id: 'customer-portal', label: 'Portail Client', icon: Users },
-    ],
-  },
-  {
-    label: 'Système',
-    items: [
-      { id: 'users', label: 'Utilisateurs & Rôles', icon: Users },
-      { id: 'integrations', label: 'Intégrations', icon: Plug },
-      { id: 'settings', label: 'Paramètres', icon: Settings },
-    ],
-  },
-];
+import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
 
 const pageNameMap: Record<PageType, string> = {
   dashboard: 'Tableau de bord',
@@ -322,9 +237,14 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { currentPage, setPage, user, logout, sidebarOpen, toggleSidebar, setSidebarOpen } = useCargoStore();
+  const { currentPage, setPage, user, logout, sidebarOpen, toggleSidebar, setSidebarOpen, roleKey, permissionsConfig } = useCargoStore();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [commandOpen, setCommandOpen] = useState(false);
+
+  // Build dynamic navigation based on user role and permissions
+  const filteredNavGroups = React.useMemo(() => {
+    return getFilteredNavigation(roleKey, permissionsConfig);
+  }, [roleKey, permissionsConfig]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -350,8 +270,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const handleSearchSelect = (page: PageType) => {
     setCommandOpen(false);
-    setPage(page);
+    // Only navigate if user has permission
+    if (canViewPage(page, roleKey, permissionsConfig)) {
+      setPage(page);
+    }
   };
+
+  // Filter search items based on user permissions
+  const accessibleSearchItems = React.useMemo(() => {
+    return searchItems.filter((item) => canViewPage(item.page, roleKey, permissionsConfig));
+  }, [roleKey, permissionsConfig]);
+
+  const accessibleRecentSearches = React.useMemo(() => {
+    return recentSearches.filter((item) => canViewPage(item.page, roleKey, permissionsConfig));
+  }, [roleKey, permissionsConfig]);
 
   return (
     <div className="min-h-screen flex bg-gray-50 dark:bg-gray-950">
@@ -398,16 +330,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
 
-          {/* Navigation */}
+          {/* Navigation — Dynamically filtered by role & permissions */}
           <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
-            {navGroups.map((group) => (
-              <div key={group.label}>
+            {filteredNavGroups.map((group) => (
+              <div key={group.key}>
                 <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-teal-400/50">
                   {group.label}
                 </p>
                 <div className="space-y-0.5">
                   {group.items.map((item) => {
                     const isActive = currentPage === item.id;
+                    const IconComponent = item.icon;
                     return (
                       <button
                         key={item.id}
@@ -418,7 +351,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             : 'text-slate-300/70 hover:bg-white/5 hover:text-white'
                         }`}
                       >
-                        <item.icon className={`w-4.5 h-4.5 flex-shrink-0 ${isActive ? 'text-teal-400' : ''}`} />
+                        <IconComponent className={`w-4.5 h-4.5 flex-shrink-0 ${isActive ? 'text-teal-400' : ''}`} />
                         <span>{item.label}</span>
                         {isActive && (
                           <motion.div
@@ -632,7 +565,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <CommandList>
           <CommandEmpty>Aucun résultat trouvé</CommandEmpty>
           <CommandGroup heading="Recherches récentes">
-            {recentSearches.map((item) => (
+            {accessibleRecentSearches.map((item) => (
               <CommandItem
                 key={item.id}
                 onSelect={() => handleSearchSelect(item.page)}
@@ -646,7 +579,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Expéditions">
-            {searchItems.filter((i) => i.page === 'shipments').slice(0, 5).map((item) => (
+            {accessibleSearchItems.filter((i) => i.page === 'shipments').slice(0, 5).map((item) => (
               <CommandItem
                 key={item.id}
                 onSelect={() => handleSearchSelect(item.page)}
@@ -665,7 +598,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Conteneurs">
-            {searchItems.filter((i) => i.page === 'maritime').slice(0, 4).map((item) => (
+            {accessibleSearchItems.filter((i) => i.page === 'maritime').slice(0, 4).map((item) => (
               <CommandItem
                 key={item.id}
                 onSelect={() => handleSearchSelect(item.page)}
@@ -684,7 +617,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Vols">
-            {searchItems.filter((i) => i.page === 'air-freight').slice(0, 4).map((item) => (
+            {accessibleSearchItems.filter((i) => i.page === 'air-freight').slice(0, 4).map((item) => (
               <CommandItem
                 key={item.id}
                 onSelect={() => handleSearchSelect(item.page)}
@@ -703,7 +636,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Clients">
-            {searchItems.filter((i) => i.page === 'clients').slice(0, 4).map((item) => (
+            {accessibleSearchItems.filter((i) => i.page === 'clients').slice(0, 4).map((item) => (
               <CommandItem
                 key={item.id}
                 onSelect={() => handleSearchSelect(item.page)}

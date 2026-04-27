@@ -411,3 +411,29 @@ Stage Summary:
 - lucide-react (ScanLine, QrCode, Barcode, CheckCircle2, AlertTriangle, Layers, etc.)
 - framer-motion (animation laser, pulsation viewfinder, transitions listes)
 - recharts (PieChart, BarChart, LineChart)
+
+---
+Task ID: 9
+Agent: Main Agent
+Task: Paramétrer les configurations pour modulariser les fonctionnalités et les droits des utilisateurs
+
+Work Log:
+- Créé src/lib/module-config.ts (~300 lignes) — Configuration centralisée des modules
+  - 30 modules avec métadonnées (id, label, icon, group, order, enabled, premium, description, defaultPermissions)
+  - 9 groupes de navigation, 5 rôles RBAC, helpers getModuleById/getModulesByGroup/mapRoleString
+- Créé src/lib/permissions.ts (~260 lignes) — Système RBAC centralisé
+  - Persistence localStorage (PermissionsConfig: overrides + featureFlags)
+  - getEffectivePermission, hasPermission, canViewPage, canEditPage, isModuleEnabled
+  - getFilteredNavigation, getFullPermissionMatrix, setPermissionOverride, setFeatureFlag
+- Mis à jour cargo-store.ts — Ajout roleKey, permissionsConfig, canView/canEdit methods, setPage vérifie permissions
+- Mis à jour dashboard-layout.tsx — Navigation dynamique filtrée par rôle, palette de commandes filtrée
+- Mis à jour page.tsx — Contrôle d'accès dans PageRenderer + composant AccessDeniedPage
+- Mis à jour settings-page.tsx — Nouveau card "Modules & Permissions" avec Feature Flags et Matrice de Permissions
+
+Stage Summary:
+- Système RBAC complet avec 30 modules configurables, 5 rôles, feature flags
+- Navigation dynamique filtrée selon le rôle de l'utilisateur
+- Interface d'administration dans Paramètres > Modules & Permissions
+- Aucune régression: serveur HTTP 200, TypeScript compilé
+- Fichiers créés: module-config.ts, permissions.ts
+- Fichiers modifiés: cargo-store.ts, dashboard-layout.tsx, page.tsx, settings-page.tsx

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   User,
   Building,
@@ -26,6 +26,11 @@ import {
   EyeOff,
   RefreshCw,
   Upload,
+  Lock,
+  RotateCcw,
+  Puzzle,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +49,28 @@ import {
 } from '@/components/ui/select';
 import { useCargoStore } from '@/lib/cargo-store';
 import { useTheme } from 'next-themes';
+import {
+  type RoleKey,
+  type PermissionLevel,
+  type NavGroupKey,
+  moduleDefinitions,
+  navGroups,
+  roleDefinitions,
+  getEffectivePermission,
+  getFullPermissionMatrix,
+  setPermissionOverride,
+  setFeatureFlag,
+  isModuleEnabled,
+  savePermissionsConfig,
+  resetPermissionsConfig,
+  type PermissionsConfig,
+} from '@/lib/permissions';
+import {
+  permissionLevelLabels,
+  permissionLevelColors,
+  permissionLevelCodes,
+  iconNameToComponent,
+} from '@/lib/module-config';
 
 interface ApiKey {
   id: string;
@@ -64,7 +91,42 @@ interface Webhook {
 
 export default function SettingsPage() {
   const user = useCargoStore((s) => s.user);
+  const roleKey = useCargoStore((s) => s.roleKey);
+  const permissionsConfig = useCargoStore((s) => s.permissionsConfig);
+  const setPermissionsConfig = useCargoStore((s) => s.setPermissionsConfig);
   const { theme, setTheme } = useTheme();
+
+  // ─── Module & Permissions Configuration ─────────────
+  const [activeModuleTab, setActiveModuleTab] = useState<'features' | 'permissions'>('features');
+  const [selectedPermGroup, setSelectedPermGroup] = useState<NavGroupKey | 'all'>('all');
+
+  // Permission matrix derived from config
+  const permissionMatrix = useMemo(() => {
+    return getFullPermissionMatrix(permissionsConfig);
+  }, [permissionsConfig]);
+
+  const handlePermissionChange = (moduleId: string, role: RoleKey, level: PermissionLevel) => {
+    const newConfig = setPermissionOverride(moduleId as any, role, level, permissionsConfig);
+    savePermissionsConfig(newConfig);
+    setPermissionsConfig(newConfig);
+  };
+
+  const handleFeatureToggle = (moduleId: string, enabled: boolean) => {
+    const newConfig = setFeatureFlag(moduleId as any, enabled, permissionsConfig);
+    savePermissionsConfig(newConfig);
+    setPermissionsConfig(newConfig);
+  };
+
+  const handleResetPermissions = () => {
+    resetPermissionsConfig();
+    setPermissionsConfig({ overrides: {}, featureFlags: {} });
+  };
+
+  // Filter modules by group
+  const filteredModules = useMemo(() => {
+    if (selectedPermGroup === 'all') return permissionMatrix;
+    return permissionMatrix.filter((m) => m.module.group === selectedPermGroup);
+  }, [permissionMatrix, selectedPermGroup]);
 
   const [companyInfo, setCompanyInfo] = useState({
     name: 'FreightFlow Pro',
@@ -251,6 +313,263 @@ export default function SettingsPage() {
               <Input value={user?.role || ''} disabled className="bg-gray-50 dark:bg-gray-900" />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Module Configuration & Permissions ─── */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Puzzle className="w-5 h-5 text-teal-500" />
+            Modules & Permissions
+          </CardTitle>
+          <CardDescription>Activez/désactivez les modules et configurez les droits d&apos;accès par rôle</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-4">
+          {/* Tab selector */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveModuleTab('features')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeModuleTab === 'features'
+                  ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400'
+                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <ToggleLeft className="w-4 h-4 inline mr-1.5" />
+              Feature Flags
+            </button>
+            <button
+              onClick={() => setActiveModuleTab('permissions')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeModuleTab === 'permissions'
+                  ? 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400'
+                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Shield className="w-4 h-4 inline mr-1.5" />
+              Matrice de Permissions
+            </button>
+            <div className="ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-900/20"
+                onClick={handleResetPermissions}
+              >
+                <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                Réinitialiser
+              </Button>
+            </div>
+          </div>
+
+          {/* ─── Feature Flags Tab ─── */}
+          {activeModuleTab === 'features' && (
+            <div className="space-y-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Activez ou désactivez les modules fonctionnels. Un module désactivé sera invisible pour tous les utilisateurs, quel que soit leur rôle.
+              </p>
+              {navGroups.map((group) => {
+                const groupModules = moduleDefinitions.filter((m) => m.group === group.key);
+                if (groupModules.length === 0) return null;
+                return (
+                  <div key={group.key}>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 mt-4 first:mt-0">
+                      {group.label}
+                    </p>
+                    <div className="space-y-1.5">
+                      {groupModules.map((mod) => {
+                        const enabled = isModuleEnabled(mod.id, permissionsConfig);
+                        const IconComponent = iconNameToComponent[mod.icon];
+                        const isOverridden = permissionsConfig.featureFlags[mod.id] !== undefined;
+                        return (
+                          <div
+                            key={mod.id}
+                            className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                              enabled
+                                ? 'border-gray-200 dark:border-gray-700'
+                                : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 opacity-60'
+                            }`}
+                          >
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                              enabled ? 'bg-teal-100 dark:bg-teal-900/20' : 'bg-gray-100 dark:bg-gray-800'
+                            }`}>
+                              {IconComponent && <IconComponent className={`w-4.5 h-4.5 ${enabled ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400'}`} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">{mod.label}</p>
+                                {mod.premium && (
+                                  <Badge className="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0">
+                                    Premium
+                                  </Badge>
+                                )}
+                                {isOverridden && (
+                                  <Badge className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 px-1.5 py-0">
+                                    Personnalisé
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{mod.description}</p>
+                            </div>
+                            <Switch
+                              checked={enabled}
+                              onCheckedChange={(checked) => handleFeatureToggle(mod.id, checked)}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ─── Permission Matrix Tab ─── */}
+          {activeModuleTab === 'permissions' && (
+            <div className="space-y-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Configurez les droits d&apos;accès par module et par rôle. Cliquez sur une cellule pour changer le niveau de permission.
+              </p>
+
+              {/* Role legend */}
+              <div className="flex flex-wrap gap-2">
+                {roleDefinitions.map((role) => (
+                  <Badge key={role.key} className={`text-[10px] px-2 py-0.5 ${role.bgColor}`}>
+                    {role.label}
+                  </Badge>
+                ))}
+              </div>
+
+              {/* Permission level legend */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">RW</span>
+                  <span className="text-[11px] text-gray-500">Lecture & Écriture</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold">RO</span>
+                  <span className="text-[11px] text-gray-500">Lecture seule</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-gray-100 dark:bg-gray-800 text-gray-400 text-[10px] font-bold">—</span>
+                  <span className="text-[11px] text-gray-500">Aucun accès</span>
+                </div>
+              </div>
+
+              {/* Group filter */}
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setSelectedPermGroup('all')}
+                  className={`text-[10px] px-2.5 py-1 rounded-full border transition-all ${
+                    selectedPermGroup === 'all'
+                      ? 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700'
+                      : 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                  }`}
+                >
+                  Tous
+                </button>
+                {navGroups.map((group) => (
+                  <button
+                    key={group.key}
+                    onClick={() => setSelectedPermGroup(group.key)}
+                    className={`text-[10px] px-2.5 py-1 rounded-full border transition-all ${
+                      selectedPermGroup === group.key
+                        ? 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700'
+                        : 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                    }`}
+                  >
+                    {group.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Matrix grid */}
+              <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                      <th className="text-left text-xs font-semibold text-gray-600 dark:text-gray-300 px-3 py-2 sticky left-0 bg-gray-50 dark:bg-gray-900/50 z-10 min-w-[180px]">
+                        Module
+                      </th>
+                      {roleDefinitions.map((role) => (
+                        <th key={role.key} className="text-center px-2 py-2 min-w-[80px]">
+                          <Badge className={`text-[10px] ${role.bgColor}`}>
+                            {role.label}
+                          </Badge>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredModules.map(({ module: mod, permissions }) => {
+                      const isEnabled = isModuleEnabled(mod.id, permissionsConfig);
+                      const IconComponent = iconNameToComponent[mod.icon];
+                      return (
+                        <tr
+                          key={mod.id}
+                          className={`border-b border-gray-100 dark:border-gray-800 ${
+                            !isEnabled ? 'opacity-40 bg-gray-50/50 dark:bg-gray-900/30' : ''
+                          }`}
+                        >
+                          <td className="text-left px-3 py-2 sticky left-0 bg-white dark:bg-gray-950 z-10">
+                            <div className="flex items-center gap-2">
+                              {IconComponent && <IconComponent className="w-3.5 h-3.5 text-gray-400" />}
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{mod.label}</span>
+                              {!isEnabled && (
+                                <Badge className="text-[8px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1 py-0">
+                                  Off
+                                </Badge>
+                              )}
+                            </div>
+                          </td>
+                          {roleDefinitions.map((role) => {
+                            const level = permissions[role.key];
+                            const defaultLevel = mod.defaultPermissions[role.key];
+                            const isCustom = level !== defaultLevel;
+                            return (
+                              <td key={role.key} className="text-center px-2 py-1.5">
+                                <button
+                                  onClick={() => {
+                                    // Cycle through: none → read → write → none
+                                    const nextLevel: PermissionLevel =
+                                      level === 'none' ? 'read' : level === 'read' ? 'write' : 'none';
+                                    handlePermissionChange(mod.id, role.key, nextLevel);
+                                  }}
+                                  className={`inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-bold transition-all cursor-pointer hover:ring-2 hover:ring-teal-300 ${
+                                    level === 'write'
+                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                      : level === 'read'
+                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                      : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
+                                  } ${isCustom ? 'ring-1 ring-sky-400' : ''}`}
+                                  title={`${permissionLevelLabels[level]}${isCustom ? ' (personnalisé)' : ' (défaut)'}`}
+                                >
+                                  {permissionLevelCodes[level]}
+                                </button>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Override count */}
+              {Object.keys(permissionsConfig.overrides).length > 0 && (
+                <div className="flex items-center gap-2 text-xs text-sky-600 dark:text-sky-400">
+                  <Info className="w-3.5 h-3.5" />
+                  <span>
+                    {Object.keys(permissionsConfig.overrides).length} permission{Object.keys(permissionsConfig.overrides).length > 1 ? 's' : ''} personnalisée{Object.keys(permissionsConfig.overrides).length > 1 ? 's' : ''} (anneau bleu).
+                    Cliquez sur « Réinitialiser » pour restaurer les valeurs par défaut.
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

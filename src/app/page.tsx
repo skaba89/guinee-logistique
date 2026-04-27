@@ -1,7 +1,11 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Shield, ArrowLeft, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useCargoStore } from '@/lib/cargo-store';
+import { canViewPage } from '@/lib/permissions';
 import LoginPage from '@/components/cargo/login-page';
 import DashboardLayout from '@/components/cargo/dashboard-layout';
 import DashboardPage from '@/components/cargo/dashboard-page';
@@ -38,8 +42,56 @@ import ChatPage from '@/components/cargo/chat-page';
 import ScannerPage from '@/components/cargo/scanner-page';
 import CustomerPortalPage from '@/components/cargo/customer-portal-page';
 
+// ─── Access Denied Page ─────────────────────────────────────────
+
+function AccessDeniedPage() {
+  const setPage = useCargoStore((s) => s.setPage);
+  const user = useCargoStore((s) => s.user);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center max-w-md"
+      >
+        <div className="w-20 h-20 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-6">
+          <Lock className="w-10 h-10 text-red-500 dark:text-red-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          Accès refusé
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+          Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+          Connecté en tant que <span className="font-semibold">{user?.name || 'Utilisateur'}</span> ({user?.role || '—'}).
+          Contactez un administrateur pour obtenir l&apos;accès.
+        </p>
+        <Button
+          onClick={() => setPage('dashboard')}
+          className="text-white"
+          style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Retour au tableau de bord
+        </Button>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Page Renderer with Permission Check ────────────────────────
+
 function PageRenderer() {
   const currentPage = useCargoStore((s) => s.currentPage);
+  const roleKey = useCargoStore((s) => s.roleKey);
+  const permissionsConfig = useCargoStore((s) => s.permissionsConfig);
+
+  // Check permission — if user can't view this page, show access denied
+  if (!canViewPage(currentPage, roleKey, permissionsConfig)) {
+    return <AccessDeniedPage />;
+  }
 
   switch (currentPage) {
     case 'dashboard':
@@ -112,6 +164,8 @@ function PageRenderer() {
       return <DashboardPage />;
   }
 }
+
+// ─── Main Home Component ────────────────────────────────────────
 
 export default function Home() {
   const isAuthenticated = useCargoStore((s) => s.isAuthenticated);
