@@ -391,7 +391,7 @@ export const parcelFormats: ParcelFormat[] = [
   },
 ];
 
-// ─── Price Calculation ─────────────────────────────────────────
+// ─── Price Calculation (V2 — multi-devises, taxes, ristournes, pénalités) ───
 
 export interface PriceCalculationParams {
   formatId: string;
@@ -400,9 +400,31 @@ export interface PriceCalculationParams {
   widthCm: number;
   heightCm: number;
   isInternational: boolean;
-  serviceLevel: 'express' | 'standard' | 'economy';
+  serviceLevel: 'express' | 'standard' | 'economy' | 'same_day' | 'next_day';
   insuranceAmount?: number;
   currency?: string;
+  /** Client category for discount */
+  clientCategory?: 'standard' | 'silver' | 'gold' | 'platinum' | 'vip';
+  /** Monthly shipment count for volume discount */
+  monthlyShipmentCount?: number;
+  /** Monthly revenue for volume discount */
+  monthlyRevenue?: number;
+  /** Current contract discount rate (%) */
+  contractDiscount?: number;
+  /** Fuel surcharge rate (%) */
+  fuelSurchargeRate?: number;
+  /** Peak season surcharge rate (%) */
+  peakSurchargeRate?: number;
+  /** Apply TVA (19%) */
+  applyTVA?: boolean;
+  /** Apply TAP (1%) */
+  applyTAP?: boolean;
+  /** Is export (TVA exempt) */
+  isExport?: boolean;
+  /** Late delivery penalty amount */
+  lateDeliveryPenalty?: number;
+  /** Dangerous goods surcharge rate */
+  dangerousGoodsSurcharge?: number;
 }
 
 export interface PriceBreakdown {
@@ -412,12 +434,31 @@ export interface PriceBreakdown {
   serviceMultiplier: number;
   servicePrice: number;
   insurancePrice: number;
+  fuelSurcharge: number;
+  peakSeasonSurcharge: number;
+  dangerousGoodsSurcharge: number;
+  subtotalBeforeDiscount: number;
+  volumeDiscount: number;
+  contractDiscount: number;
+  totalDiscount: number;
+  subtotalAfterDiscount: number;
+  tvaRate: number;
+  tvaAmount: number;
+  tapRate: number;
+  tapAmount: number;
+  lateDeliveryPenalty: number;
   totalPrice: number;
+  totalPriceTTC: number;
   currency: string;
+  /** Exchange rate info if conversion needed */
+  exchangeRate?: number;
+  originalCurrency?: string;
+  originalAmount?: number;
 }
 
 /**
- * Calculate parcel shipping price with full breakdown.
+ * Calculate parcel shipping price with full breakdown (V2).
+ * Includes: multi-devises, taxes algériennes, ristournes, surcharges.
  */
 export function calculateParcelPrice(params: PriceCalculationParams): PriceBreakdown {
   const format = parcelFormats.find((f) => f.id === params.formatId) ?? parcelFormats[2]; // default M
@@ -436,6 +477,8 @@ export function calculateParcelPrice(params: PriceCalculationParams): PriceBreak
     express: 1.6,
     standard: 1.0,
     economy: 0.7,
+    same_day: 2.2,
+    next_day: 1.8,
   };
   const serviceMultiplier = serviceMultipliers[params.serviceLevel] ?? 1.0;
   const servicePrice = basePrice * (serviceMultiplier - 1);
@@ -443,7 +486,54 @@ export function calculateParcelPrice(params: PriceCalculationParams): PriceBreak
   // Insurance: 2% of declared value
   const insurancePrice = params.insuranceAmount ? params.insuranceAmount * 0.02 : 0;
 
-  const totalPrice = basePrice + weightSurcharge + volumeSurcharge + servicePrice + insurancePrice;
+  // Fuel surcharge
+  const fuelSurcharge = (params.fuelSurchargeRate ?? 0) / 100 * basePrice;
+
+  // Peak season surcharge
+  const peakSeasonSurcharge = (params.peakSurchargeRate ?? 0) / 100 * basePrice;
+
+  // Dangerous goods surcharge
+  const dangerousGoodsSurcharge = params.dangerousGoodsSurcharge
+    ? basePrice * params.dangerousGoodsSurcharge / 100
+    : 0;
+
+  // Subtotal before discount
+  const subtotalBeforeDiscount = basePrice + weightSurcharge + volumeSurcharge + servicePrice + insurancePrice + fuelSurcharge + peakSeasonSurcharge + dangerousGoodsSurcharge;
+
+  // Volume discount (based on monthly shipment count + revenue)
+  let volumeDiscountRate = 0;
+  if ((params.monthlyShipmentCount ?? 0) >= 2000) volumeDiscountRate = 0.15;
+  else if ((params.monthlyShipmentCount ?? 0) >= 1000) volumeDiscountRate = 0.12;
+  else if ((params.monthlyShipmentCount ?? 0) >= 500) volumeDiscountRate = 0.08;
+  else if ((params.monthlyShipmentCount ?? 0) >= 300) volumeDiscountRate = 0.05;
+  else if ((params.monthlyShipmentCount ?? 0) >= 100) volumeDiscountRate = 0.03;
+  const volumeDiscount = subtotalBeforeDiscount * volumeDiscountRate;
+
+  // Contract discount
+  const contractDiscountRate = (params.contractDiscount ?? 0) / 100;
+  const contractDiscount = (subtotalBeforeDiscount - volumeDiscount) * contractDiscountRate;
+
+  // Total discount
+  const totalDiscount = volumeDiscount + contractDiscount;
+
+  // Subtotal after discount
+  const subtotalAfterDiscount = subtotalBeforeDiscount - totalDiscount;
+
+  // Late delivery penalty
+  const lateDeliveryPenalty = params.lateDeliveryPenalty ?? 0;
+
+  // Tax calculation (Algeria)
+  const isExport = params.isExport ?? false;
+  const applyTVA = params.applyTVA ?? !isExport;
+  const applyTAP = params.applyTAP ?? !isExport;
+  const tvaRate = applyTVA && !isExport ? 19 : 0;
+  const tapRate = applyTAP && !isExport ? 1 : 0;
+  const tvaAmount = subtotalAfterDiscount * tvaRate / 100;
+  const tapAmount = subtotalAfterDiscount * tapRate / 100;
+
+  // Total HT and TTC
+  const totalPrice = Math.round(subtotalAfterDiscount + lateDeliveryPenalty);
+  const totalPriceTTC = Math.round(totalPrice + tvaAmount + tapAmount);
 
   return {
     basePrice,
@@ -452,7 +542,21 @@ export function calculateParcelPrice(params: PriceCalculationParams): PriceBreak
     serviceMultiplier,
     servicePrice,
     insurancePrice,
-    totalPrice: Math.round(totalPrice),
+    fuelSurcharge,
+    peakSeasonSurcharge,
+    dangerousGoodsSurcharge,
+    subtotalBeforeDiscount,
+    volumeDiscount,
+    contractDiscount,
+    totalDiscount,
+    subtotalAfterDiscount,
+    tvaRate,
+    tvaAmount,
+    tapRate,
+    tapAmount,
+    lateDeliveryPenalty,
+    totalPrice,
+    totalPriceTTC,
     currency: params.currency ?? 'DZD',
   };
 }

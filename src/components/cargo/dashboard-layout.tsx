@@ -126,6 +126,10 @@ const pageNameMap: Record<PageType, string> = {
   users: 'Utilisateurs & Rôles',
   chat: 'Messagerie',
   scanner: 'Scanner',
+  'temperature-controlled': 'Chaîne du Froid',
+  'dangerous-goods': 'Marchandises Dangereuses',
+  'credit-management': 'Crédit & Risque',
+  compliance: 'Conformité Réglementaire',
 };
 
 // Notification type icon mapping

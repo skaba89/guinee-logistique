@@ -36,6 +36,12 @@ import {
   GitMerge,
   Plug,
   Settings,
+  Flame,
+  ThermometerSnowflake,
+  CreditCard,
+  Gauge,
+  ClipboardCheck,
+  AlertTriangle,
 } from 'lucide-react';
 import type { PageType } from './cargo-store';
 
@@ -189,6 +195,12 @@ export const iconNameToComponent: Record<string, React.ElementType> = {
   GitMerge,
   Plug,
   Settings,
+  Flame,
+  ThermometerSnowflake,
+  CreditCard,
+  Gauge,
+  ClipboardCheck,
+  AlertTriangle,
 };
 
 // ─── Module Definitions (Single Source of Truth) ────────────────
@@ -516,11 +528,55 @@ export const moduleDefinitions: ModuleDefinition[] = [
 
   // Conformité
   {
+    id: 'dangerous-goods',
+    label: 'Marchandises Dangereuses',
+    icon: 'Flame',
+    group: 'conformite',
+    order: 1,
+    enabled: true,
+    premium: true,
+    description: 'Gestion MD — classification UN, DGD, emballage certifié, restrictions par mode',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+  },
+  {
+    id: 'temperature-controlled',
+    label: 'Chaîne du Froid',
+    icon: 'ThermometerSnowflake',
+    group: 'conformite',
+    order: 2,
+    enabled: true,
+    premium: true,
+    description: 'Chaîne du froid — conteneurs réfrigérés, data loggers, alertes température',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+  },
+  {
+    id: 'credit-management',
+    label: 'Crédit & Risque',
+    icon: 'CreditCard',
+    group: 'conformite',
+    order: 3,
+    enabled: true,
+    premium: true,
+    description: 'Gestion du crédit client — limites, encours, relances, scoring risque',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+  },
+  {
+    id: 'compliance',
+    label: 'Conformité Réglementaire',
+    icon: 'ClipboardCheck',
+    group: 'conformite',
+    order: 4,
+    enabled: true,
+    premium: true,
+    description: 'Conformité réglementaire — KYC, sanctions, embargo, licences, audits',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+  },
+  {
     id: 'sustainability',
     label: 'Durabilité & RSE',
     icon: 'Leaf',
     group: 'conformite',
-    order: 1,
+    order: 5,
     enabled: true,
     premium: true,
     description: 'Empreinte carbone, RSE, conformité environnementale',

@@ -6,7 +6,7 @@ import { users, type User } from './test-data';
 import { type RoleKey, mapRoleString, canViewPage, canEditPage } from './permissions';
 import { loadPermissionsConfig, type PermissionsConfig } from './permissions';
 
-export type PageType = 'dashboard' | 'shipments' | 'tracking' | 'clients' | 'billing' | 'fleet' | 'settings' | 'maritime' | 'air-freight' | 'ground-transport' | 'parcels' | 'customs' | 'analytics' | 'warehouse' | 'quotations' | 'documents' | 'insurance' | 'partners' | 'incoterms' | 'reports' | 'drivers' | 'integrations' | 'claims' | 'multimodal' | 'contracts' | 'tasks' | 'calendar' | 'customer-portal' | 'rates' | 'sustainability' | 'users' | 'chat' | 'scanner';
+export type PageType = 'dashboard' | 'shipments' | 'tracking' | 'clients' | 'billing' | 'fleet' | 'settings' | 'maritime' | 'air-freight' | 'ground-transport' | 'parcels' | 'customs' | 'analytics' | 'warehouse' | 'quotations' | 'documents' | 'insurance' | 'partners' | 'incoterms' | 'reports' | 'drivers' | 'integrations' | 'claims' | 'multimodal' | 'contracts' | 'tasks' | 'calendar' | 'customer-portal' | 'rates' | 'sustainability' | 'users' | 'chat' | 'scanner' | 'dangerous-goods' | 'temperature-controlled' | 'credit-management' | 'compliance';
 
 interface CargoState {
   isAuthenticated: boolean;
