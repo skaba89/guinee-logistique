@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   User,
   Building,
@@ -33,6 +33,11 @@ import {
   ToggleRight,
   Printer,
   Tag,
+  ScrollText,
+  ThumbsUp,
+  ThumbsDown,
+  AlertTriangle,
+  FileCheck,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,6 +78,31 @@ import {
   permissionLevelCodes,
   iconNameToComponent,
 } from '@/lib/module-config';
+import {
+  allBusinessRules,
+  isRuleEnabled as isRuleEnabledLib,
+  toggleRule as toggleRuleLib,
+  currentFuelSurcharges,
+} from '@/lib/business-rules';
+import {
+  getAuditTrail,
+  auditActionLabels,
+  auditSeverityColors,
+  auditSeverityLabels,
+  auditResultLabels,
+  auditResultColors,
+  fieldLevelPermissions,
+} from '@/lib/audit-trail';
+import {
+  loadNotificationPrefs,
+  saveNotificationPrefs,
+  getPendingApprovals,
+  approveRequest,
+  rejectRequest,
+  approvalStatusLabels,
+  approvalStatusColors,
+  notificationTypeLabels,
+} from '@/lib/notifications';
 
 interface ApiKey {
   id: string;
@@ -1138,6 +1168,249 @@ export default function SettingsPage() {
             <Badge className="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400">
               Français
             </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Business Rules Configuration ─── */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ScrollText className="w-5 h-5 text-teal-500" />
+            Règles Métier
+          </CardTitle>
+          <CardDescription>Configurez les règles de validation, conformité et tarification automatiques</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Les règles métier sont évaluées automatiquement lors de la création et modification de colis et expéditions.
+            Les règles critiques bloquent l&apos;action, les avertissements affichent un message.
+          </p>
+          {allBusinessRules.map((rule) => {
+            const enabled = isRuleEnabledLib(rule.id);
+            const severityColors: Record<string, string> = {
+              critical: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+              warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+              info: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+            };
+            const categoryLabels: Record<string, string> = {
+              validation: 'Validation', compliance: 'Conformité', pricing: 'Tarification',
+              workflow: 'Workflow', safety: 'Sécurité', customs: 'Douanes',
+            };
+            return (
+              <div
+                key={rule.id}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                  enabled ? 'border-gray-200 dark:border-gray-700' : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 opacity-60'
+                }`}
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${enabled ? 'bg-teal-100 dark:bg-teal-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  <AlertTriangle className={`w-4.5 h-4.5 ${enabled ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400'}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{rule.name}</p>
+                    <Badge className={`text-[9px] ${severityColors[rule.severity]}`}>
+                      {rule.severity === 'critical' ? 'Critique' : rule.severity === 'warning' ? 'Avertissement' : 'Info'}
+                    </Badge>
+                    <Badge className="text-[9px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 px-1.5 py-0">
+                      {categoryLabels[rule.category] || rule.category}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{rule.description}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Modules: {rule.appliesTo.join(', ')}</p>
+                </div>
+                <Switch
+                  checked={enabled}
+                  onCheckedChange={(checked) => toggleRuleLib(rule.id, checked)}
+                />
+              </div>
+            );
+          })}
+
+          {/* Fuel Surcharges */}
+          <Separator className="my-4" />
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Surcharges carburant en vigueur</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {currentFuelSurcharges.map((surcharge) => (
+              <div key={surcharge.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-900 dark:text-white">{surcharge.transportMode === 'air' ? 'Aérien' : surcharge.transportMode === 'maritime' ? 'Maritime' : surcharge.transportMode === 'ground' ? 'Terrestre' : 'Colis'} — {surcharge.region}</p>
+                  <p className="text-[10px] text-gray-500">{surcharge.carrier || 'Tous transporteurs'} — {surcharge.percentage}%</p>
+                  <p className="text-[9px] text-gray-400">Depuis le {surcharge.effectiveDate}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Audit Trail ─── */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileCheck className="w-5 h-5 text-teal-500" />
+            Journal d&apos;audit
+          </CardTitle>
+          <CardDescription>Historique des actions et modifications effectuées sur la plateforme</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-3">
+          <div className="space-y-2">
+            {getAuditTrail({ limit: 10 }).map((entry) => (
+              <div key={entry.id} className="flex items-start gap-3 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${auditSeverityColors[entry.severity]}`}>
+                  <Shield className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs font-medium text-gray-900 dark:text-white">{entry.userName}</p>
+                    <Badge className={`text-[8px] ${auditSeverityColors[entry.severity]}`}>
+                      {auditSeverityLabels[entry.severity]}
+                    </Badge>
+                    <Badge className={`text-[8px] ${auditResultColors[entry.result]}`}>
+                      {auditResultLabels[entry.result]}
+                    </Badge>
+                    <span className="text-[9px] text-gray-400">{auditActionLabels[entry.action]}</span>
+                  </div>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{entry.details}</p>
+                  <p className="text-[9px] text-gray-400 mt-0.5">{new Date(entry.timestamp).toLocaleString('fr-FR')} — IP: {entry.ipAddress}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ─── Approval Workflow ─── */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <ThumbsUp className="w-5 h-5 text-teal-500" />
+            Approbations en attente
+          </CardTitle>
+          <CardDescription>Demandes d&apos;approbation nécessitant une action (admin/manager uniquement)</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-3">
+          {roleKey !== 'admin' && roleKey !== 'manager' ? (
+            <p className="text-xs text-gray-400">Accès réservé aux administrateurs et responsables</p>
+          ) : getPendingApprovals().length === 0 ? (
+            <p className="text-xs text-gray-400">Aucune approbation en attente</p>
+          ) : (
+            getPendingApprovals().map((approval) => (
+              <div key={approval.id} className="flex flex-col gap-2 p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/10">
+                <div className="flex items-center gap-2">
+                  <Badge className={`text-[9px] ${approvalStatusColors[approval.status]}`}>
+                    {approvalStatusLabels[approval.status]}
+                  </Badge>
+                  <Badge className="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                    {approval.type === 'return' ? 'Retour' : approval.type === 'price_override' ? 'Modification prix' : approval.type === 'rule_override' ? 'Contournement règle' : approval.type}
+                  </Badge>
+                  {approval.amount && (
+                    <Badge className="text-[9px] bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                      {approval.amount.toLocaleString('fr-DZ')} DZD
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-gray-700 dark:text-gray-300">{approval.reason}</p>
+                <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                  <span>Demandé par: {approval.requestedByName}</span>
+                  <span>—</span>
+                  <span>{new Date(approval.requestedAt).toLocaleString('fr-FR')}</span>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Button
+                    size="sm"
+                    className="h-7 text-[10px] text-white"
+                    style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                    onClick={() => {
+                      approveRequest(approval.id, user?.id || '1', user?.name || 'Admin');
+                    }}
+                  >
+                    <ThumbsUp className="w-3 h-3 mr-1" />
+                    Approuver
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px] text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800"
+                    onClick={() => {
+                      rejectRequest(approval.id, user?.id || '1', user?.name || 'Admin', 'Non conforme aux politiques');
+                    }}
+                  >
+                    <ThumbsDown className="w-3 h-3 mr-1" />
+                    Rejeter
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ─── Field-Level Permissions ─── */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Lock className="w-5 h-5 text-teal-500" />
+            Permissions par champ
+          </CardTitle>
+          <CardDescription>Contrôle granulaire de la visibilité et l&apos;édition des champs par rôle</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-3">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Définit quels champs sont visibles, éditables ou requis selon le rôle de l&apos;utilisateur.
+          </p>
+          <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                  <th className="text-left text-xs font-semibold text-gray-600 dark:text-gray-300 px-3 py-2">Champ</th>
+                  <th className="text-left text-xs font-semibold text-gray-600 dark:text-gray-300 px-3 py-2">Module</th>
+                  <th className="text-left text-xs font-semibold text-gray-600 dark:text-gray-300 px-3 py-2">Catégorie</th>
+                  {roleDefinitions.map((role) => (
+                    <th key={role.key} className="text-center px-2 py-2 min-w-[70px]">
+                      <Badge className={`text-[9px] ${role.bgColor}`}>{role.label}</Badge>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {fieldLevelPermissions.slice(0, 15).map((perm, idx) => {
+                  const fieldPermLabels: Record<string, string> = {
+                    hidden: 'Masqué', readonly: 'Lecture', editable: 'Édition', required: 'Requis',
+                  };
+                  const fieldPermColors: Record<string, string> = {
+                    hidden: 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500',
+                    readonly: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                    editable: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                    required: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                  };
+                  const categoryLabels: Record<string, string> = {
+                    personal: 'Personnel', financial: 'Financier', operational: 'Opérationnel', system: 'Système',
+                  };
+                  return (
+                    <tr key={idx} className="border-b border-gray-100 dark:border-gray-800">
+                      <td className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300">{perm.field}</td>
+                      <td className="px-3 py-1.5 text-[10px] text-gray-500">{perm.module}</td>
+                      <td className="px-3 py-1.5"><Badge className="text-[8px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{categoryLabels[perm.category] || perm.category}</Badge></td>
+                      {roleDefinitions.map((role) => {
+                        const p = perm.rolePermissions[role.key];
+                        return (
+                          <td key={role.key} className="text-center px-2 py-1.5">
+                            <span className={`inline-flex items-center justify-center w-7 h-7 rounded text-[9px] font-bold ${fieldPermColors[p]}`}>
+                              {p === 'hidden' ? '—' : p === 'readonly' ? 'RO' : p === 'editable' ? 'ED' : 'REQ'}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>

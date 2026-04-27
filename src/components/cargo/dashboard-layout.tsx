@@ -47,6 +47,10 @@ import {
   Leaf,
   MessageSquare,
   ScanLine,
+  Camera,
+  RotateCcw,
+  Printer,
+  DollarSign,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,6 +82,15 @@ import {
 import { useCargoStore, type PageType } from '@/lib/cargo-store';
 import { shipments, containers, flights, parcels, customsDeclarations, clients } from '@/lib/test-data';
 import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
+import {
+  getNotificationsForRole,
+  markNotificationRead as markNotificationReadLib,
+  markAllNotificationsRead as markAllNotificationsReadLib,
+  getUnreadCount as getUnreadCountLib,
+  notificationTypeLabels,
+  getPendingApprovals,
+  type Notification as LibNotification,
+} from '@/lib/notifications';
 
 const pageNameMap: Record<PageType, string> = {
   dashboard: 'Tableau de bord',
@@ -115,38 +128,81 @@ const pageNameMap: Record<PageType, string> = {
   scanner: 'Scanner',
 };
 
-// Notification data
-interface Notification {
-  id: string;
-  type: 'shipment_status' | 'container_arrival' | 'flight_delay' | 'customs_clearance' | 'invoice_overdue' | 'delivery_completed';
-  title: string;
-  description: string;
-  time: string;
-  read: boolean;
-  icon: React.ElementType;
-}
-
-const initialNotifications: Notification[] = [
-  { id: 'n1', type: 'shipment_status', title: 'Statut mis à jour', description: 'FFP-0002-2026 est maintenant En transit', time: 'Il y a 5 min', read: false, icon: Package },
-  { id: 'n2', type: 'container_arrival', title: 'Conteneur arrivé', description: 'CSLU-8912345 est arrivé au port d\'Alger', time: 'Il y a 15 min', read: false, icon: Ship },
-  { id: 'n3', type: 'flight_delay', title: 'Vol retardé', description: 'EK-757 Emirates retardé de 2h', time: 'Il y a 30 min', read: false, icon: Plane },
-  { id: 'n4', type: 'customs_clearance', title: 'Déclaration dédouanée', description: 'DD-2026-0003 a été dédouanée avec succès', time: 'Il y a 1h', read: false, icon: FileCheck },
-  { id: 'n5', type: 'invoice_overdue', title: 'Facture en retard', description: 'FAC-2026-0005 - SPA HydroServices : 950 000 DA', time: 'Il y a 2h', read: false, icon: CreditCard },
-  { id: 'n6', type: 'delivery_completed', title: 'Livraison terminée', description: 'FFP-0001-2026 livré à Paris', time: 'Il y a 3h', read: true, icon: CheckCircle2 },
-  { id: 'n7', type: 'shipment_status', title: 'Nouvelle expédition', description: 'FFP-0022-2026 créée pour Karim Djebbar', time: 'Il y a 4h', read: true, icon: Package },
-  { id: 'n8', type: 'container_arrival', title: 'Conteneur au port', description: 'TEMU-9987654 arrivé à Alger en provenance de Barcelone', time: 'Il y a 5h', read: true, icon: Ship },
-  { id: 'n9', type: 'flight_delay', title: 'Vol annulé', description: 'AH-1080 Air Algérie Alger-Dubaï annulé', time: 'Il y a 6h', read: true, icon: AlertTriangle },
-  { id: 'n10', type: 'invoice_overdue', title: 'Facture en retard', description: 'FAC-2026-0012 - Sarl TechnoPlus : 280 000 DA', time: 'Hier', read: true, icon: CreditCard },
-];
-
-const notificationTypeColors: Record<Notification['type'], string> = {
-  shipment_status: 'text-teal-500',
-  container_arrival: 'text-sky-500',
-  flight_delay: 'text-orange-500',
-  customs_clearance: 'text-emerald-500',
-  invoice_overdue: 'text-red-500',
-  delivery_completed: 'text-green-500',
+// Notification type icon mapping
+const notificationIconMap: Record<string, React.ElementType> = {
+  shipment_created: Package,
+  shipment_status_changed: Package,
+  shipment_delayed: AlertTriangle,
+  parcel_created: PackageCheck,
+  parcel_status_changed: PackageCheck,
+  parcel_delivered: CheckCircle2,
+  parcel_returned: RotateCcw,
+  label_printed: Printer,
+  label_print_failed: AlertTriangle,
+  proof_photo_uploaded: Camera,
+  proof_photo_required: Camera,
+  invoice_overdue: CreditCard,
+  invoice_paid: CheckCircle2,
+  customs_hold: AlertCircle,
+  customs_cleared: FileCheck,
+  rule_violation: AlertTriangle,
+  rule_override: Shield,
+  approval_requested: Clock,
+  approval_granted: CheckCircle2,
+  approval_rejected: X,
+  printer_offline: Printer,
+  printer_error: AlertTriangle,
+  printer_low_media: Printer,
+  fuel_surcharge_change: DollarSign,
+  system_maintenance: Settings,
+  system_update: Settings,
+  task_assigned: ListTodo,
+  task_overdue: AlertTriangle,
+  chat_message: MessageSquare,
 };
+
+const notificationTypeColorMap: Record<string, string> = {
+  shipment_created: 'text-teal-500',
+  shipment_status_changed: 'text-teal-500',
+  shipment_delayed: 'text-orange-500',
+  parcel_created: 'text-violet-500',
+  parcel_status_changed: 'text-violet-500',
+  parcel_delivered: 'text-green-500',
+  parcel_returned: 'text-red-500',
+  label_printed: 'text-blue-500',
+  label_print_failed: 'text-red-500',
+  proof_photo_uploaded: 'text-amber-500',
+  proof_photo_required: 'text-amber-500',
+  invoice_overdue: 'text-red-500',
+  invoice_paid: 'text-green-500',
+  customs_hold: 'text-orange-500',
+  customs_cleared: 'text-emerald-500',
+  rule_violation: 'text-red-500',
+  rule_override: 'text-amber-500',
+  approval_requested: 'text-amber-500',
+  approval_granted: 'text-green-500',
+  approval_rejected: 'text-red-500',
+  printer_offline: 'text-gray-500',
+  printer_error: 'text-red-500',
+  printer_low_media: 'text-amber-500',
+  fuel_surcharge_change: 'text-sky-500',
+  system_maintenance: 'text-gray-500',
+  system_update: 'text-blue-500',
+  task_assigned: 'text-violet-500',
+  task_overdue: 'text-red-500',
+  chat_message: 'text-sky-500',
+};
+
+function formatNotifTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'À l\'instant';
+  if (mins < 60) return `Il y a ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Il y a ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `Il y a ${days}j`;
+}
 
 // Search result types
 interface SearchItem {
@@ -238,8 +294,15 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { currentPage, setPage, user, logout, sidebarOpen, toggleSidebar, setSidebarOpen, roleKey, permissionsConfig } = useCargoStore();
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<LibNotification[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
   const [commandOpen, setCommandOpen] = useState(false);
+
+  // Load notifications from real system
+  useEffect(() => {
+    setNotifications(getNotificationsForRole(roleKey));
+    setPendingApprovals(getPendingApprovals().length);
+  }, [roleKey]);
 
   // Build dynamic navigation based on user role and permissions
   const filteredNavGroups = React.useMemo(() => {
@@ -249,12 +312,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
+    markAllNotificationsReadLib();
+    setNotifications(getNotificationsForRole(roleKey));
+  }, [roleKey]);
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  }, []);
+    markNotificationReadLib(id);
+    setNotifications(getNotificationsForRole(roleKey));
+  }, [roleKey]);
 
   // Keyboard shortcut for command palette
   useEffect(() => {
@@ -416,6 +481,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                       {unreadCount}
                     </span>
                   )}
+                  {pendingApprovals > 0 && (
+                    <span className="absolute -bottom-0.5 -left-0.5 min-w-[16px] h-[16px] rounded-full bg-amber-500 text-white text-[8px] font-bold flex items-center justify-center px-0.5">
+                      {pendingApprovals}
+                    </span>
+                  )}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-80 sm:w-96 p-0" align="end" sideOffset={8}>
@@ -441,7 +511,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <ScrollArea className="h-[400px]">
                   <div className="divide-y divide-gray-100 dark:divide-gray-800">
                     {notifications.map((notification) => {
-                      const NotifIcon = notification.icon;
+                      const NotifIcon = notificationIconMap[notification.type] || Bell;
                       return (
                         <button
                           key={notification.id}
@@ -450,7 +520,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             !notification.read ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''
                           }`}
                         >
-                          <div className={`mt-0.5 flex-shrink-0 ${notificationTypeColors[notification.type]}`}>
+                          <div className={`mt-0.5 flex-shrink-0 ${notificationTypeColorMap[notification.type] || 'text-gray-500'}`}>
                             <NotifIcon className="w-4.5 h-4.5" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -463,11 +533,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                               )}
                             </div>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
-                              {notification.description}
+                              {notification.message}
                             </p>
                             <div className="flex items-center gap-1 mt-1">
                               <Clock className="w-3 h-3 text-gray-400" />
-                              <span className="text-[10px] text-gray-400">{notification.time}</span>
+                              <span className="text-[10px] text-gray-400">{formatNotifTime(notification.createdAt)}</span>
                             </div>
                           </div>
                         </button>

@@ -1,8 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, ArrowLeft, Lock } from 'lucide-react';
+import { seedAuditTrail } from '@/lib/audit-trail';
+import { seedNotifications, seedApprovals } from '@/lib/notifications';
+import { seedPrintHistory } from '@/lib/label-advanced';
 import { Button } from '@/components/ui/button';
 import { useCargoStore } from '@/lib/cargo-store';
 import { canViewPage } from '@/lib/permissions';
@@ -169,6 +172,13 @@ function PageRenderer() {
 
 export default function Home() {
   const isAuthenticated = useCargoStore((s) => s.isAuthenticated);
+
+  useEffect(() => {
+    seedAuditTrail();
+    seedNotifications();
+    seedApprovals();
+    seedPrintHistory();
+  }, []);
 
   if (!isAuthenticated) {
     return <LoginPage />;

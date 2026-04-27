@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   PackageCheck,
@@ -41,6 +41,18 @@ import {
   Hash,
   AlertTriangle,
   Send,
+  CheckboxIcon,
+  CheckSquare,
+  Square,
+  FileCheck,
+  ChevronDown,
+  Info,
+  ThumbsUp,
+  ThumbsDown,
+  ScrollText,
+  LayoutTemplate,
+  Verified,
+  GalleryHorizontalEnd,
 } from 'lucide-react';
 import {
   Card,
@@ -81,6 +93,43 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { parcels, parcelStatusLabels, formatDate, formatDZD } from '@/lib/test-data';
+import { useCargoStore } from '@/lib/cargo-store';
+import {
+  evaluateRules,
+  getAvailableTransitions,
+  canTransitionStatus,
+  allBusinessRules,
+  isRuleEnabled,
+  toggleRule as toggleRuleLib,
+  type RuleContext,
+  type RuleEvaluationSummary,
+  type RuleResult,
+} from '@/lib/business-rules';
+import {
+  addAuditEntry,
+} from '@/lib/audit-trail';
+import {
+  createApprovalRequest,
+  getPendingApprovals,
+} from '@/lib/notifications';
+import {
+  createBatchJob,
+  updateBatchJobProgress,
+  loadPrintHistory,
+  addPrintHistoryEntry,
+  loadLabelTemplates,
+  getTemplatesForFormat,
+  addProofPhoto,
+  getPhotosForParcel,
+  verifyProofPhoto,
+  generatePhotoHash,
+  photoTypeLabels,
+  photoTypeColors,
+  type ProofPhoto,
+  type PrintHistoryEntry,
+  type LabelTemplate,
+  type BatchPrintJob,
+} from '@/lib/label-advanced';
 import {
   labelFormats,
   parcelFormats,
@@ -188,6 +237,32 @@ export default function ParcelsPage() {
   const [activeTab, setActiveTab] = useState<string>('parcels');
   const pageSize = 8;
 
+  // Store for auth state
+  const roleKey = useCargoStore((s) => s.roleKey);
+  const canEdit = useCargoStore((s) => s.canEdit);
+  const user = useCargoStore((s) => s.user);
+
+  // Batch printing state
+  const [selectedParcelIds, setSelectedParcelIds] = useState<Set<string>>(new Set());
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; active: boolean }>({ current: 0, total: 0, active: false });
+
+  // Business rules state
+  const [ruleSummary, setRuleSummary] = useState<RuleEvaluationSummary | null>(null);
+  const [rulesForParcel, setRulesForParcel] = useState<typeof parcels[0] | null>(null);
+
+  // Photo state - enhanced
+  const [photoType, setPhotoType] = useState<ProofPhoto['type']>('pickup');
+  const [photoComment, setPhotoComment] = useState('');
+  const [parcelPhotos, setParcelPhotos] = useState<ProofPhoto[]>([]);
+
+  // Print history and templates
+  const [printHistory, setPrintHistory] = useState<PrintHistoryEntry[]>([]);
+  const [labelTemplates, setLabelTemplates] = useState<LabelTemplate[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+
+  // Status transition state
+  const [transitionError, setTransitionError] = useState<string>('');
+
   // Printers state
   const [printers, setPrinters] = useState<ZebraPrinter[]>(loadPrinters());
   const [labelSettings, setLabelSettings] = useState<LabelSettings>(loadLabelSettings());
@@ -213,6 +288,105 @@ export default function ParcelsPage() {
   const [proofPhotos, setProofPhotos] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Load print history & templates on mount
+  useEffect(() => {
+    setPrintHistory(loadPrintHistory());
+    setLabelTemplates(loadLabelTemplates());
+  }, []);
+
+  // Load photos when selected parcel changes
+  useEffect(() => {
+    if (selectedParcel) {
+      setParcelPhotos(getPhotosForParcel(selectedParcel.id));
+    }
+  }, [selectedParcel]);
+
+  // Evaluate business rules for a parcel
+  const evaluateParcelRules = (parcel: typeof parcels[0]) => {
+    const ctx: RuleContext = {
+      data: {
+        format: parcel.format,
+        lengthCm: parseFloat(parcel.dimensions.split('x')[0]) || 30,
+        widthCm: parseFloat(parcel.dimensions.split('x')[1]) || 20,
+        heightCm: parseFloat(parcel.dimensions.split('x')[2]) || 15,
+        weightKg: parcel.weight,
+        isInternational: parcel.isInternational,
+        carrier: parcel.carrier,
+        declaredValue: parcel.price,
+        status: parcel.status,
+        proofPhoto: parcel.proofPhoto || proofPhotos[parcel.id],
+        description: '',
+        serviceLevel: 'standard',
+        createdAt: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 5 * 86400000).toISOString(),
+        copies: 1,
+        printerStatus: 'online',
+      },
+      userRole: roleKey,
+      module: 'parcels',
+      action: 'update',
+    };
+    const summary = evaluateRules(ctx);
+    setRuleSummary(summary);
+    setRulesForParcel(parcel);
+  };
+
+  // Batch print handler
+  const handleBatchPrint = () => {
+    const ids = Array.from(selectedParcelIds);
+    if (ids.length === 0) return;
+    const job = createBatchJob({
+      name: `Lot ${new Date().toLocaleString('fr-FR')}`,
+      parcelIds: ids,
+      labelFormatId: labelPreviewFormat,
+      printerId: selectedPrinterId,
+      copiesPerLabel: 1,
+      createdBy: user?.name || 'Utilisateur',
+    });
+    setBatchProgress({ current: 0, total: ids.length, active: true });
+    // Simulate progress
+    let printed = 0;
+    const interval = setInterval(() => {
+      printed++;
+      setBatchProgress(prev => ({ ...prev, current: printed }));
+      updateBatchJobProgress(job.id, printed, 0, []);
+      if (printed >= ids.length) {
+        clearInterval(interval);
+        setBatchProgress(prev => ({ ...prev, active: false }));
+        setSelectedParcelIds(new Set());
+        // Refresh print history
+        setPrintHistory(loadPrintHistory());
+      }
+    }, 800);
+  };
+
+  // Handle enhanced photo upload
+  const handleEnhancedPhotoUpload = (parcelId: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      const photo = addProofPhoto({
+        parcelId,
+        type: photoType,
+        dataUrl,
+        metadata: {
+          capturedAt: new Date().toISOString(),
+          fileSize: file.size,
+          width: 800,
+          height: 600,
+          hash: generatePhotoHash(dataUrl),
+        },
+        capturedBy: user?.name || 'Utilisateur',
+        comment: photoComment || undefined,
+        verified: false,
+      });
+      setParcelPhotos(getPhotosForParcel(parcelId));
+      setProofPhotos(prev => ({ ...prev, [parcelId]: dataUrl }));
+      setPhotoComment('');
+    };
+    reader.readAsDataURL(file);
+  };
 
   const filtered = parcels.filter(p => {
     const matchSearch = search === '' ||
@@ -381,11 +555,12 @@ export default function ParcelsPage() {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
           <TabsTrigger value="parcels" className="text-xs">Colis</TabsTrigger>
           <TabsTrigger value="labels" className="text-xs">Étiquettes Zebra</TabsTrigger>
           <TabsTrigger value="formats" className="text-xs">Formats & Prix</TabsTrigger>
           <TabsTrigger value="tracking" className="text-xs">Suivi & Retours</TabsTrigger>
+          <TabsTrigger value="rules" className="text-xs">Règles Métier</TabsTrigger>
         </TabsList>
 
         {/* ─── PARCELS TAB ─── */}
@@ -471,6 +646,21 @@ export default function ParcelsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="text-xs w-10">
+                        <button onClick={() => {
+                          if (selectedParcelIds.size === paged.length && paged.length > 0) {
+                            setSelectedParcelIds(new Set());
+                          } else {
+                            setSelectedParcelIds(new Set(paged.map(p => p.id)));
+                          }
+                        }} className="p-0.5">
+                          {selectedParcelIds.size === paged.length && paged.length > 0 ? (
+                            <CheckSquare className="w-4 h-4 text-teal-500" />
+                          ) : (
+                            <Square className="w-4 h-4 text-gray-400" />
+                          )}
+                        </button>
+                      </TableHead>
                       <TableHead className="text-xs">N° Suivi</TableHead>
                       <TableHead className="text-xs">Format</TableHead>
                       <TableHead className="text-xs hidden sm:table-cell">Expéditeur</TableHead>
@@ -485,8 +675,22 @@ export default function ParcelsPage() {
                   <TableBody>
                     {paged.map((parcel) => {
                       const fmt = parcelFormats.find(f => f.id === parcel.format);
+                      const isSelected = selectedParcelIds.has(parcel.id);
                       return (
-                        <TableRow key={parcel.id} className="cursor-pointer hover:bg-violet-50/50 dark:hover:bg-violet-900/10" onClick={() => setSelectedParcel(parcel)}>
+                        <TableRow key={parcel.id} className={`cursor-pointer hover:bg-violet-50/50 dark:hover:bg-violet-900/10 ${isSelected ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''}`} onClick={() => setSelectedParcel(parcel)}>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <button onClick={() => {
+                              const next = new Set(selectedParcelIds);
+                              if (next.has(parcel.id)) next.delete(parcel.id); else next.add(parcel.id);
+                              setSelectedParcelIds(next);
+                            }} className="p-0.5">
+                              {isSelected ? (
+                                <CheckSquare className="w-4 h-4 text-teal-500" />
+                              ) : (
+                                <Square className="w-4 h-4 text-gray-400" />
+                              )}
+                            </button>
+                          </TableCell>
                           <TableCell className="font-mono text-[11px] font-semibold">{parcel.trackingNumber}</TableCell>
                           <TableCell>
                             <Badge className={`text-[9px] bg-gradient-to-r ${formatColorMap[parcel.format] ?? 'from-gray-400 to-gray-600'} text-white border-0 px-1.5 py-0.5`}>
@@ -544,11 +748,32 @@ export default function ParcelsPage() {
                   <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)} className="h-7 text-xs">Suiv.</Button>
                 </div>
               </div>
+              {/* Batch print floating button */}
+              {selectedParcelIds.size > 0 && !batchProgress.active && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
+                    <Button
+                      className="text-white shadow-lg shadow-teal-500/30 h-12 px-6 text-sm font-semibold"
+                      style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                      onClick={handleBatchPrint}
+                    >
+                      <Printer className="w-5 h-5 mr-2" />
+                      Imprimer {selectedParcelIds.size} étiquette{selectedParcelIds.size > 1 ? 's' : ''}
+                    </Button>
+                  </motion.div>
+                </div>
+              )}
+              {batchProgress.active && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-gray-900 rounded-xl shadow-xl border p-4 min-w-[300px]">
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Impression en cours... {batchProgress.current}/{batchProgress.total}
+                  </p>
+                  <Progress value={(batchProgress.current / batchProgress.total) * 100} className="h-2" />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
-
-        {/* ─── LABELS TAB ─── */}
         <TabsContent value="labels" className="space-y-4 mt-4">
           {/* Label Formats */}
           <Card>
@@ -809,6 +1034,76 @@ export default function ParcelsPage() {
                     </div>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Print History */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ScrollText className="w-5 h-5 text-teal-500" />
+                Historique d&apos;impression
+              </CardTitle>
+              <CardDescription>Dernières impressions réalisées</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {printHistory.length > 0 ? printHistory.map(entry => (
+                  <div key={entry.id} className="flex items-center justify-between p-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2">
+                      <Printer className="w-3.5 h-3.5 text-gray-500" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{entry.trackingNumber}</p>
+                        <p className="text-[10px] text-gray-400">{entry.labelFormatName} — {entry.printerName} — {entry.copies} copie(s)</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-[8px] ${entry.result === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        {entry.result === 'success' ? 'Succès' : 'Échoué'}
+                      </Badge>
+                      <span className="text-[9px] text-gray-400">{new Date(entry.printedAt).toLocaleString('fr-FR')}</span>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="text-xs text-gray-400 text-center py-4">Aucun historique d&apos;impression</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Label Templates */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <LayoutTemplate className="w-5 h-5 text-violet-500" />
+                Modèles d&apos;étiquettes
+              </CardTitle>
+              <CardDescription>Modèles personnalisables pour vos étiquettes</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {labelTemplates.map(tpl => (
+                  <div key={tpl.id} className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                    selectedTemplate === tpl.id ? 'border-teal-500 bg-teal-50/50 dark:bg-teal-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-teal-300'
+                  }`} onClick={() => setSelectedTemplate(tpl.id)}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ backgroundColor: tpl.colors.header }}>
+                        <LayoutTemplate className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-900 dark:text-white">{tpl.name}</p>
+                        <Badge className="text-[7px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 px-1 py-0">{tpl.type}</Badge>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-gray-500">{tpl.description}</p>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {tpl.compatibleFormats.map(f => (
+                        <span key={f} className="text-[8px] px-1 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">{f}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -1179,9 +1474,164 @@ export default function ParcelsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
 
-      {/* ─── PARCEL DETAIL DIALOG ─── */}
+        {/* ─── BUSINESS RULES TAB ─── */}
+        <TabsContent value="rules" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Shield className="w-5 h-5 text-teal-500" />
+                Évaluation des règles métier
+              </CardTitle>
+              <CardDescription>Sélectionnez un colis pour évaluer les règles métier applicables</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2 space-y-4">
+              <div className="flex items-center gap-3">
+                <Select onValueChange={(v) => {
+                  const parcel = parcels.find(p => p.id === v);
+                  if (parcel) evaluateParcelRules(parcel);
+                }}>
+                  <SelectTrigger className="h-9 w-64"><SelectValue placeholder="Sélectionner un colis..." /></SelectTrigger>
+                  <SelectContent>
+                    {parcels.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.trackingNumber} — {p.receiverName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {ruleSummary && rulesForParcel && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                  {/* Summary */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800">
+                      <p className="text-[10px] text-green-600 dark:text-green-400">Réussies</p>
+                      <p className="text-xl font-bold text-green-700 dark:text-green-300">{ruleSummary.passed}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
+                      <p className="text-[10px] text-red-600 dark:text-red-400">Échouées</p>
+                      <p className="text-xl font-bold text-red-700 dark:text-red-300">{ruleSummary.failed}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400">Critiques</p>
+                      <p className="text-xl font-bold text-amber-700 dark:text-amber-300">{ruleSummary.critical}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-sky-50 dark:bg-sky-900/10 border border-sky-200 dark:border-sky-800">
+                      <p className="text-[10px] text-sky-600 dark:text-sky-400">Peut continuer</p>
+                      <p className="text-xl font-bold text-sky-700 dark:text-sky-300">{ruleSummary.canProceed ? 'Oui' : 'Non'}</p>
+                    </div>
+                  </div>
+
+                  {/* Rule results */}
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {ruleSummary.results.map((result, idx) => {
+                      const rule = allBusinessRules.find(r => r.id === result.ruleId);
+                      return (
+                        <div key={result.ruleId} className={`p-3 rounded-lg border ${
+                          result.passed ? 'border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-900/5' :
+                          result.severity === 'critical' ? 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10' :
+                          'border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/5'
+                        }`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                {result.passed ? (
+                                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                ) : result.severity === 'critical' ? (
+                                  <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                ) : (
+                                  <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                                )}
+                                <p className="text-xs font-semibold text-gray-900 dark:text-white">{rule?.name || result.ruleId}</p>
+                                <Badge className={`text-[8px] ${
+                                  result.severity === 'critical' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                                  result.severity === 'warning' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                  'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                }`}>
+                                  {result.severity === 'critical' ? 'Critique' : result.severity === 'warning' ? 'Avertissement' : 'Info'}
+                                </Badge>
+                              </div>
+                              <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-1">{result.message}</p>
+                              {result.suggestions && result.suggestions.length > 0 && (
+                                <div className="mt-1.5 space-y-0.5">
+                                  {result.suggestions.map((s, i) => (
+                                    <p key={i} className="text-[10px] text-gray-500 dark:text-gray-500">• {s}</p>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            {!result.passed && roleKey === 'admin' && (
+                              <Button variant="outline" size="sm" className="h-6 text-[9px] flex-shrink-0" onClick={() => {
+                                addAuditEntry({
+                                  userId: user?.id || '1',
+                                  userName: user?.name || 'Admin',
+                                  userRole: 'admin',
+                                  action: 'rule_override',
+                                  module: 'parcels',
+                                  entityId: rulesForParcel.id,
+                                  entityType: 'parcel',
+                                  details: `Contournement de la règle ${result.ruleId} pour ${rulesForParcel.trackingNumber}`,
+                                  result: 'success',
+                                  severity: 'critical',
+                                });
+                              }}>
+                                Contourner
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Status Transitions */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ArrowRight className="w-5 h-5 text-teal-500" />
+                Transitions de statut
+              </CardTitle>
+              <CardDescription>Transitions autorisées selon votre rôle</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="space-y-2">
+                {parcels.slice(0, 5).map(parcel => {
+                  const transitions = getAvailableTransitions(parcel.status, roleKey);
+                  return (
+                    <div key={parcel.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <span className="text-xs font-mono text-gray-700 dark:text-gray-300 w-36">{parcel.trackingNumber}</span>
+                      <Badge variant="secondary" className={`text-[9px] ${parcelStatusColors[parcel.status]}`}>
+                        {parcelStatusLabels[parcel.status]}
+                      </Badge>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {transitions.length > 0 ? transitions.map(t => (
+                          <Badge key={t.to} className="text-[8px] bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 cursor-pointer hover:bg-teal-200 dark:hover:bg-teal-900/50">
+                            {parcelStatusLabels[t.to as keyof typeof parcelStatusLabels] || t.to}
+                            {t.requiresPhoto && ' 📷'}
+                            {t.requiresApproval && ' ✋'}
+                          </Badge>
+                        )) : (
+                          <span className="text-[10px] text-gray-400">Aucune transition</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {transitionError && (
+                <div className="mt-2 p-2 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
+                  <p className="text-xs text-red-600 dark:text-red-400">{transitionError}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
       <Dialog open={!!selectedParcel && !showPhotoDialog} onOpenChange={() => setSelectedParcel(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedParcel && (
@@ -1510,92 +1960,97 @@ export default function ParcelsPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Camera className="w-5 h-5 text-violet-500" />
-                  Photo de preuve — {selectedParcel.trackingNumber}
+                  Preuves photo — {selectedParcel.trackingNumber}
                 </DialogTitle>
-                <DialogDescription>Ajoutez une photo comme preuve du dépôt ou de la livraison</DialogDescription>
+                <DialogDescription>Ajoutez des photos avec type et commentaire</DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                {/* Current Photo */}
+                {/* Photo Type Selection */}
                 <div className="space-y-2">
-                  <Label className="text-xs">Photo du colis (dépôt)</Label>
-                  <div className="w-full aspect-video rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-gray-800/50">
-                    {proofPhotos[selectedParcel.id] ? (
-                      <img src={proofPhotos[selectedParcel.id]} alt="Preuve colis" className="w-full h-full object-contain" />
-                    ) : selectedParcel.proofPhoto ? (
-                      <div className="text-center p-4">
-                        <ImageIcon className="w-12 h-12 text-green-400 mx-auto mb-2" />
-                        <p className="text-sm text-green-600 dark:text-green-400 font-medium">Photo déjà enregistrée</p>
-                        <p className="text-xs text-gray-400 mt-1">{selectedParcel.proofPhoto}</p>
-                      </div>
-                    ) : (
-                      <div className="text-center p-4">
-                        <Camera className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                        <p className="text-sm text-gray-400">Aucune photo</p>
-                        <p className="text-xs text-gray-400 mt-1">Prenez une photo ou chargez une image</p>
-                      </div>
-                    )}
+                  <Label className="text-xs">Type de photo</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(['pickup', 'warehouse', 'transit', 'delivery', 'damage', 'return'] as const).map(t => (
+                      <button key={t} onClick={() => setPhotoType(t)} className={`text-[10px] px-2.5 py-1 rounded-full border transition-all ${
+                        photoType === t
+                          ? 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700'
+                          : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                      }`}>
+                        {photoTypeLabels[t]}
+                      </button>
+                    ))}
                   </div>
+                </div>
+
+                {/* Comment */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Commentaire</Label>
+                  <Input placeholder="Ajouter un commentaire..." value={photoComment} onChange={(e) => setPhotoComment(e.target.value)} className="h-8 text-xs" />
                 </div>
 
                 {/* Upload buttons */}
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-9"
-                    onClick={() => cameraInputRef.current?.click()}
-                  >
+                  <Button variant="outline" className="flex-1 h-9" onClick={() => cameraInputRef.current?.click()}>
                     <Camera className="w-4 h-4 mr-1" />
                     Prendre une photo
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1 h-9"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
+                  <Button variant="outline" className="flex-1 h-9" onClick={() => fileInputRef.current?.click()}>
                     <ImageIcon className="w-4 h-4 mr-1" />
                     Charger une image
                   </Button>
                 </div>
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handlePhotoUpload(selectedParcel.id, file);
-                  }}
-                />
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handlePhotoUpload(selectedParcel.id, file);
-                  }}
-                />
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleEnhancedPhotoUpload(selectedParcel.id, file);
+                }} />
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleEnhancedPhotoUpload(selectedParcel.id, file);
+                }} />
 
-                {/* Delivery Proof Photo */}
-                {selectedParcel.deliveryProofPhoto && (
-                  <div className="space-y-2">
-                    <Label className="text-xs">Photo de livraison (POD)</Label>
-                    <div className="w-full aspect-video rounded-lg border border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10 flex items-center justify-center">
-                      <div className="text-center">
-                        <CheckCircle2 className="w-10 h-10 text-green-500 mx-auto mb-2" />
-                        <p className="text-sm text-green-600 dark:text-green-400 font-medium">Preuve de livraison capturée</p>
-                        <p className="text-xs text-gray-400 mt-1">{selectedParcel.deliveryProofPhoto}</p>
-                      </div>
+                {/* Photo Gallery */}
+                <div className="space-y-2">
+                  <Label className="text-xs flex items-center gap-1.5">
+                    <GalleryHorizontalEnd className="w-3.5 h-3.5" />
+                    Galerie ({parcelPhotos.length} photo{parcelPhotos.length > 1 ? 's' : ''})
+                  </Label>
+                  {parcelPhotos.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                      {parcelPhotos.map(photo => (
+                        <div key={photo.id} className="relative rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                          <img src={photo.dataUrl} alt={photoTypeLabels[photo.type]} className="w-full h-24 object-cover" />
+                          <div className="p-1.5">
+                            <div className="flex items-center gap-1">
+                              <Badge className={`text-[7px] px-1 py-0 ${photoTypeColors[photo.type]}`}>
+                                {photoTypeLabels[photo.type]}
+                              </Badge>
+                              {photo.verified && (
+                                <Verified className="w-3 h-3 text-green-500" />
+                              )}
+                            </div>
+                            <p className="text-[9px] text-gray-400 mt-0.5">{new Date(photo.metadata.capturedAt).toLocaleString('fr-FR')}</p>
+                            {photo.comment && <p className="text-[9px] text-gray-500 truncate">{photo.comment}</p>}
+                            <div className="flex items-center gap-1 mt-1">
+                              {roleKey === 'admin' && !photo.verified && (
+                                <Button variant="ghost" size="sm" className="h-5 text-[8px] p-0 text-green-600" onClick={() => {
+                                  verifyProofPhoto(photo.id, user?.name || 'Admin');
+                                  setParcelPhotos(getPhotosForParcel(selectedParcel.id));
+                                }}>
+                                  <Verified className="w-3 h-3 mr-0.5" /> Vérifier
+                                </Button>
+                              )}
+                              <span className="text-[8px] text-gray-400">{photo.capturedBy}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                )}
-
-                <Button className="w-full text-white h-10" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowPhotoDialog(false)}>
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  Valider
-                </Button>
+                  ) : (
+                    <div className="text-center py-6 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                      <Camera className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                      <p className="text-xs text-gray-400">Aucune photo pour ce colis</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </>
           )}
