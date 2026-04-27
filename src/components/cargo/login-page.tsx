@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Lock, Eye, EyeOff, Plane, Ship, Truck, MapPin } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, Ship, Plane, Truck, Container, Globe, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -32,37 +32,63 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  const modeCards = [
-    { icon: Plane, label: 'Aérien', color: 'from-sky-400 to-blue-500' },
-    { icon: Ship, label: 'Maritime', color: 'from-teal-400 to-cyan-500' },
-    { icon: Truck, label: 'Terrestre', color: 'from-amber-400 to-orange-500' },
-    { icon: MapPin, label: 'Suivi', color: 'from-emerald-400 to-green-500' },
+  const animatedIcons = [
+    { icon: Ship, x: '15%', y: '20%', delay: 0, duration: 6 },
+    { icon: Plane, x: '70%', y: '15%', delay: 1, duration: 7 },
+    { icon: Truck, x: '25%', y: '70%', delay: 2, duration: 8 },
+    { icon: Container, x: '60%', y: '65%', delay: 0.5, duration: 5 },
+    { icon: Globe, x: '80%', y: '45%', delay: 1.5, duration: 9 },
   ];
 
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0b1f3a 0%, #1a3a5c 50%, #0b1f3a 100%)' }}>
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #0d3b36 50%, #0f172a 100%)' }}>
         {/* Animated mesh gradient */}
         <div className="absolute inset-0">
           <motion.div
-            className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full opacity-20"
-            style={{ background: 'radial-gradient(circle, #3b7cff 0%, transparent 70%)' }}
-            animate={{ scale: [1, 1.2, 1], x: [0, 30, 0], y: [0, -20, 0] }}
+            className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full opacity-20"
+            style={{ background: 'radial-gradient(circle, #0d9488 0%, transparent 70%)' }}
+            animate={{ scale: [1, 1.3, 1], x: [0, 40, 0], y: [0, -30, 0] }}
             transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.div
-            className="absolute bottom-1/4 right-1/4 w-72 h-72 rounded-full opacity-15"
-            style={{ background: 'radial-gradient(circle, #00c9a7 0%, transparent 70%)' }}
-            animate={{ scale: [1.2, 1, 1.2], x: [0, -20, 0], y: [0, 30, 0] }}
+            className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full opacity-15"
+            style={{ background: 'radial-gradient(circle, #059669 0%, transparent 70%)' }}
+            animate={{ scale: [1.2, 1, 1.2], x: [0, -30, 0], y: [0, 40, 0] }}
             transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.div
-            className="absolute top-1/2 left-1/2 w-56 h-56 rounded-full opacity-10"
-            style={{ background: 'radial-gradient(circle, #4facfe 0%, transparent 70%)' }}
-            animate={{ scale: [1, 1.3, 1], x: [-30, 0, -30], y: [20, 0, 20] }}
+            className="absolute top-1/2 left-1/2 w-64 h-64 rounded-full opacity-10"
+            style={{ background: 'radial-gradient(circle, #14b8a6 0%, transparent 70%)' }}
+            animate={{ scale: [1, 1.4, 1], x: [-40, 0, -40], y: [30, 0, 30] }}
             transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
           />
+        </div>
+
+        {/* Floating icons */}
+        <div className="absolute inset-0">
+          {animatedIcons.map((item, index) => (
+            <motion.div
+              key={index}
+              className="absolute"
+              style={{ left: item.x, top: item.y }}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{
+                opacity: [0.08, 0.15, 0.08],
+                scale: [0.8, 1.1, 0.8],
+                y: [0, -15, 0],
+              }}
+              transition={{
+                duration: item.duration,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: item.delay,
+              }}
+            >
+              <item.icon className="w-12 h-12 text-teal-300/20" />
+            </motion.div>
+          ))}
         </div>
 
         {/* Content */}
@@ -74,38 +100,48 @@ export default function LoginPage() {
             className="text-center"
           >
             {/* Logo */}
-            <div className="mb-8 flex items-center justify-center gap-3">
-              <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3b7cff, #00c9a7)' }}>
-                <Truck className="w-8 h-8 text-white" />
+            <div className="mb-8 flex items-center justify-center gap-4">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                <Ship className="w-8 h-8 text-white" />
+                <div className="absolute -right-1 -top-1 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: '#0f172a', border: '2px solid #0d9488' }}>
+                  <ArrowRight className="w-3 h-3 text-teal-400" />
+                </div>
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight">Cargo 360</h1>
-                <p className="text-xs text-blue-200 tracking-widest uppercase">Logistique & Transport</p>
+              <div className="text-left">
+                <h1 className="text-3xl font-bold text-white tracking-tight">FreightFlow Pro</h1>
+                <p className="text-[10px] text-teal-300/70 tracking-[0.25em] uppercase">Logistique Internationale</p>
               </div>
             </div>
 
-            <h2 className="text-2xl font-semibold text-white mb-2">
-              Votre logistique, sous contrôle total
+            <h2 className="text-2xl font-semibold text-white mb-3">
+              La logistique mondiale, simplifiée
             </h2>
-            <p className="text-blue-200/80 mb-12 max-w-md mx-auto">
-              Plateforme complète de gestion de colis et d&apos;expéditions. Suivez, gérez et optimisez vos envois en temps réel.
+            <p className="text-teal-200/60 mb-4 text-sm">
+              Maritime &bull; Aérien &bull; Terrestre &bull; Colis &bull; Douanes
+            </p>
+            <p className="text-slate-400/60 text-xs max-w-md mx-auto mb-12">
+              Plateforme complète de gestion logistique internationale. Suivez, gérez et optimisez vos flux de marchandises à travers le monde.
             </p>
 
-            {/* Mode cards */}
-            <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-              {modeCards.map((card, index) => (
+            {/* Animated mode cards */}
+            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+              {[
+                { icon: Ship, label: 'Maritime', color: 'from-teal-500 to-emerald-600' },
+                { icon: Plane, label: 'Aérien', color: 'from-cyan-500 to-teal-600' },
+                { icon: Truck, label: 'Terrestre', color: 'from-emerald-500 to-green-600' },
+              ].map((card, index) => (
                 <motion.div
                   key={card.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                  className="rounded-xl p-4 text-center backdrop-blur-sm border border-white/10"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                  className="rounded-xl p-4 text-center backdrop-blur-sm border border-teal-500/10"
+                  style={{ background: 'rgba(13, 148, 136, 0.08)' }}
                 >
-                  <div className={`w-12 h-12 rounded-lg mx-auto mb-3 flex items-center justify-center bg-gradient-to-br ${card.color}`}>
-                    <card.icon className="w-6 h-6 text-white" />
+                  <div className={`w-11 h-11 rounded-lg mx-auto mb-2 flex items-center justify-center bg-gradient-to-br ${card.color}`}>
+                    <card.icon className="w-5 h-5 text-white" />
                   </div>
-                  <span className="text-sm font-medium text-white">{card.label}</span>
+                  <span className="text-xs font-medium text-teal-100">{card.label}</span>
                 </motion.div>
               ))}
             </div>
@@ -123,31 +159,31 @@ export default function LoginPage() {
         >
           {/* Mobile logo */}
           <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3b7cff, #00c9a7)' }}>
-              <Truck className="w-7 h-7 text-white" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <Ship className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Cargo 360</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">FreightFlow Pro</h1>
             </div>
           </div>
 
-          {/* Logo area */}
+          {/* Logo area for desktop */}
           <div className="hidden lg:flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1a56db, #0b1f3a)' }}>
-              <Truck className="w-7 h-7 text-white" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <Ship className="w-6 h-6 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">CARGO 360</span>
+              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">FREIGHTFLOW PRO</span>
             </div>
           </div>
 
           <div className="mb-6">
-            <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: '#1a56db' }}>
+            <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: '#0d9488' }}>
               Espace Professionnel
             </p>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Connexion</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Accédez à votre espace de gestion logistique
+              Accédez à votre plateforme de gestion logistique internationale
             </p>
           </div>
 
@@ -188,7 +224,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  placeholder="Mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 h-11"
@@ -219,7 +255,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 className="text-sm font-medium hover:underline"
-                style={{ color: '#1a56db' }}
+                style={{ color: '#0d9488' }}
               >
                 Mot de passe oublié ?
               </button>
@@ -229,7 +265,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full h-11 text-white font-semibold text-sm"
-              style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}
+              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
               disabled={loading}
             >
               {loading ? (
@@ -244,10 +280,21 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-8 text-center">
+          {/* Client Portal Link */}
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              className="w-full h-10 text-sm border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              Portail Client
+            </Button>
+          </div>
+
+          <div className="mt-6 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Besoin d&apos;un accès ?{' '}
-              <button className="font-medium hover:underline" style={{ color: '#1a56db' }}>
+              <button className="font-medium hover:underline" style={{ color: '#0d9488' }}>
                 Contacter l&apos;administrateur
               </button>
             </p>

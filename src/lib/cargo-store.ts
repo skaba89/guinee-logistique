@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { users, type User } from './test-data';
 
-export type PageType = 'dashboard' | 'shipments' | 'tracking' | 'clients' | 'billing' | 'fleet' | 'settings';
+export type PageType = 'dashboard' | 'shipments' | 'tracking' | 'clients' | 'billing' | 'fleet' | 'settings' | 'maritime' | 'air-freight' | 'ground-transport' | 'parcels' | 'customs' | 'analytics' | 'warehouse';
 
 interface CargoState {
   isAuthenticated: boolean;
@@ -58,7 +58,7 @@ export const useCargoStore = create<CargoState>()(
       },
     }),
     {
-      name: 'cargo360-storage',
+      name: 'freightflow-storage',
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         user: state.user,

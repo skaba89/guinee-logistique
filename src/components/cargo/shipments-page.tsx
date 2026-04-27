@@ -13,8 +13,16 @@ import {
   Truck,
   ChevronLeft,
   ChevronRight,
+  FileSpreadsheet,
+  FileText,
+  FileDown,
+  Trash2,
+  CheckSquare,
+  Square,
+  MoreHorizontal,
+  Package,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +52,18 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   shipments as initialShipments,
   statusLabels,
   typeLabels,
@@ -69,11 +89,19 @@ const typeIcons: Record<ShipmentType, React.ElementType> = {
   terrestre: Truck,
 };
 
+const typeColors: Record<ShipmentType, string> = {
+  aerien: 'text-sky-500 border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-sky-900/20',
+  maritime: 'text-teal-500 border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20',
+  terrestre: 'text-amber-500 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20',
+};
+
+const allStatuses: ShipmentStatus[] = ['en_attente', 'confirmee', 'en_transit', 'livree', 'retardee', 'annulee'];
+
 const ITEMS_PER_PAGE = 8;
 
 const algerianCities = [
-  'Alger', 'Oran', 'Constantine', 'Annaba', 'Sétif', 'Blida',
-  'Tizi Ouzou', 'Béjaïa', 'Batna', 'Djelfa', 'Biskra', 'Tiaret',
+  'Alger', 'Oran', 'Constantine', 'Annaba', 'Setif', 'Blida',
+  'Tizi Ouzou', 'Bejaia', 'Batna', 'Djelfa', 'Biskra', 'Tiaret',
 ];
 
 export default function ShipmentsPage() {
@@ -85,6 +113,8 @@ export default function ShipmentsPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
 
   // Add form state
   const [newShipment, setNewShipment] = useState({
@@ -132,7 +162,7 @@ export default function ShipmentsPage() {
 
   const handleAddShipment = () => {
     const id = `s${data.length + 1}`;
-    const trackingNumber = `CG360-${String(data.length + 1).padStart(4, '0')}-2026`;
+    const trackingNumber = `FFP-${String(data.length + 1).padStart(4, '0')}-2026`;
     const shipment: Shipment = {
       id,
       trackingNumber,
@@ -168,6 +198,46 @@ export default function ShipmentsPage() {
     });
   };
 
+  const handleStatusChange = (shipmentId: string, newStatus: ShipmentStatus) => {
+    setData((prev) =>
+      prev.map((s) => (s.id === shipmentId ? { ...s, status: newStatus } : s))
+    );
+  };
+
+  const handleBulkStatusChange = (newStatus: ShipmentStatus) => {
+    setData((prev) =>
+      prev.map((s) => (selectedIds.has(s.id) ? { ...s, status: newStatus } : s))
+    );
+    setSelectedIds(new Set());
+    setShowBulkActions(false);
+  };
+
+  const handleBulkDelete = () => {
+    setData((prev) => prev.filter((s) => !selectedIds.has(s.id)));
+    setSelectedIds(new Set());
+    setShowBulkActions(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === paginated.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginated.map((s) => s.id)));
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -177,16 +247,67 @@ export default function ShipmentsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Gérez vos expéditions et colis</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
-            <Download className="w-4 h-4 mr-1" />
-            Exporter
-          </Button>
-          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowAddDialog(true)}>
+          {/* Export dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="text-xs">
+                <Download className="w-4 h-4 mr-1" />
+                Exporter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <FileSpreadsheet className="w-4 h-4 mr-2 text-green-500" />
+                Exporter CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText className="w-4 h-4 mr-2 text-red-500" />
+                Exporter PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileDown className="w-4 h-4 mr-2 text-blue-500" />
+                Exporter Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
             <Plus className="w-4 h-4 mr-1" />
             Nouvelle expédition
           </Button>
         </div>
       </div>
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 p-3 rounded-lg border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-900/20"
+        >
+          <span className="text-sm font-medium text-teal-700 dark:text-teal-300">
+            {selectedIds.size} sélectionnée{selectedIds.size > 1 ? 's' : ''}
+          </span>
+          <div className="flex items-center gap-2 ml-auto">
+            <Select onValueChange={(v) => handleBulkStatusChange(v as ShipmentStatus)}>
+              <SelectTrigger className="h-8 w-44 text-xs">
+                <SelectValue placeholder="Changer le statut" />
+              </SelectTrigger>
+              <SelectContent>
+                {allStatuses.map((status) => (
+                  <SelectItem key={status} value={status}>{statusLabels[status]}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={handleBulkDelete}>
+              <Trash2 className="w-3.5 h-3.5 mr-1" />
+              Supprimer
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setSelectedIds(new Set())}>
+              Annuler
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Filters */}
       <Card>
@@ -201,20 +322,56 @@ export default function ShipmentsPage() {
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               />
             </div>
-            <Select value={filterType} onValueChange={(v) => { setFilterType(v); setCurrentPage(1); }}>
-              <SelectTrigger className="w-full sm:w-40">
-                <Filter className="w-4 h-4 mr-2 text-gray-400" />
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                <SelectItem value="aerien">Aérien</SelectItem>
-                <SelectItem value="maritime">Maritime</SelectItem>
-                <SelectItem value="terrestre">Terrestre</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Type filter with icons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => { setFilterType('all'); setCurrentPage(1); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                  filterType === 'all'
+                    ? 'border-teal-300 bg-teal-50 text-teal-700 dark:border-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Package className="w-3.5 h-3.5" />
+                Tous
+              </button>
+              <button
+                onClick={() => { setFilterType('maritime'); setCurrentPage(1); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                  filterType === 'maritime'
+                    ? 'border-teal-300 bg-teal-50 text-teal-700 dark:border-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Ship className="w-3.5 h-3.5" />
+                Maritime
+              </button>
+              <button
+                onClick={() => { setFilterType('aerien'); setCurrentPage(1); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                  filterType === 'aerien'
+                    ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-700 dark:bg-sky-900/30 dark:text-sky-400'
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Plane className="w-3.5 h-3.5" />
+                Aérien
+              </button>
+              <button
+                onClick={() => { setFilterType('terrestre'); setCurrentPage(1); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                  filterType === 'terrestre'
+                    ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                    : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
+                }`}
+              >
+                <Truck className="w-3.5 h-3.5" />
+                Terrestre
+              </button>
+            </div>
             <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
               <SelectTrigger className="w-full sm:w-44">
+                <Filter className="w-4 h-4 mr-2 text-gray-400" />
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
@@ -238,6 +395,15 @@ export default function ShipmentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="text-xs w-10">
+                    <button onClick={toggleSelectAll} className="p-0.5">
+                      {selectedIds.size === paginated.length && paginated.length > 0 ? (
+                        <CheckSquare className="w-4 h-4 text-teal-500" />
+                      ) : (
+                        <Square className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="text-xs">N° Suivi</TableHead>
                   <TableHead className="text-xs">Type</TableHead>
                   <TableHead className="text-xs">Client</TableHead>
@@ -253,29 +419,75 @@ export default function ShipmentsPage() {
               <TableBody>
                 {paginated.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={11} className="text-center py-8 text-gray-500">
                       Aucune expédition trouvée
                     </TableCell>
                   </TableRow>
                 ) : (
                   paginated.map((shipment) => {
                     const TypeIcon = typeIcons[shipment.type];
+                    const isSelected = selectedIds.has(shipment.id);
                     return (
-                      <TableRow key={shipment.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900" onClick={() => handleViewDetail(shipment)}>
+                      <TableRow
+                        key={shipment.id}
+                        className={`cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 ${isSelected ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''}`}
+                        onClick={() => handleViewDetail(shipment)}
+                      >
+                        <TableCell>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleSelect(shipment.id); }}
+                            className="p-0.5"
+                          >
+                            {isSelected ? (
+                              <CheckSquare className="w-4 h-4 text-teal-500" />
+                            ) : (
+                              <Square className="w-4 h-4 text-gray-400" />
+                            )}
+                          </button>
+                        </TableCell>
                         <TableCell className="font-mono text-xs font-semibold">{shipment.trackingNumber}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            <TypeIcon className="w-3.5 h-3.5 text-gray-500" />
-                            <span className="text-xs">{typeLabels[shipment.type]}</span>
+                          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${typeColors[shipment.type]}`}>
+                            <TypeIcon className="w-3.5 h-3.5" />
+                            <span className="text-xs font-medium">{typeLabels[shipment.type]}</span>
                           </div>
                         </TableCell>
                         <TableCell className="text-xs font-medium">{shipment.clientName}</TableCell>
                         <TableCell className="text-xs hidden md:table-cell">{shipment.origin}</TableCell>
                         <TableCell className="text-xs hidden md:table-cell">{shipment.destination}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusColors[shipment.status]}`}>
-                            {statusLabels[shipment.status]}
-                          </Badge>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="focus:outline-none">
+                                <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 cursor-pointer hover:opacity-80 transition-opacity ${statusColors[shipment.status]}`}>
+                                  {statusLabels[shipment.status]}
+                                </Badge>
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-1" align="start">
+                              <p className="text-xs font-medium text-gray-500 px-2 py-1.5">Changer le statut</p>
+                              <div className="space-y-0.5">
+                                {allStatuses.map((status) => (
+                                  <button
+                                    key={status}
+                                    onClick={() => handleStatusChange(shipment.id, status)}
+                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                                      shipment.status === status ? 'font-semibold text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'
+                                    }`}
+                                  >
+                                    <div className={`w-2 h-2 rounded-full ${
+                                      status === 'en_attente' ? 'bg-yellow-500' :
+                                      status === 'confirmee' ? 'bg-blue-500' :
+                                      status === 'en_transit' ? 'bg-orange-500' :
+                                      status === 'livree' ? 'bg-green-500' :
+                                      status === 'retardee' ? 'bg-red-500' : 'bg-gray-500'
+                                    }`} />
+                                    {statusLabels[status]}
+                                  </button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         </TableCell>
                         <TableCell className="text-xs hidden sm:table-cell">{formatDate(shipment.dateCreation)}</TableCell>
                         <TableCell className="text-xs hidden lg:table-cell">{shipment.weight} kg</TableCell>
@@ -347,12 +559,44 @@ export default function ShipmentsPage() {
           {selectedShipment && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Badge className={`${statusColors[selectedShipment.status]} text-sm px-3 py-1`}>
-                  {statusLabels[selectedShipment.status]}
-                </Badge>
-                <div className="flex items-center gap-1.5">
-                  {React.createElement(typeIcons[selectedShipment.type], { className: 'w-4 h-4 text-gray-500' })}
-                  <span className="text-sm text-gray-600 dark:text-gray-300">{typeLabels[selectedShipment.type]}</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="focus:outline-none">
+                      <Badge className={`${statusColors[selectedShipment.status]} text-sm px-3 py-1 cursor-pointer hover:opacity-80`}>
+                        {statusLabels[selectedShipment.status]}
+                      </Badge>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-1" align="start">
+                    <p className="text-xs font-medium text-gray-500 px-2 py-1.5">Changer le statut</p>
+                    <div className="space-y-0.5">
+                      {allStatuses.map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            handleStatusChange(selectedShipment.id, status);
+                            setSelectedShipment({ ...selectedShipment, status });
+                          }}
+                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                            selectedShipment.status === status ? 'font-semibold text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'
+                          }`}
+                        >
+                          <div className={`w-2 h-2 rounded-full ${
+                            status === 'en_attente' ? 'bg-yellow-500' :
+                            status === 'confirmee' ? 'bg-blue-500' :
+                            status === 'en_transit' ? 'bg-orange-500' :
+                            status === 'livree' ? 'bg-green-500' :
+                            status === 'retardee' ? 'bg-red-500' : 'bg-gray-500'
+                          }`} />
+                          {statusLabels[status]}
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${typeColors[selectedShipment.type]}`}>
+                  {React.createElement(typeIcons[selectedShipment.type], { className: 'w-4 h-4' })}
+                  <span className="text-sm font-medium">{typeLabels[selectedShipment.type]}</span>
                 </div>
               </div>
 
@@ -395,7 +639,7 @@ export default function ShipmentsPage() {
                 </div>
                 <div>
                   <p className="text-gray-500 text-xs">Prix</p>
-                  <p className="font-semibold text-lg" style={{ color: '#1a56db' }}>{formatDZD(selectedShipment.price)}</p>
+                  <p className="font-semibold text-lg" style={{ color: '#0d9488' }}>{formatDZD(selectedShipment.price)}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-xs">Chauffeur</p>
@@ -541,7 +785,7 @@ export default function ShipmentsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-            <Button onClick={handleAddShipment} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleAddShipment} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Créer l&apos;expédition
             </Button>
           </DialogFooter>

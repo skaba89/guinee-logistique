@@ -14,6 +14,18 @@ import {
   MapPin,
   Shield,
   Save,
+  Key,
+  Webhook,
+  DollarSign,
+  Palette,
+  Plus,
+  Trash2,
+  Copy,
+  Check,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  Upload,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,18 +35,42 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCargoStore } from '@/lib/cargo-store';
 import { useTheme } from 'next-themes';
+
+interface ApiKey {
+  id: string;
+  name: string;
+  key: string;
+  created: string;
+  lastUsed: string;
+  status: 'active' | 'revoked';
+}
+
+interface Webhook {
+  id: string;
+  url: string;
+  events: string[];
+  status: 'active' | 'inactive';
+  created: string;
+}
 
 export default function SettingsPage() {
   const user = useCargoStore((s) => s.user);
   const { theme, setTheme } = useTheme();
 
   const [companyInfo, setCompanyInfo] = useState({
-    name: 'Cargo 360 Algérie',
+    name: 'FreightFlow Pro',
     address: '23 Rue Didouche Mourad, Alger Centre',
     phone: '+213 21 00 00 00',
-    email: 'contact@cargo360.dz',
+    email: 'contact@freightflow.pro',
   });
 
   const [notifications, setNotifications] = useState({
@@ -48,10 +84,110 @@ export default function SettingsPage() {
 
   const [saved, setSaved] = useState(false);
 
+  // API Keys
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
+    { id: 'ak1', name: 'Production API', key: 'ffp_live_k8x2m9p4q7r1s3t5', created: '2026-01-15', lastUsed: 'Il y a 2h', status: 'active' },
+    { id: 'ak2', name: 'Test API', key: 'ffp_test_a1b2c3d4e5f6g7h8', created: '2026-02-01', lastUsed: 'Il y a 5j', status: 'active' },
+    { id: 'ak3', name: 'Ancienne clé', key: 'ffp_live_z9y8x7w6v5u4t3s2', created: '2025-11-10', lastUsed: 'Il y a 30j', status: 'revoked' },
+  ]);
+  const [showKeyValues, setShowKeyValues] = useState<Record<string, boolean>>({});
+  const [newKeyName, setNewKeyName] = useState('');
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+
+  // Webhooks
+  const [webhooks, setWebhooks] = useState<Webhook[]>([
+    { id: 'wh1', url: 'https://api.example.com/webhooks/shipment', events: ['shipment.created', 'shipment.status_changed'], status: 'active', created: '2026-01-20' },
+    { id: 'wh2', url: 'https://api.example.com/webhooks/invoice', events: ['invoice.overdue', 'invoice.paid'], status: 'active', created: '2026-02-05' },
+  ]);
+  const [newWebhookUrl, setNewWebhookUrl] = useState('');
+  const [newWebhookEvents, setNewWebhookEvents] = useState<string[]>([]);
+
+  // Multi-currency
+  const [currencies, setCurrencies] = useState([
+    { code: 'DZD', name: 'Dinar Algérien', symbol: 'DA', rate: 1, isDefault: true, active: true },
+    { code: 'EUR', name: 'Euro', symbol: '\u20AC', rate: 0.0068, isDefault: false, active: true },
+    { code: 'USD', name: 'Dollar US', symbol: '$', rate: 0.0074, isDefault: false, active: true },
+    { code: 'GBP', name: 'Livre Sterling', symbol: '\u00A3', rate: 0.0054, isDefault: false, active: false },
+  ]);
+  const [defaultCurrency, setDefaultCurrency] = useState('DZD');
+
+  // Branding
+  const [branding, setBranding] = useState({
+    primaryColor: '#0d9488',
+    secondaryColor: '#059669',
+    logoUrl: '',
+    companyName: 'FreightFlow Pro',
+  });
+
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  const generateApiKey = () => {
+    if (!newKeyName.trim()) return;
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let key = 'ffp_live_';
+    for (let i = 0; i < 16; i++) {
+      key += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const newKey: ApiKey = {
+      id: `ak${apiKeys.length + 1}`,
+      name: newKeyName,
+      key,
+      created: new Date().toISOString().split('T')[0],
+      lastUsed: 'Jamais',
+      status: 'active',
+    };
+    setApiKeys([...apiKeys, newKey]);
+    setNewKeyName('');
+  };
+
+  const revokeApiKey = (id: string) => {
+    setApiKeys(apiKeys.map((k) => (k.id === id ? { ...k, status: 'revoked' as const } : k)));
+  };
+
+  const copyKey = (id: string, key: string) => {
+    navigator.clipboard.writeText(key).then(() => {
+      setCopiedKeyId(id);
+      setTimeout(() => setCopiedKeyId(null), 2000);
+    });
+  };
+
+  const addWebhook = () => {
+    if (!newWebhookUrl.trim() || newWebhookEvents.length === 0) return;
+    const newWh: Webhook = {
+      id: `wh${webhooks.length + 1}`,
+      url: newWebhookUrl,
+      events: [...newWebhookEvents],
+      status: 'active',
+      created: new Date().toISOString().split('T')[0],
+    };
+    setWebhooks([...webhooks, newWh]);
+    setNewWebhookUrl('');
+    setNewWebhookEvents([]);
+  };
+
+  const deleteWebhook = (id: string) => {
+    setWebhooks(webhooks.filter((w) => w.id !== id));
+  };
+
+  const toggleWebhookEvent = (event: string) => {
+    setNewWebhookEvents((prev) =>
+      prev.includes(event) ? prev.filter((e) => e !== event) : [...prev, event]
+    );
+  };
+
+  const webhookEventOptions = [
+    'shipment.created',
+    'shipment.status_changed',
+    'shipment.delivered',
+    'invoice.paid',
+    'invoice.overdue',
+    'container.arrived',
+    'flight.delayed',
+    'customs.cleared',
+  ];
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -64,7 +200,7 @@ export default function SettingsPage() {
         <Button
           size="sm"
           className="text-xs text-white"
-          style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}
+          style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
           onClick={handleSave}
         >
           <Save className="w-4 h-4 mr-1" />
@@ -76,7 +212,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <User className="w-5 h-5" style={{ color: '#1a56db' }} />
+            <User className="w-5 h-5 text-teal-500" />
             Profil utilisateur
           </CardTitle>
           <CardDescription>Vos informations personnelles</CardDescription>
@@ -84,13 +220,13 @@ export default function SettingsPage() {
         <CardContent className="pt-2">
           <div className="flex items-center gap-4 mb-4">
             <Avatar className="w-16 h-16">
-              <AvatarFallback className="text-xl font-semibold text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+              <AvatarFallback className="text-xl font-semibold text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
                 {user?.name?.split(' ').map((n) => n[0]).join('') || 'AB'}
               </AvatarFallback>
             </Avatar>
             <div>
               <h3 className="font-semibold text-lg text-gray-900 dark:text-white">{user?.name || 'Utilisateur'}</h3>
-              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 text-xs">
+              <Badge className="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 text-xs">
                 <Shield className="w-3 h-3 mr-1" />
                 {user?.role || 'Administrateur'}
               </Badge>
@@ -122,7 +258,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Building className="w-5 h-5" style={{ color: '#1a56db' }} />
+            <Building className="w-5 h-5 text-teal-500" />
             Informations entreprise
           </CardTitle>
           <CardDescription>Détails de votre société</CardDescription>
@@ -162,11 +298,314 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* API Keys Management */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Key className="w-5 h-5 text-teal-500" />
+            Clés API
+          </CardTitle>
+          <CardDescription>Gérez vos clés d&apos;accès API pour les intégrations</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-4">
+          {/* Add new key */}
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Nom de la clé API..."
+              value={newKeyName}
+              onChange={(e) => setNewKeyName(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={generateApiKey} className="text-white flex-shrink-0" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <Plus className="w-4 h-4 mr-1" />
+              Générer
+            </Button>
+          </div>
+
+          {/* Keys list */}
+          <div className="space-y-3">
+            {apiKeys.map((apiKey) => (
+              <div
+                key={apiKey.id}
+                className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border ${
+                  apiKey.status === 'revoked'
+                    ? 'border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-900/10'
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{apiKey.name}</p>
+                    <Badge className={`text-[10px] ${
+                      apiKey.status === 'active'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
+                      {apiKey.status === 'active' ? 'Active' : 'Révoquée'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="text-xs font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                      {showKeyValues[apiKey.id] ? apiKey.key : `${apiKey.key.substring(0, 12)}${'*'.repeat(12)}`}
+                    </code>
+                    <button
+                      onClick={() => setShowKeyValues({ ...showKeyValues, [apiKey.id]: !showKeyValues[apiKey.id] })}
+                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      {showKeyValues[apiKey.id] ? <EyeOff className="w-3.5 h-3.5 text-gray-400" /> : <Eye className="w-3.5 h-3.5 text-gray-400" />}
+                    </button>
+                    <button
+                      onClick={() => copyKey(apiKey.id, apiKey.key)}
+                      className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      {copiedKeyId === apiKey.id ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-400">
+                    <span>Créée le: {apiKey.created}</span>
+                    <span>Dernière utilisation: {apiKey.lastUsed}</span>
+                  </div>
+                </div>
+                {apiKey.status === 'active' && (
+                  <Button variant="outline" size="sm" className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20" onClick={() => revokeApiKey(apiKey.id)}>
+                    Révoquer
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Webhooks Configuration */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Webhook className="w-5 h-5 text-teal-500" />
+            Webhooks
+          </CardTitle>
+          <CardDescription>Configurez les webhooks pour les notifications en temps réel</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-4">
+          {/* Add new webhook */}
+          <div className="space-y-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="space-y-2">
+              <Label className="text-xs">URL du webhook</Label>
+              <Input
+                placeholder="https://api.example.com/webhooks"
+                value={newWebhookUrl}
+                onChange={(e) => setNewWebhookUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Événements</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {webhookEventOptions.map((event) => (
+                  <button
+                    key={event}
+                    onClick={() => toggleWebhookEvent(event)}
+                    className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                      newWebhookEvents.includes(event)
+                        ? 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700'
+                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                    }`}
+                  >
+                    {event}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={addWebhook} size="sm" className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <Plus className="w-4 h-4 mr-1" />
+              Ajouter webhook
+            </Button>
+          </div>
+
+          {/* Webhooks list */}
+          <div className="space-y-3">
+            {webhooks.map((webhook) => (
+              <div key={webhook.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-mono text-gray-600 dark:text-gray-300 truncate">{webhook.url}</code>
+                    <Badge className={`text-[10px] ${
+                      webhook.status === 'active'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                    }`}>
+                      {webhook.status === 'active' ? 'Actif' : 'Inactif'}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {webhook.events.map((event) => (
+                      <span key={event} className="text-[9px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
+                        {event}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">Créé le: {webhook.created}</p>
+                </div>
+                <Button variant="ghost" size="sm" className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => deleteWebhook(webhook.id)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Multi-Currency Settings */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-teal-500" />
+            Devises
+          </CardTitle>
+          <CardDescription>Configurez les devises et les taux de change</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs">Devise par défaut</Label>
+            <Select value={defaultCurrency} onValueChange={setDefaultCurrency}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currencies.filter((c) => c.active).map((c) => (
+                  <SelectItem key={c.code} value={c.code}>{c.code} - {c.name} ({c.symbol})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            {currencies.map((currency) => (
+              <div key={currency.code} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300">
+                    {currency.symbol}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{currency.code} - {currency.name}</p>
+                    <p className="text-xs text-gray-400">Taux: 1 {defaultCurrency} = {currency.rate} {currency.code}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {currency.isDefault && (
+                    <Badge className="text-[10px] bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">Par défaut</Badge>
+                  )}
+                  <Switch
+                    checked={currency.active}
+                    onCheckedChange={(checked) =>
+                      setCurrencies(currencies.map((c) => (c.code === currency.code ? { ...c, active: checked } : c)))
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Dernière mise à jour des taux: aujourd&apos;hui à 08:00</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Company Branding */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Palette className="w-5 h-5 text-teal-500" />
+            Image de marque
+          </CardTitle>
+          <CardDescription>Personnalisez l&apos;apparence de votre plateforme</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs">Nom de l&apos;entreprise</Label>
+              <Input
+                value={branding.companyName}
+                onChange={(e) => setBranding({ ...branding, companyName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Logo</Label>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+                  {branding.logoUrl ? (
+                    <img src={branding.logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+                  ) : (
+                    <Upload className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+                <Button variant="outline" size="sm" className="text-xs">
+                  <Upload className="w-4 h-4 mr-1" />
+                  Charger un logo
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-xs">Couleur principale</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={branding.primaryColor}
+                  onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })}
+                  className="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer"
+                />
+                <Input
+                  value={branding.primaryColor}
+                  onChange={(e) => setBranding({ ...branding, primaryColor: e.target.value })}
+                  className="flex-1 font-mono text-xs"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Couleur secondaire</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={branding.secondaryColor}
+                  onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })}
+                  className="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer"
+                />
+                <Input
+                  value={branding.secondaryColor}
+                  onChange={(e) => setBranding({ ...branding, secondaryColor: e.target.value })}
+                  className="flex-1 font-mono text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Color preview */}
+          <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-500 mb-3">Aperçu</p>
+            <div className="flex items-center gap-3">
+              <div className="w-24 h-10 rounded-lg flex items-center justify-center text-white text-xs font-medium" style={{ background: branding.primaryColor }}>
+                Principal
+              </div>
+              <div className="w-24 h-10 rounded-lg flex items-center justify-center text-white text-xs font-medium" style={{ background: branding.secondaryColor }}>
+                Secondaire
+              </div>
+              <div className="w-24 h-10 rounded-lg flex items-center justify-center text-xs font-medium border" style={{ borderColor: branding.primaryColor, color: branding.primaryColor }}>
+                Contour
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Notifications */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Bell className="w-5 h-5" style={{ color: '#1a56db' }} />
+            <Bell className="w-5 h-5 text-teal-500" />
             Notifications
           </CardTitle>
           <CardDescription>Configurez vos alertes</CardDescription>
@@ -262,7 +701,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            {theme === 'dark' ? <Moon className="w-5 h-5" style={{ color: '#1a56db' }} /> : <Sun className="w-5 h-5" style={{ color: '#1a56db' }} />}
+            {theme === 'dark' ? <Moon className="w-5 h-5 text-teal-500" /> : <Sun className="w-5 h-5 text-teal-500" />}
             Apparence
           </CardTitle>
           <CardDescription>Personnalisez l&apos;interface</CardDescription>
@@ -287,7 +726,7 @@ export default function SettingsPage() {
               </p>
               <p className="text-xs text-gray-500">Langue de l&apos;interface</p>
             </div>
-            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+            <Badge className="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400">
               Français
             </Badge>
           </div>
@@ -298,7 +737,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Info className="w-5 h-5" style={{ color: '#1a56db' }} />
+            <Info className="w-5 h-5 text-teal-500" />
             À propos
           </CardTitle>
         </CardHeader>
@@ -306,15 +745,15 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500 text-xs">Application</p>
-              <p className="font-medium">Cargo 360</p>
+              <p className="font-medium">FreightFlow Pro</p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">Version</p>
-              <p className="font-medium">2.1.0</p>
+              <p className="font-medium">3.0.0</p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">Support technique</p>
-              <p className="font-medium">support@cargo360.dz</p>
+              <p className="font-medium">support@freightflow.pro</p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">Contact commercial</p>
@@ -322,7 +761,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-xs text-gray-500">
-            © 2026 Cargo 360 Algérie. Tous droits réservés. Système de gestion logistique.
+            © 2026 FreightFlow Pro. Tous droits réservés. Plateforme logistique mondiale.
           </div>
         </CardContent>
       </Card>
