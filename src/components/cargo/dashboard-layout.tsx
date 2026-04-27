@@ -32,6 +32,18 @@ import {
   ChevronRight,
   CheckCheck,
   MapPin,
+  Calculator,
+  Shield,
+  Handshake,
+  FileSpreadsheet,
+  UserCheck,
+  Plug,
+  FolderOpen,
+  AlertCircle,
+  GitMerge,
+  FileSignature,
+  ListTodo,
+  CalendarDays,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,6 +86,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
       { id: 'shipments', label: 'Expéditions', icon: Package },
+      { id: 'tracking', label: 'Suivi', icon: MapPin },
     ],
   },
   {
@@ -82,6 +95,7 @@ const navGroups: NavGroup[] = [
       { id: 'maritime', label: 'Maritime', icon: Ship },
       { id: 'air-freight', label: 'Aérien', icon: Plane },
       { id: 'ground-transport', label: 'Terrestre', icon: Truck },
+      { id: 'multimodal', label: 'Multi-Modal', icon: GitMerge },
     ],
   },
   {
@@ -90,20 +104,37 @@ const navGroups: NavGroup[] = [
       { id: 'parcels', label: 'Colis & Courier', icon: PackageCheck },
       { id: 'customs', label: 'Douanes', icon: FileCheck },
       { id: 'warehouse', label: 'Entrepôt', icon: Warehouse },
+      { id: 'insurance', label: 'Assurance', icon: Shield },
+      { id: 'incoterms', label: 'Incoterms', icon: Calculator },
+      { id: 'claims', label: 'Réclamations', icon: AlertCircle },
+    ],
+  },
+  {
+    label: 'Commercial',
+    items: [
+      { id: 'quotations', label: 'Devis', icon: FileText },
+      { id: 'clients', label: 'Clients', icon: Users },
+      { id: 'partners', label: 'Partenaires', icon: Handshake },
+      { id: 'billing', label: 'Facturation', icon: Receipt },
+      { id: 'contracts', label: 'Contrats', icon: FileSignature },
     ],
   },
   {
     label: 'Gestion',
     items: [
-      { id: 'clients', label: 'Clients', icon: Users },
-      { id: 'billing', label: 'Facturation', icon: Receipt },
       { id: 'fleet', label: 'Flotte', icon: Container },
+      { id: 'drivers', label: 'Conducteurs', icon: UserCheck },
+      { id: 'documents', label: 'Documents', icon: FolderOpen },
       { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+      { id: 'reports', label: 'Rapports', icon: FileSpreadsheet },
+      { id: 'tasks', label: 'Tâches', icon: ListTodo },
+      { id: 'calendar', label: 'Calendrier', icon: CalendarDays },
     ],
   },
   {
     label: 'Système',
     items: [
+      { id: 'integrations', label: 'Intégrations', icon: Plug },
       { id: 'settings', label: 'Paramètres', icon: Settings },
     ],
   },
@@ -124,6 +155,19 @@ const pageNameMap: Record<PageType, string> = {
   customs: 'Douanes',
   analytics: 'Analytics',
   warehouse: 'Entrepôt',
+  quotations: 'Devis',
+  documents: 'Documents',
+  insurance: 'Assurance Cargo',
+  partners: 'Partenaires',
+  incoterms: 'Incoterms',
+  reports: 'Rapports',
+  drivers: 'Conducteurs',
+  integrations: 'Intégrations',
+  claims: 'Réclamations',
+  multimodal: 'Transport Multi-Modal',
+  contracts: 'Contrats Transporteurs',
+  tasks: 'Centre de Tâches',
+  calendar: 'Calendrier',
 };
 
 // Notification data

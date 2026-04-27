@@ -18,6 +18,19 @@ import ParcelsPage from '@/components/cargo/parcels-page';
 import CustomsPage from '@/components/cargo/customs-page';
 import AnalyticsPage from '@/components/cargo/analytics-page';
 import WarehousePage from '@/components/cargo/warehouse-page';
+import QuotationsPage from '@/components/cargo/quotations-page';
+import DocumentsPage from '@/components/cargo/documents-page';
+import InsurancePage from '@/components/cargo/insurance-page';
+import PartnersPage from '@/components/cargo/partners-page';
+import IncotermsPage from '@/components/cargo/incoterms-page';
+import ReportsPage from '@/components/cargo/reports-page';
+import DriversPage from '@/components/cargo/drivers-page';
+import IntegrationsPage from '@/components/cargo/integrations-page';
+import ClaimsPage from '@/components/cargo/claims-page';
+import MultimodalPage from '@/components/cargo/multimodal-page';
+import ContractsPage from '@/components/cargo/contracts-page';
+import TasksPage from '@/components/cargo/tasks-page';
+import CalendarPage from '@/components/cargo/calendar-page';
 
 function PageRenderer() {
   const currentPage = useCargoStore((s) => s.currentPage);
@@ -51,6 +64,32 @@ function PageRenderer() {
       return <AnalyticsPage />;
     case 'warehouse':
       return <WarehousePage />;
+    case 'quotations':
+      return <QuotationsPage />;
+    case 'documents':
+      return <DocumentsPage />;
+    case 'insurance':
+      return <InsurancePage />;
+    case 'partners':
+      return <PartnersPage />;
+    case 'incoterms':
+      return <IncotermsPage />;
+    case 'reports':
+      return <ReportsPage />;
+    case 'drivers':
+      return <DriversPage />;
+    case 'integrations':
+      return <IntegrationsPage />;
+    case 'claims':
+      return <ClaimsPage />;
+    case 'multimodal':
+      return <MultimodalPage />;
+    case 'contracts':
+      return <ContractsPage />;
+    case 'tasks':
+      return <TasksPage />;
+    case 'calendar':
+      return <CalendarPage />;
     default:
       return <DashboardPage />;
   }
