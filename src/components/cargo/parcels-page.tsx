@@ -53,6 +53,7 @@ import {
   LayoutTemplate,
   Verified,
   GalleryHorizontalEnd,
+  ArrowRight,
 } from 'lucide-react';
 import {
   Card,
