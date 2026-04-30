@@ -44,8 +44,8 @@ interface ChatApiResponse {
 
 // ─── Constants ────────────────────────────────────────────────────
 
-const STORAGE_KEY_HISTORY = 'freightflow-chatbot-history';
-const STORAGE_KEY_OPEN = 'freightflow-chatbot-open';
+const STORAGE_KEY_HISTORY = 'logisway-chatbot-history';
+const STORAGE_KEY_OPEN = 'logisway-chatbot-open';
 const INITIAL_GREETING = "Bonjour ! 👋 Je suis FlowBot, votre assistant logistique. Comment puis-je vous aider ?";
 
 const QUICK_ACTIONS = [
@@ -67,7 +67,7 @@ const LOGISTICS_PATTERNS: Array<{
 ];
 
 const FALLBACK_RESPONSES = [
-  "Je rencontre un problème technique, mais voici quelques conseils utiles :\n\n• Vérifiez vos numéros de suivi au format FFP-XXXX-XXXX\n• Pour les conteneurs, utilisez le format MSKU-XXXXXXX\n• Consultez le tableau de bord pour une vue d'ensemble de vos expéditions\n• Contactez notre support à support@freightflow.pro",
+  "Je rencontre un problème technique, mais voici quelques conseils utiles :\n\n• Vérifiez vos numéros de suivi au format FFP-XXXX-XXXX\n• Pour les conteneurs, utilisez le format MSKU-XXXXXXX\n• Consultez le tableau de bord pour une vue d'ensemble de vos expéditions\n• Contactez notre support à support@logisway.pro",
   "Désolé, je suis temporairement indisponible. En attendant :\n\n• Vos expéditions en cours sont visibles dans la section 'Expéditions'\n• Les tarifs de fret sont mis à jour dans 'Gestion des Tarifs'\n• Pour les douanes, consultez la section dédiée\n• Notre équipe est disponible au +33 1 23 45 67 89",
   "Une erreur s'est produite. Voici ce que vous pouvez faire :\n\n• Réessayez dans quelques instants\n• Utilisez la recherche (Ctrl+K) pour trouver vos expéditions\n• Consultez les notifications pour les mises à jour\n• Les documents sont accessibles dans la section 'Documents'",
 ];
@@ -527,7 +527,7 @@ export default function ChatbotWidget() {
                   <h3 className="text-sm font-bold leading-tight">FlowBot</h3>
                   <p className="text-[11px] text-white/70 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                    Assistant IA FreightFlow Pro
+                    Assistant IA LogisWay
                   </p>
                 </div>
               </div>

@@ -93,7 +93,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { parcels, parcelStatusLabels, formatDate, formatDZD } from '@/lib/test-data';
+import { parcels, parcelStatusLabels, formatDate, formatDZD, type Parcel } from '@/lib/test-data';
 import { useCargoStore } from '@/lib/cargo-store';
 import {
   evaluateRules,
@@ -237,6 +237,51 @@ export default function ParcelsPage() {
   const [selectedCarrier, setSelectedCarrier] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('parcels');
   const pageSize = 8;
+
+  // Mutable parcels state
+  const [parcelsList, setParcelsList] = useState<Parcel[]>(parcels);
+
+  // Handle adding a new parcel
+  const handleAddParcel = () => {
+    if (!newParcel.senderName || !newParcel.receiverName || !newParcel.carrier) return;
+    const trackingNumber = `PRC-${String(Math.floor(100000 + Math.random() * 900000))}`;
+    const newP: Parcel = {
+      id: `pc${Date.now()}`,
+      trackingNumber,
+      senderName: newParcel.senderName,
+      senderPhone: newParcel.senderPhone,
+      senderAddress: newParcel.senderAddress,
+      receiverName: newParcel.receiverName,
+      receiverPhone: newParcel.receiverPhone,
+      receiverAddress: newParcel.receiverAddress,
+      weight: newParcel.weight,
+      dimensions: `${newParcel.lengthCm}x${newParcel.widthCm}x${newParcel.heightCm}`,
+      lengthCm: newParcel.lengthCm,
+      widthCm: newParcel.widthCm,
+      heightCm: newParcel.heightCm,
+      format: newParcel.format,
+      status: 'picked_up',
+      carrier: newParcel.carrier,
+      estimatedDelivery: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+      price: priceBreakdown.totalPrice,
+      serviceLevel: newParcel.serviceLevel,
+      isInternational: newParcel.isInternational,
+      barcode: trackingNumber,
+      labelPrinted: false,
+      labelCopies: 0,
+      insuranceAmount: newParcel.insuranceAmount,
+      declaredValue: newParcel.declaredValue,
+    };
+    setParcelsList(prev => [...prev, newP]);
+    setNewParcel({
+      senderName: '', senderPhone: '', senderAddress: '',
+      receiverName: '', receiverPhone: '', receiverAddress: '',
+      weight: 1, lengthCm: 30, widthCm: 20, heightCm: 15,
+      format: 'm', serviceLevel: 'standard' as 'express' | 'standard' | 'economy',
+      isInternational: true, carrier: '', insuranceAmount: 0, declaredValue: 0,
+    });
+    setShowAddDialog(false);
+  };
 
   // Store for auth state
   const roleKey = useCargoStore((s) => s.roleKey);
@@ -389,7 +434,7 @@ export default function ParcelsPage() {
     reader.readAsDataURL(file);
   };
 
-  const filtered = parcels.filter(p => {
+  const filtered = parcelsList.filter(p => {
     const matchSearch = search === '' ||
       p.trackingNumber.toLowerCase().includes(search.toLowerCase()) ||
       p.senderName.toLowerCase().includes(search.toLowerCase()) ||
@@ -450,9 +495,9 @@ export default function ParcelsPage() {
       carrier: parcel.carrier,
       price: parcel.price,
       barcode: parcel.barcode,
-      qrData: `https://freightflow.pro/track/${parcel.trackingNumber}`,
+      qrData: `https://logisway.pro/track/${parcel.trackingNumber}`,
       date: new Date().toLocaleDateString('fr-FR'),
-      companyName: 'FreightFlow Pro',
+      companyName: 'LogisWay',
     };
 
     const printer = printers.find(p => p.id === selectedPrinterId);
@@ -502,12 +547,12 @@ export default function ParcelsPage() {
 
   // KPIs
   const kpis = [
-    { title: 'Colis aujourd\'hui', value: parcels.length, icon: PackageCheck, color: 'from-violet-500 to-purple-600' },
-    { title: 'En livraison', value: parcels.filter(p => p.status === 'out_for_delivery').length, icon: Truck, color: 'from-teal-500 to-teal-600' },
-    { title: 'Livrés aujourd\'hui', value: parcels.filter(p => p.status === 'delivered').length, icon: CheckCircle2, color: 'from-green-500 to-emerald-600' },
-    { title: 'Retours', value: parcels.filter(p => p.status === 'returned').length, icon: RotateCcw, color: 'from-red-500 to-rose-600' },
-    { title: 'Étiquettes imprimées', value: parcels.filter(p => p.labelPrinted).length, icon: Printer, color: 'from-blue-500 to-indigo-600' },
-    { title: 'Avec preuve photo', value: parcels.filter(p => p.proofPhoto || proofPhotos[p.id]).length, icon: Camera, color: 'from-amber-500 to-orange-600' },
+    { title: 'Colis aujourd\'hui', value: parcelsList.length, icon: PackageCheck, color: 'from-violet-500 to-purple-600' },
+    { title: 'En livraison', value: parcelsList.filter(p => p.status === 'out_for_delivery').length, icon: Truck, color: 'from-teal-500 to-teal-600' },
+    { title: 'Livrés aujourd\'hui', value: parcelsList.filter(p => p.status === 'delivered').length, icon: CheckCircle2, color: 'from-green-500 to-emerald-600' },
+    { title: 'Retours', value: parcelsList.filter(p => p.status === 'returned').length, icon: RotateCcw, color: 'from-red-500 to-rose-600' },
+    { title: 'Étiquettes imprimées', value: parcelsList.filter(p => p.labelPrinted).length, icon: Printer, color: 'from-blue-500 to-indigo-600' },
+    { title: 'Avec preuve photo', value: parcelsList.filter(p => p.proofPhoto || proofPhotos[p.id]).length, icon: Camera, color: 'from-amber-500 to-orange-600' },
   ];
 
   return (
@@ -878,12 +923,12 @@ export default function ParcelsPage() {
                   <div className="space-y-2">
                     <Label className="text-xs">Colis</Label>
                     <Select onValueChange={(v) => {
-                      const parcel = parcels.find(p => p.id === v);
+                      const parcel = parcelsList.find(p => p.id === v);
                       if (parcel) handleGenerateLabel(parcel);
                     }}>
                       <SelectTrigger className="h-9"><SelectValue placeholder="Sélectionner un colis..." /></SelectTrigger>
                       <SelectContent>
-                        {parcels.map(p => (
+                        {parcelsList.map(p => (
                           <SelectItem key={p.id} value={p.id}>
                             {p.trackingNumber} — {p.receiverName}
                           </SelectItem>
@@ -896,7 +941,7 @@ export default function ParcelsPage() {
                   <div className="space-y-2 mt-4">
                     <Label className="text-xs text-gray-500">Colis sans étiquette imprimée</Label>
                     <div className="space-y-2">
-                      {parcels.filter(p => !p.labelPrinted).map(p => (
+                      {parcelsList.filter(p => !p.labelPrinted).map(p => (
                         <div key={p.id} className="flex items-center justify-between p-2 rounded border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
@@ -908,7 +953,7 @@ export default function ParcelsPage() {
                           </Button>
                         </div>
                       ))}
-                      {parcels.filter(p => !p.labelPrinted).length === 0 && (
+                      {parcelsList.filter(p => !p.labelPrinted).length === 0 && (
                         <p className="text-xs text-gray-400">Toutes les étiquettes ont été imprimées</p>
                       )}
                     </div>
@@ -1429,7 +1474,7 @@ export default function ParcelsPage() {
             </CardHeader>
             <CardContent className="pt-2">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                {parcels.map(parcel => {
+                {parcelsList.map(parcel => {
                   const hasPhoto = parcel.proofPhoto || proofPhotos[parcel.id];
                   return (
                     <div
@@ -1489,12 +1534,12 @@ export default function ParcelsPage() {
             <CardContent className="pt-2 space-y-4">
               <div className="flex items-center gap-3">
                 <Select onValueChange={(v) => {
-                  const parcel = parcels.find(p => p.id === v);
+                  const parcel = parcelsList.find(p => p.id === v);
                   if (parcel) evaluateParcelRules(parcel);
                 }}>
                   <SelectTrigger className="h-9 w-64"><SelectValue placeholder="Sélectionner un colis..." /></SelectTrigger>
                   <SelectContent>
-                    {parcels.map(p => (
+                    {parcelsList.map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.trackingNumber} — {p.receiverName}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1600,7 +1645,7 @@ export default function ParcelsPage() {
             </CardHeader>
             <CardContent className="pt-2">
               <div className="space-y-2">
-                {parcels.slice(0, 5).map(parcel => {
+                {parcelsList.slice(0, 5).map(parcel => {
                   const transitions = getAvailableTransitions(parcel.status, roleKey);
                   return (
                     <div key={parcel.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -2219,7 +2264,7 @@ export default function ParcelsPage() {
 
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(false)}>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleAddParcel}>
                 <PackageCheck className="w-4 h-4 mr-1" />
                 Enregistrer — {formatPrice(priceBreakdown.totalPrice)}
               </Button>

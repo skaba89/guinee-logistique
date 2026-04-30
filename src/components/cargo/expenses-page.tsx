@@ -249,6 +249,28 @@ export default function ExpensesPage() {
     setExpenseData(prev => prev.map(e => e.id === id ? { ...e, statut: 'rejetee' as ExpenseStatus } : e));
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N°', 'Employé', 'Catégorie', 'Montant (DA)', 'Date', 'Statut', 'Description', 'Département'];
+    const rows = filteredExpenses.map(e => [
+      e.id,
+      e.employe,
+      CATEGORY_LABELS[e.categorie] || e.categorie,
+      String(e.montant),
+      e.date,
+      STATUS_LABELS[e.statut] || e.statut,
+      e.description,
+      e.departement,
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-expenses-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   /* ─── Chart Tooltip Styling ─── */
   const tooltipStyle = {
     backgroundColor: 'var(--popover)',
@@ -275,10 +297,10 @@ export default function ExpensesPage() {
             <Wallet className="w-7 h-7 text-teal-600" />
             Gestion des Dépenses
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Suivez, contrôlez et optimisez les dépenses de FreightFlow Pro</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Suivez, contrôlez et optimisez les dépenses de LogisWay</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>

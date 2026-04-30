@@ -15,12 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cargo 360 — Système de gestion de colis",
-  description: "Plateforme complète de gestion logistique et de suivi de colis. Gérez vos expéditions aériennes, maritimes et terrestres.",
-  keywords: ["Cargo 360", "logistique", "gestion colis", "expédition", "Algérie", "suivi colis"],
-  authors: [{ name: "Cargo 360 Algérie" }],
+  title: "LogisWay — Plateforme Logistique Intelligente",
+  description: "Plateforme complète de gestion logistique et de suivi de colis. Gérez vos expéditions aériennes, maritimes et terrestres avec LogisWay.",
+  keywords: ["LogisWay", "logistique", "gestion colis", "expédition", "fret", "suivi colis", "transport"],
+  authors: [{ name: "LogisWay" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/favicon.svg",
+    apple: "/icon-192.png",
   },
 };
 

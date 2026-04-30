@@ -186,7 +186,7 @@ export default function TrackingPage() {
   };
 
   const handleCopyLink = () => {
-    const link = `https://freightflow.pro/track/${selectedShipment?.trackingNumber || ''}`;
+    const link = `https://logisway.pro/track/${selectedShipment?.trackingNumber || ''}`;
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -196,7 +196,7 @@ export default function TrackingPage() {
   const handleDownloadPDF = () => {
     // Simulate PDF download
     const element = document.createElement('a');
-    const content = `FreightFlow Pro - Bon de Suivi\n\nN° Suivi: ${selectedShipment?.trackingNumber}\nClient: ${selectedShipment?.clientName}\nOrigine: ${selectedShipment?.origin}\nDestination: ${selectedShipment?.destination}\nStatut: ${statusLabels[selectedShipment?.status || 'en_attente']}\nPoids: ${selectedShipment?.weight} kg\nPrix: ${formatDZD(selectedShipment?.price || 0)}\nDate création: ${selectedShipment?.dateCreation}\nLivraison estimée: ${selectedShipment?.dateLivraisonEstimee}`;
+    const content = `LogisWay - Bon de Suivi\n\nN° Suivi: ${selectedShipment?.trackingNumber}\nClient: ${selectedShipment?.clientName}\nOrigine: ${selectedShipment?.origin}\nDestination: ${selectedShipment?.destination}\nStatut: ${statusLabels[selectedShipment?.status || 'en_attente']}\nPoids: ${selectedShipment?.weight} kg\nPrix: ${formatDZD(selectedShipment?.price || 0)}\nDate création: ${selectedShipment?.dateCreation}\nLivraison estimée: ${selectedShipment?.dateLivraisonEstimee}`;
     const file = new Blob([content], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `suivi-${selectedShipment?.trackingNumber}.txt`;
@@ -586,7 +586,7 @@ export default function TrackingPage() {
             <div className="flex items-center gap-2">
               <Input
                 readOnly
-                value={`https://freightflow.pro/track/${selectedShipment?.trackingNumber || ''}`}
+                value={`https://logisway.pro/track/${selectedShipment?.trackingNumber || ''}`}
                 className="font-mono text-xs"
               />
               <Button

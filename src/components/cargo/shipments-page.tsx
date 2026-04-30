@@ -238,6 +238,34 @@ export default function ShipmentsPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N° Suivi', 'Type', 'Client', 'Téléphone', 'Origine', 'Destination', 'Statut', 'Date Création', 'Date Expédition', 'Livraison Estimée', 'Poids (kg)', 'Prix (DA)', 'Chauffeur', 'Notes'];
+    const rows = filtered.map(s => [
+      s.trackingNumber,
+      typeLabels[s.type] || s.type,
+      s.clientName,
+      s.clientPhone,
+      s.origin,
+      s.destination,
+      statusLabels[s.status] || s.status,
+      s.dateCreation,
+      s.dateExpedition,
+      s.dateLivraisonEstimee,
+      String(s.weight),
+      String(s.price),
+      s.driverName || '',
+      s.notes || '',
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-shipments-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -256,15 +284,15 @@ export default function ShipmentsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCSV}>
                 <FileSpreadsheet className="w-4 h-4 mr-2 text-green-500" />
                 Exporter CSV
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => alert('Fonctionnalité à venir')}>
                 <FileText className="w-4 h-4 mr-2 text-red-500" />
                 Exporter PDF
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => alert('Fonctionnalité à venir')}>
                 <FileDown className="w-4 h-4 mr-2 text-blue-500" />
                 Exporter Excel
               </DropdownMenuItem>

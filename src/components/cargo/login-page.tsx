@@ -108,7 +108,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="text-left">
-                <h1 className="text-3xl font-bold text-white tracking-tight">FreightFlow Pro</h1>
+                <h1 className="text-3xl font-bold text-white tracking-tight">LogisWay</h1>
                 <p className="text-[10px] text-teal-300/70 tracking-[0.25em] uppercase">Logistique Internationale</p>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function LoginPage() {
               <Ship className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">FreightFlow Pro</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">LogisWay</h1>
             </div>
           </div>
 
@@ -173,7 +173,7 @@ export default function LoginPage() {
               <Ship className="w-6 h-6 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">FREIGHTFLOW PRO</span>
+              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">LOGISWAY</span>
             </div>
           </div>
 

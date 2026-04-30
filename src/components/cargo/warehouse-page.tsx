@@ -176,16 +176,44 @@ const kpis = [
 ];
 
 export default function WarehousePage() {
+  const [data, setData] = useState(warehouseItems);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newItem, setNewItem] = useState({
+    sku: '',
+    name: '',
+    category: '',
+    quantity: '',
+    location: '',
+    clientName: '',
+  });
   const pageSize = 8;
 
-  const categories = [...new Set(warehouseItems.map(item => item.category))];
+  const handleAddItem = () => {
+    const item = {
+      id: `wh${data.length + 1}-${Date.now()}`,
+      sku: newItem.sku || 'WH-NEW-' + Math.random().toString(36).substring(2, 5).toUpperCase(),
+      name: newItem.name,
+      category: newItem.category,
+      quantity: parseInt(newItem.quantity) || 0,
+      location: newItem.location,
+      entryDate: new Date().toISOString().split('T')[0],
+      status: 'stored' as const,
+      clientName: newItem.clientName,
+      weight: 0,
+    };
+    setData([item, ...data]);
+    setNewItem({ sku: '', name: '', category: '', quantity: '', location: '', clientName: '' });
+    setShowAddDialog(false);
+    setPage(0);
+  };
 
-  const filtered = warehouseItems.filter(item => {
+  const categories = [...new Set(data.map(item => item.category))];
+
+  const filtered = data.filter(item => {
     const matchSearch = search === '' ||
       item.sku.toLowerCase().includes(search.toLowerCase()) ||
       item.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -691,16 +719,16 @@ export default function WarehousePage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label className="text-xs">SKU</Label><Input placeholder="WH-XXXX-001" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Nom</Label><Input placeholder="Nom de l&apos;article" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Catégorie</Label><Input placeholder="Électronique" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Quantité</Label><Input placeholder="100" type="number" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Emplacement</Label><Input placeholder="A-01-03" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Client</Label><Input placeholder="Nom du client" className="h-9" /></div>
+              <div className="space-y-2"><Label className="text-xs">SKU</Label><Input placeholder="WH-XXXX-001" className="h-9" value={newItem.sku} onChange={(e) => setNewItem({ ...newItem, sku: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Nom</Label><Input placeholder="Nom de l&apos;article" className="h-9" value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Catégorie</Label><Input placeholder="Électronique" className="h-9" value={newItem.category} onChange={(e) => setNewItem({ ...newItem, category: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Quantité</Label><Input placeholder="100" type="number" className="h-9" value={newItem.quantity} onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Emplacement</Label><Input placeholder="A-01-03" className="h-9" value={newItem.location} onChange={(e) => setNewItem({ ...newItem, location: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Client</Label><Input placeholder="Nom du client" className="h-9" value={newItem.clientName} onChange={(e) => setNewItem({ ...newItem, clientName: e.target.value })} /></div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(false)}>Enregistrer</Button>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleAddItem}>Enregistrer</Button>
             </div>
           </div>
         </DialogContent>

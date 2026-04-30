@@ -1,5 +1,5 @@
 /**
- * Label & Printer Configuration System — FreightFlow Pro
+ * Label & Printer Configuration System — LogisWay
  * Centralized configuration for Zebra/ZPL label generation,
  * printer management, label formats, and parcel size categories.
  */
@@ -720,9 +720,9 @@ export function generateLabelPreviewSVG(data: ZPLLabelData, formatId: string): s
 
 // ─── Local Storage Keys ────────────────────────────────────────
 
-const PRINTERS_KEY = 'freightflow-printers';
-const DEFAULT_PRINTER_KEY = 'freightflow-default-printer';
-const LABEL_SETTINGS_KEY = 'freightflow-label-settings';
+const PRINTERS_KEY = 'logisway-printers';
+const DEFAULT_PRINTER_KEY = 'logisway-default-printer';
+const LABEL_SETTINGS_KEY = 'logisway-label-settings';
 
 export interface LabelSettings {
   defaultLabelFormat: string;

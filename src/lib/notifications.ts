@@ -1,5 +1,5 @@
 /**
- * Notifications & Workflow System — FreightFlow Pro
+ * Notifications & Workflow System — LogisWay
  * Système de notifications en temps réel, workflow d'approbation,
  * alertes automatiques et règles de notification.
  */
@@ -53,7 +53,7 @@ export interface Notification {
 
 // ─── Persistance des notifications ─────────────────────────────
 
-const NOTIFICATIONS_KEY = 'freightflow-notifications';
+const NOTIFICATIONS_KEY = 'logisway-notifications';
 
 export function loadNotifications(): Notification[] {
   if (typeof window === 'undefined') return [];
@@ -142,7 +142,7 @@ export interface NotificationPreferences {
   autoArchiveAfterDays: number;
 }
 
-const NOTIFICATION_PREFS_KEY = 'freightflow-notification-prefs';
+const NOTIFICATION_PREFS_KEY = 'logisway-notification-prefs';
 
 export const defaultNotificationPrefs: NotificationPreferences = {
   enabledTypes: {},
@@ -207,7 +207,7 @@ export interface ApprovalRequest {
   expiresAt: string;
 }
 
-const APPROVALS_KEY = 'freightflow-approvals';
+const APPROVALS_KEY = 'logisway-approvals';
 
 export function loadApprovals(): ApprovalRequest[] {
   if (typeof window === 'undefined') return [];

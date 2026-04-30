@@ -100,14 +100,46 @@ const kpis = [
 ];
 
 export default function GroundTransportPage() {
+  const [data, setData] = useState(routes);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [selectedRoute, setSelectedRoute] = useState<typeof routes[0] | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newRoute, setNewRoute] = useState({
+    origin: '',
+    destination: '',
+    driverName: '',
+    vehiclePlate: '',
+    distance: '',
+    clientName: '',
+  });
   const pageSize = 8;
 
-  const filtered = routes.filter(r => {
+  const handleAddRoute = () => {
+    const route = {
+      id: `rt${data.length + 1}-${Date.now()}`,
+      routeNumber: 'RT-2026-' + String(data.length + 1).padStart(3, '0'),
+      origin: newRoute.origin,
+      destination: newRoute.destination,
+      distance: parseInt(newRoute.distance) || 500,
+      estimatedDuration: Math.ceil((parseInt(newRoute.distance) || 500) / 80) + ' heures',
+      driverName: newRoute.driverName,
+      vehiclePlate: newRoute.vehiclePlate,
+      status: 'planned' as const,
+      departureTime: new Date(Date.now() + 86400000).toISOString(),
+      arrivalTime: new Date(Date.now() + 86400000 * 2).toISOString(),
+      stops: [] as string[],
+      cargo: '',
+      clientName: newRoute.clientName,
+    };
+    setData([route, ...data]);
+    setNewRoute({ origin: '', destination: '', driverName: '', vehiclePlate: '', distance: '', clientName: '' });
+    setShowAddDialog(false);
+    setPage(0);
+  };
+
+  const filtered = data.filter(r => {
     const matchSearch = search === '' ||
       r.routeNumber.toLowerCase().includes(search.toLowerCase()) ||
       r.driverName.toLowerCase().includes(search.toLowerCase()) ||
@@ -630,16 +662,16 @@ export default function GroundTransportPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label className="text-xs">Origine</Label><Input placeholder="Alger" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Destination</Label><Input placeholder="Oran" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Chauffeur</Label><Input placeholder="Nom du chauffeur" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Véhicule</Label><Input placeholder="Plaque d&apos;immatriculation" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Distance (km)</Label><Input placeholder="500" type="number" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Client</Label><Input placeholder="Nom du client" className="h-9" /></div>
+              <div className="space-y-2"><Label className="text-xs">Origine</Label><Input placeholder="Alger" className="h-9" value={newRoute.origin} onChange={(e) => setNewRoute({ ...newRoute, origin: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Destination</Label><Input placeholder="Oran" className="h-9" value={newRoute.destination} onChange={(e) => setNewRoute({ ...newRoute, destination: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Chauffeur</Label><Input placeholder="Nom du chauffeur" className="h-9" value={newRoute.driverName} onChange={(e) => setNewRoute({ ...newRoute, driverName: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Véhicule</Label><Input placeholder="Plaque d&apos;immatriculation" className="h-9" value={newRoute.vehiclePlate} onChange={(e) => setNewRoute({ ...newRoute, vehiclePlate: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Distance (km)</Label><Input placeholder="500" type="number" className="h-9" value={newRoute.distance} onChange={(e) => setNewRoute({ ...newRoute, distance: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Client</Label><Input placeholder="Nom du client" className="h-9" value={newRoute.clientName} onChange={(e) => setNewRoute({ ...newRoute, clientName: e.target.value })} /></div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(false)}>Enregistrer</Button>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleAddRoute}>Enregistrer</Button>
             </div>
           </div>
         </DialogContent>

@@ -1,5 +1,5 @@
 /**
- * Advanced Label & Printer Extensions — FreightFlow Pro
+ * Advanced Label & Printer Extensions — LogisWay
  * Batch printing, print history, printer groups, custom label templates,
  * and enhanced label generation features.
  */
@@ -34,7 +34,7 @@ export interface BatchPrintJob {
   errors: { parcelId: string; error: string }[];
 }
 
-const BATCH_JOBS_KEY = 'freightflow-batch-jobs';
+const BATCH_JOBS_KEY = 'logisway-batch-jobs';
 
 export function loadBatchJobs(): BatchPrintJob[] {
   if (typeof window === 'undefined') return [];
@@ -119,7 +119,7 @@ export interface PrintHistoryEntry {
   duration?: number;
 }
 
-const PRINT_HISTORY_KEY = 'freightflow-print-history';
+const PRINT_HISTORY_KEY = 'logisway-print-history';
 
 export function loadPrintHistory(): PrintHistoryEntry[] {
   if (typeof window === 'undefined') return [];
@@ -170,7 +170,7 @@ export interface PrinterGroup {
   enabled: boolean;
 }
 
-const PRINTER_GROUPS_KEY = 'freightflow-printer-groups';
+const PRINTER_GROUPS_KEY = 'logisway-printer-groups';
 
 export const defaultPrinterGroups: PrinterGroup[] = [
   {
@@ -339,7 +339,7 @@ export const defaultLabelTemplates: LabelTemplate[] = [
   },
 ];
 
-const LABEL_TEMPLATES_KEY = 'freightflow-label-templates';
+const LABEL_TEMPLATES_KEY = 'logisway-label-templates';
 
 export function loadLabelTemplates(): LabelTemplate[] {
   if (typeof window === 'undefined') return defaultLabelTemplates;
@@ -398,7 +398,7 @@ export interface ProofPhoto {
   verifiedAt?: string;
 }
 
-const PROOF_PHOTOS_KEY = 'freightflow-proof-photos';
+const PROOF_PHOTOS_KEY = 'logisway-proof-photos';
 
 export function loadProofPhotos(): ProofPhoto[] {
   if (typeof window === 'undefined') return [];

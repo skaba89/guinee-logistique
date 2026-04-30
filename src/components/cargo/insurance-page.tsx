@@ -264,6 +264,29 @@ export default function InsurancePage() {
     });
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N° Police', 'Client', 'Expédition', 'Type Couverture', 'Valeur Assurée (DA)', 'Prime (DA)', 'Statut', 'Date Début', 'Date Fin'];
+    const rows = filteredPolicies.map(p => [
+      p.policyNumber,
+      p.clientName,
+      p.shipmentRef,
+      coverageTypeLabels[p.coverageType] || p.coverageType,
+      String(p.insuredValue),
+      String(p.premium),
+      policyStatusLabels[p.status] || p.status,
+      p.startDate,
+      p.endDate,
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-insurance-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ─── KPI cards config ───────────────────────────────────────────────────
 
   const kpiCards = [
@@ -307,7 +330,7 @@ export default function InsurancePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>

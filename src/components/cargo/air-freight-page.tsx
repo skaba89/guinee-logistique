@@ -115,14 +115,45 @@ const kpis = [
 ];
 
 export default function AirFreightPage() {
+  const [data, setData] = useState(flights);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [selectedFlight, setSelectedFlight] = useState<typeof flights[0] | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newFlight, setNewFlight] = useState({
+    flightNumber: '',
+    airline: '',
+    origin: '',
+    destination: '',
+    capacity: '',
+    clientName: '',
+  });
   const pageSize = 8;
 
-  const filtered = flights.filter(f => {
+  const handleAddFlight = () => {
+    const flight = {
+      id: `fl${data.length + 1}-${Date.now()}`,
+      flightNumber: newFlight.flightNumber || 'NEW-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
+      airline: newFlight.airline,
+      origin: newFlight.origin,
+      destination: newFlight.destination,
+      departureTime: new Date(Date.now() + 86400000).toISOString(),
+      arrivalTime: new Date(Date.now() + 86400000 + 6 * 3600000).toISOString(),
+      status: 'scheduled' as const,
+      awbPrefix: '124-',
+      awbNumber: '124-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+      capacity: parseInt(newFlight.capacity) || 15000,
+      booked: 0,
+      clientName: newFlight.clientName,
+    };
+    setData([flight, ...data]);
+    setNewFlight({ flightNumber: '', airline: '', origin: '', destination: '', capacity: '', clientName: '' });
+    setShowAddDialog(false);
+    setPage(0);
+  };
+
+  const filtered = data.filter(f => {
     const matchSearch = search === '' ||
       f.flightNumber.toLowerCase().includes(search.toLowerCase()) ||
       f.airline.toLowerCase().includes(search.toLowerCase()) ||
@@ -437,32 +468,32 @@ export default function AirFreightPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-xs">N° Vol</Label>
-                <Input placeholder="AH-1234" className="h-9" />
+                <Input placeholder="AH-1234" className="h-9" value={newFlight.flightNumber} onChange={(e) => setNewFlight({ ...newFlight, flightNumber: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Compagnie</Label>
-                <Input placeholder="Air Algérie" className="h-9" />
+                <Input placeholder="Air Algérie" className="h-9" value={newFlight.airline} onChange={(e) => setNewFlight({ ...newFlight, airline: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Origine</Label>
-                <Input placeholder="Alger" className="h-9" />
+                <Input placeholder="Alger" className="h-9" value={newFlight.origin} onChange={(e) => setNewFlight({ ...newFlight, origin: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Destination</Label>
-                <Input placeholder="Paris" className="h-9" />
+                <Input placeholder="Paris" className="h-9" value={newFlight.destination} onChange={(e) => setNewFlight({ ...newFlight, destination: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Capacité (kg)</Label>
-                <Input placeholder="15000" type="number" className="h-9" />
+                <Input placeholder="15000" type="number" className="h-9" value={newFlight.capacity} onChange={(e) => setNewFlight({ ...newFlight, capacity: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Client</Label>
-                <Input placeholder="Nom du client" className="h-9" />
+                <Input placeholder="Nom du client" className="h-9" value={newFlight.clientName} onChange={(e) => setNewFlight({ ...newFlight, clientName: e.target.value })} />
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(false)}>Enregistrer</Button>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleAddFlight}>Enregistrer</Button>
             </div>
           </div>
         </DialogContent>

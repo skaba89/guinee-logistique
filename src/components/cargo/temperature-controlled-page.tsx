@@ -494,6 +494,31 @@ export default function TemperatureControlledPage() {
     setLocalAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'résolue' as AlertStatus, actionTaken: 'Problème résolu — température stabilisée' } : a));
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N° Suivi', 'Type Marchandise', 'Temp Min (°C)', 'Temp Max (°C)', 'Temp Actuelle (°C)', 'Statut', 'Data Logger', 'Départ', 'Arrivée', 'Date Départ', 'Date Arrivée'];
+    const rows = filteredShipments.map(s => [
+      s.trackingNumber,
+      s.commodityType,
+      String(s.tempMin),
+      String(s.tempMax),
+      String(s.currentTemp),
+      shipmentStatusLabel[s.status] || s.status,
+      s.dataLoggerId,
+      s.departure,
+      s.arrival,
+      s.departureDate,
+      s.arrivalDate,
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-temperature-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Container chart data
   const getContainerTempHistory = (container: ContainerRF) => generateTempHistory(container.currentTemp, container.setTemp - 5, container.setTemp + 5, 24);
   const getContainerHumidityHistory = (container: ContainerRF) => {
@@ -557,7 +582,7 @@ export default function TemperatureControlledPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Gestion du transport sous température contrôlée — conteneurs RF, data loggers & conformité</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>

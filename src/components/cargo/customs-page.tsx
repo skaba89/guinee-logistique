@@ -150,12 +150,22 @@ const kpis = [
 ];
 
 export default function CustomsPage() {
+  const [data, setData] = useState(customsDeclarations);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [selectedDecl, setSelectedDecl] = useState<typeof customsDeclarations[0] | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newDecl, setNewDecl] = useState({
+    type: 'import' as 'import' | 'export' | 'transit',
+    clientName: '',
+    originCountry: '',
+    destinationCountry: '',
+    hsCode: '',
+    declaredValue: '',
+    goodsDescription: '',
+  });
 
   // HS Code lookup state
   const [hsSearch, setHsSearch] = useState('');
@@ -167,6 +177,29 @@ export default function CustomsPage() {
   const [calcCurrency, setCalcCurrency] = useState<string>('EUR');
 
   const pageSize = 8;
+
+  const handleAddDeclaration = () => {
+    const decl = {
+      id: `cd${data.length + 1}-${Date.now()}`,
+      declarationNumber: 'DOU-2026-' + String(data.length + 1).padStart(4, '0'),
+      type: newDecl.type,
+      status: 'draft' as const,
+      clientName: newDecl.clientName,
+      originCountry: newDecl.originCountry,
+      destinationCountry: newDecl.destinationCountry,
+      hsCode: newDecl.hsCode,
+      goodsDescription: newDecl.goodsDescription,
+      declaredValue: parseInt(newDecl.declaredValue) || 0,
+      currency: 'DZD',
+      dutiesAndTaxes: 0,
+      submissionDate: '',
+      clearanceDate: '',
+    };
+    setData([decl, ...data]);
+    setNewDecl({ type: 'import', clientName: '', originCountry: '', destinationCountry: '', hsCode: '', declaredValue: '', goodsDescription: '' });
+    setShowAddDialog(false);
+    setPage(0);
+  };
 
   // HS Code search results
   const hsSearchResults = useMemo(() => {
@@ -205,7 +238,7 @@ export default function CustomsPage() {
     };
   }, [calcHsCode, calcValue, calcCurrency]);
 
-  const filtered = customsDeclarations.filter(d => {
+  const filtered = data.filter(d => {
     const matchSearch = search === '' ||
       d.declarationNumber.toLowerCase().includes(search.toLowerCase()) ||
       d.clientName.toLowerCase().includes(search.toLowerCase()) ||
@@ -715,7 +748,7 @@ export default function CustomsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-xs">Type</Label>
-                <Select>
+                <Select value={newDecl.type} onValueChange={(v) => setNewDecl({ ...newDecl, type: v as 'import' | 'export' | 'transit' })}>
                   <SelectTrigger className="h-9"><SelectValue placeholder="Type" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="import">Import</SelectItem>
@@ -724,12 +757,12 @@ export default function CustomsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label className="text-xs">Client</Label><Input placeholder="Nom du client" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Pays d&apos;origine</Label><Input placeholder="France" className="h-9" /></div>
-              <div className="space-y-2"><Label className="text-xs">Pays de destination</Label><Input placeholder="Algérie" className="h-9" /></div>
+              <div className="space-y-2"><Label className="text-xs">Client</Label><Input placeholder="Nom du client" className="h-9" value={newDecl.clientName} onChange={(e) => setNewDecl({ ...newDecl, clientName: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Pays d&apos;origine</Label><Input placeholder="France" className="h-9" value={newDecl.originCountry} onChange={(e) => setNewDecl({ ...newDecl, originCountry: e.target.value })} /></div>
+              <div className="space-y-2"><Label className="text-xs">Pays de destination</Label><Input placeholder="Algérie" className="h-9" value={newDecl.destinationCountry} onChange={(e) => setNewDecl({ ...newDecl, destinationCountry: e.target.value })} /></div>
               <div className="space-y-2">
                 <Label className="text-xs">Code HS</Label>
-                <Select>
+                <Select value={newDecl.hsCode} onValueChange={(v) => setNewDecl({ ...newDecl, hsCode: v })}>
                   <SelectTrigger className="h-9"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                   <SelectContent>
                     {hsCodes.slice(0, 10).map((hs) => (
@@ -738,12 +771,12 @@ export default function CustomsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2"><Label className="text-xs">Valeur déclarée</Label><Input placeholder="1000000" type="number" className="h-9" /></div>
+              <div className="space-y-2"><Label className="text-xs">Valeur déclarée</Label><Input placeholder="1000000" type="number" className="h-9" value={newDecl.declaredValue} onChange={(e) => setNewDecl({ ...newDecl, declaredValue: e.target.value })} /></div>
             </div>
-            <div className="space-y-2"><Label className="text-xs">Description des marchandises</Label><Input placeholder="Description" className="h-9" /></div>
+            <div className="space-y-2"><Label className="text-xs">Description des marchandises</Label><Input placeholder="Description" className="h-9" value={newDecl.goodsDescription} onChange={(e) => setNewDecl({ ...newDecl, goodsDescription: e.target.value })} /></div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(false)}>Enregistrer</Button>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleAddDeclaration}>Enregistrer</Button>
             </div>
           </div>
         </DialogContent>

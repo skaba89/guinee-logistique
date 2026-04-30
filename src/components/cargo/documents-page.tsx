@@ -245,6 +245,29 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N° Document', 'Type', 'Référence', 'Client', 'Expédition', 'Date Création', 'Date Expiration', 'Statut', 'Fichier'];
+    const rows = filtered.map(d => [
+      d.documentNumber,
+      typeLabels[d.type] || d.type,
+      d.reference,
+      d.clientName,
+      d.shipmentRef,
+      d.createdAt,
+      d.expiresAt,
+      statusLabels[d.status] || d.status,
+      d.fileName,
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-documents-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ── KPI cards config ───────────────────────────────────────────────────
   const kpiCards = [
     {
@@ -286,7 +309,7 @@ export default function DocumentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>

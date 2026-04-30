@@ -88,15 +88,46 @@ const kpis = [
 ];
 
 export default function MaritimePage() {
+  const [data, setData] = useState(containers);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [selectedContainer, setSelectedContainer] = useState<typeof containers[0] | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newContainer, setNewContainer] = useState({
+    containerNumber: '',
+    type: '40ft' as '20ft' | '40ft' | '40ft_hc' | 'reefer',
+    portOfLoading: '',
+    portOfDischarge: '',
+    vesselName: '',
+    clientName: '',
+  });
   const pageSize = 8;
 
-  const filtered = containers.filter(c => {
+  const handleAddContainer = () => {
+    const container = {
+      id: `ct${data.length + 1}-${Date.now()}`,
+      containerNumber: newContainer.containerNumber || 'NEW-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
+      type: newContainer.type,
+      status: 'empty' as const,
+      vesselName: newContainer.vesselName,
+      voyageNumber: '',
+      portOfLoading: newContainer.portOfLoading,
+      portOfDischarge: newContainer.portOfDischarge,
+      eta: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+      weight: 0,
+      bookingRef: 'BK-' + Date.now().toString(36).toUpperCase(),
+      blNumber: '',
+      clientName: newContainer.clientName,
+    };
+    setData([container, ...data]);
+    setNewContainer({ containerNumber: '', type: '40ft', portOfLoading: '', portOfDischarge: '', vesselName: '', clientName: '' });
+    setShowAddDialog(false);
+    setPage(0);
+  };
+
+  const filtered = data.filter(c => {
     const matchSearch = search === '' ||
       c.containerNumber.toLowerCase().includes(search.toLowerCase()) ||
       c.clientName.toLowerCase().includes(search.toLowerCase()) ||
@@ -418,11 +449,11 @@ export default function MaritimePage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-xs">N° Conteneur</Label>
-                <Input placeholder="MSKU-1234567" className="h-9" />
+                <Input placeholder="MSKU-1234567" className="h-9" value={newContainer.containerNumber} onChange={(e) => setNewContainer({ ...newContainer, containerNumber: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Type</Label>
-                <Select>
+                <Select value={newContainer.type} onValueChange={(v) => setNewContainer({ ...newContainer, type: v as '20ft' | '40ft' | '40ft_hc' | 'reefer' })}>
                   <SelectTrigger className="h-9"><SelectValue placeholder="Type" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="20ft">20 pieds</SelectItem>
@@ -434,24 +465,24 @@ export default function MaritimePage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Port de chargement</Label>
-                <Input placeholder="Alger" className="h-9" />
+                <Input placeholder="Alger" className="h-9" value={newContainer.portOfLoading} onChange={(e) => setNewContainer({ ...newContainer, portOfLoading: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Port de déchargement</Label>
-                <Input placeholder="Marseille" className="h-9" />
+                <Input placeholder="Marseille" className="h-9" value={newContainer.portOfDischarge} onChange={(e) => setNewContainer({ ...newContainer, portOfDischarge: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Navire</Label>
-                <Input placeholder="Nom du navire" className="h-9" />
+                <Input placeholder="Nom du navire" className="h-9" value={newContainer.vesselName} onChange={(e) => setNewContainer({ ...newContainer, vesselName: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Client</Label>
-                <Input placeholder="Nom du client" className="h-9" />
+                <Input placeholder="Nom du client" className="h-9" value={newContainer.clientName} onChange={(e) => setNewContainer({ ...newContainer, clientName: e.target.value })} />
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(false)}>Enregistrer</Button>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleAddContainer}>Enregistrer</Button>
             </div>
           </div>
         </DialogContent>

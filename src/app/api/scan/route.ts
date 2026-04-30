@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    service: 'FreightFlow Pro Scanner API',
+    service: 'LogisWay Scanner API',
     version: '1.0.0',
     endpoints: {
       'POST /api/scan': {

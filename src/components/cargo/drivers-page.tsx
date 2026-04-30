@@ -155,7 +155,7 @@ const drivers: Driver[] = [
     firstName: 'Rachid',
     lastName: 'Kaci',
     phone: '0555111222',
-    email: 'r.kaci@freightflow.pro',
+    email: 'r.kaci@logisway.pro',
     status: 'on_route',
     licenseType: 'CE',
     licenseExpiry: '2026-12-15',
@@ -196,7 +196,7 @@ const drivers: Driver[] = [
     firstName: 'Yacine',
     lastName: 'Hamdi',
     phone: '0555333444',
-    email: 'y.hamdi@freightflow.pro',
+    email: 'y.hamdi@logisway.pro',
     status: 'on_route',
     licenseType: 'CE',
     licenseExpiry: '2027-03-22',
@@ -237,7 +237,7 @@ const drivers: Driver[] = [
     firstName: 'Karim',
     lastName: 'Bouzid',
     phone: '0555555666',
-    email: 'k.bouzid@freightflow.pro',
+    email: 'k.bouzid@logisway.pro',
     status: 'available',
     licenseType: 'C',
     licenseExpiry: '2026-08-30',
@@ -278,7 +278,7 @@ const drivers: Driver[] = [
     firstName: 'Ali',
     lastName: 'Mezdad',
     phone: '0555999000',
-    email: 'a.mezdad@freightflow.pro',
+    email: 'a.mezdad@logisway.pro',
     status: 'on_route',
     licenseType: 'CE',
     licenseExpiry: '2028-01-10',
@@ -319,7 +319,7 @@ const drivers: Driver[] = [
     firstName: 'Sofiane',
     lastName: 'Benali',
     phone: '0555121202',
-    email: 's.benali@freightflow.pro',
+    email: 's.benali@logisway.pro',
     status: 'on_leave',
     licenseType: 'C',
     licenseExpiry: '2026-07-14',
@@ -360,7 +360,7 @@ const drivers: Driver[] = [
     firstName: 'Bilal',
     lastName: 'Kherrazi',
     phone: '0555171819',
-    email: 'b.kherrazi@freightflow.pro',
+    email: 'b.kherrazi@logisway.pro',
     status: 'available',
     licenseType: 'CE',
     licenseExpiry: '2027-06-25',
@@ -401,7 +401,7 @@ const drivers: Driver[] = [
     firstName: 'Mourad',
     lastName: 'Talbi',
     phone: '0555777888',
-    email: 'm.talbi@freightflow.pro',
+    email: 'm.talbi@logisway.pro',
     status: 'off_duty',
     licenseType: 'C',
     licenseExpiry: '2026-05-01',
@@ -442,7 +442,7 @@ const drivers: Driver[] = [
     firstName: 'Mustapha',
     lastName: 'Djamel',
     phone: '0555141516',
-    email: 'm.djamel@freightflow.pro',
+    email: 'm.djamel@logisway.pro',
     status: 'available',
     licenseType: 'D',
     licenseExpiry: '2027-09-18',
@@ -483,7 +483,7 @@ const drivers: Driver[] = [
     firstName: 'Hichem',
     lastName: 'Rouabah',
     phone: '0555202122',
-    email: 'h.rouabah@freightflow.pro',
+    email: 'h.rouabah@logisway.pro',
     status: 'on_route',
     licenseType: 'CE',
     licenseExpiry: '2027-11-05',
@@ -524,7 +524,7 @@ const drivers: Driver[] = [
     firstName: 'Samir',
     lastName: 'Boudiaf',
     phone: '0555232425',
-    email: 's.boudiaf@freightflow.pro',
+    email: 's.boudiaf@logisway.pro',
     status: 'available',
     licenseType: 'C',
     licenseExpiry: '2026-10-20',
@@ -565,7 +565,7 @@ const drivers: Driver[] = [
     firstName: 'Nabil',
     lastName: 'Ferhat',
     phone: '0555262728',
-    email: 'n.ferhat@freightflow.pro',
+    email: 'n.ferhat@logisway.pro',
     status: 'on_leave',
     licenseType: 'CE',
     licenseExpiry: '2027-04-30',
@@ -688,12 +688,71 @@ export default function DriversPage() {
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
+  // Mutable drivers state
+  const [driversList, setDriversList] = useState<Driver[]>(drivers);
+
+  // New driver form state
+  const [newDriver, setNewDriver] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    email: '',
+    licenseType: 'C' as LicenseType,
+    licenseExpiry: '',
+    vehicleId: '',
+    status: 'available' as DriverStatus,
+  });
+
+  // Handle adding a new driver
+  const handleAddDriver = () => {
+    if (!newDriver.firstName || !newDriver.lastName || !newDriver.phone) return;
+    const vehicle = vehicles.find(v => v.id === newDriver.vehicleId);
+    const newDrv: Driver = {
+      id: `d${Date.now()}`,
+      firstName: newDriver.firstName,
+      lastName: newDriver.lastName,
+      phone: newDriver.phone,
+      email: newDriver.email || '',
+      status: newDriver.status,
+      licenseType: newDriver.licenseType,
+      licenseExpiry: newDriver.licenseExpiry || '2027-01-01',
+      vehiclePlate: vehicle?.immatriculation || 'N/A',
+      vehicleType: vehicle ? `${vehicle.marque} ${vehicle.modele}` : 'Non assigné',
+      rating: 0,
+      totalTrips: 0,
+      totalDistance: 0,
+      onTimeRate: 0,
+      safetyScore: 0,
+      fuelEfficiency: 0,
+      joinDate: new Date().toISOString().split('T')[0],
+      documents: [
+        { type: 'license', label: 'Permis de conduire', expiryDate: newDriver.licenseExpiry || '2027-01-01', status: 'valid' },
+        { type: 'medical', label: 'Certificat médical', expiryDate: '2027-01-01', status: 'valid' },
+        { type: 'insurance', label: 'Attestation assurance', expiryDate: '2027-01-01', status: 'valid' },
+        { type: 'training', label: 'Formation FIMO', expiryDate: '2027-01-01', status: 'valid' },
+      ],
+      recentTrips: [],
+      weeklySchedule: [
+        { day: 'Lun', route: '—', status: 'available' as const },
+        { day: 'Mar', route: '—', status: 'available' as const },
+        { day: 'Mer', route: '—', status: 'available' as const },
+        { day: 'Jeu', route: '—', status: 'available' as const },
+        { day: 'Ven', route: '—', status: 'available' as const },
+        { day: 'Sam', route: '—', status: 'off' as const },
+        { day: 'Dim', route: '—', status: 'off' as const },
+      ],
+    };
+    setDriversList(prev => [...prev, newDrv]);
+    setNewDriver({ firstName: '', lastName: '', phone: '', email: '', licenseType: 'C', licenseExpiry: '', vehicleId: '', status: 'available' });
+    setShowAddDialog(false);
+  };
+
   // KPI calculations
-  const totalDrivers = drivers.length;
-  const availableDrivers = drivers.filter(d => d.status === 'available').length;
-  const onRouteDrivers = drivers.filter(d => d.status === 'on_route').length;
-  const onLeaveDrivers = drivers.filter(d => d.status === 'on_leave').length;
-  const avgRating = (drivers.reduce((s, d) => s + d.rating, 0) / drivers.length).toFixed(1);
+  const totalDrivers = driversList.length;
+  const availableDrivers = driversList.filter(d => d.status === 'available').length;
+  const onRouteDrivers = driversList.filter(d => d.status === 'on_route').length;
+  const onLeaveDrivers = driversList.filter(d => d.status === 'on_leave').length;
+  const avgRating = driversList.length > 0 ? (driversList.reduce((s, d) => s + d.rating, 0) / driversList.length).toFixed(1) : '0';
 
   const kpis = [
     { title: 'Total chauffeurs', value: totalDrivers, icon: Users, color: 'from-teal-500 to-teal-600' },
@@ -704,7 +763,7 @@ export default function DriversPage() {
   ];
 
   const filtered = useMemo(() => {
-    let result = [...drivers];
+    let result = [...driversList];
     if (statusFilter !== 'all') result = result.filter(d => d.status === statusFilter);
     if (search) {
       const q = search.toLowerCase();
@@ -716,10 +775,10 @@ export default function DriversPage() {
       );
     }
     return result;
-  }, [search, statusFilter]);
+  }, [search, statusFilter, driversList]);
 
   // Count documents expiring soon or expired
-  const allDocs = drivers.flatMap(d => d.documents);
+  const allDocs = driversList.flatMap(d => d.documents);
   const expiringDocs = allDocs.filter(d => d.status === 'expiring_soon');
   const expiredDocs = allDocs.filter(d => d.status === 'expired');
 
@@ -924,10 +983,10 @@ export default function DriversPage() {
 
                   {/* Quick action buttons */}
                   <div className="pt-2 border-t border-gray-100 dark:border-gray-800 mt-2 flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20" onClick={(e) => { e.stopPropagation(); }}>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20" onClick={(e) => { e.stopPropagation(); alert(`Appel en cours vers ${driver.firstName} ${driver.lastName} (${driver.phone})...`); }}>
                       <Phone className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={(e) => { e.stopPropagation(); }}>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={(e) => { e.stopPropagation(); alert(`Ouverture du chat avec ${driver.firstName} ${driver.lastName}...`); }}>
                       <MessageSquare className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20" onClick={(e) => { e.stopPropagation(); setSelectedDriver(driver); }}>
@@ -1076,7 +1135,7 @@ export default function DriversPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {drivers.map((driver) => (
+                {driversList.map((driver) => (
                   <TableRow key={driver.id} className="cursor-pointer hover:bg-teal-50/50 dark:hover:bg-teal-900/10" onClick={() => setSelectedDriver(driver)}>
                     <TableCell className="text-xs">
                       <div className="flex items-center gap-2">
@@ -1349,19 +1408,19 @@ export default function DriversPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-xs">Prénom</Label>
-                  <Input placeholder="Prénom" className="h-9" />
+                  <Input placeholder="Prénom" className="h-9" value={newDriver.firstName} onChange={e => setNewDriver({ ...newDriver, firstName: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Nom</Label>
-                  <Input placeholder="Nom" className="h-9" />
+                  <Input placeholder="Nom" className="h-9" value={newDriver.lastName} onChange={e => setNewDriver({ ...newDriver, lastName: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Téléphone</Label>
-                  <Input placeholder="05XXXXXXXX" className="h-9" />
+                  <Input placeholder="05XXXXXXXX" className="h-9" value={newDriver.phone} onChange={e => setNewDriver({ ...newDriver, phone: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Email</Label>
-                  <Input placeholder="email@freightflow.pro" className="h-9" />
+                  <Input placeholder="email@logisway.pro" className="h-9" value={newDriver.email} onChange={e => setNewDriver({ ...newDriver, email: e.target.value })} />
                 </div>
               </div>
             </div>
@@ -1372,7 +1431,7 @@ export default function DriversPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-xs">Type de permis</Label>
-                  <Select>
+                  <Select value={newDriver.licenseType} onValueChange={v => setNewDriver({ ...newDriver, licenseType: v as LicenseType })}>
                     <SelectTrigger className="h-9"><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="B">Permis B</SelectItem>
@@ -1385,7 +1444,7 @@ export default function DriversPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Date d&apos;expiration</Label>
-                  <Input type="date" className="h-9" />
+                  <Input type="date" className="h-9" value={newDriver.licenseExpiry} onChange={e => setNewDriver({ ...newDriver, licenseExpiry: e.target.value })} />
                 </div>
               </div>
             </div>
@@ -1396,7 +1455,7 @@ export default function DriversPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label className="text-xs">Véhicule</Label>
-                  <Select>
+                  <Select value={newDriver.vehicleId} onValueChange={v => setNewDriver({ ...newDriver, vehicleId: v })}>
                     <SelectTrigger className="h-9"><SelectValue placeholder="Sélectionner un véhicule" /></SelectTrigger>
                     <SelectContent>
                       {vehicles.filter(v => v.status === 'actif').map(v => (
@@ -1409,7 +1468,7 @@ export default function DriversPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Statut initial</Label>
-                  <Select defaultValue="available">
+                  <Select value={newDriver.status} onValueChange={v => setNewDriver({ ...newDriver, status: v as DriverStatus })}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="available">Disponible</SelectItem>
@@ -1423,7 +1482,7 @@ export default function DriversPage() {
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(false)}>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleAddDriver}>
                 <Plus className="w-4 h-4 mr-1" />
                 Enregistrer
               </Button>

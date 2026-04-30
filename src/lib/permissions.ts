@@ -1,5 +1,5 @@
 /**
- * Permissions System — FreightFlow Pro
+ * Permissions System — LogisWay
  * Centralized RBAC (Role-Based Access Control) with helper functions.
  * Uses the module configuration as the source of truth.
  */
@@ -39,7 +39,7 @@ export interface PermissionsConfig {
   featureFlags: ModuleFeatureFlags;
 }
 
-const PERMISSIONS_CONFIG_KEY = 'freightflow-permissions-config';
+const PERMISSIONS_CONFIG_KEY = 'logisway-permissions-config';
 
 /** Load persisted permissions configuration */
 export function loadPermissionsConfig(): PermissionsConfig {

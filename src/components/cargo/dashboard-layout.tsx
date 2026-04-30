@@ -390,7 +390,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </div>
               </div>
               <div>
-                <h1 className="text-base font-bold text-white tracking-tight">FreightFlow Pro</h1>
+                <h1 className="text-base font-bold text-white tracking-tight">LogisWay</h1>
                 <p className="text-[9px] text-teal-300/50 uppercase tracking-widest">Logistique</p>
               </div>
             </div>
@@ -606,7 +606,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               onClick={() => setPage('dashboard')}
               className="text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium"
             >
-              FreightFlow Pro
+              LogisWay
             </button>
             <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
             <span className="text-gray-700 dark:text-gray-200 font-medium">

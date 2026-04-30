@@ -172,15 +172,15 @@ const mockHighRiskCountries = [
 ];
 
 const mockLicenses = [
-  { id: 'LIC-001', type: 'Licence import', holder: 'FreightFlow Pro', number: 'IMP-DZ-2026-0012', issuedDate: '2025-06-15', expiryDate: '2026-06-15', status: 'valid' as const },
-  { id: 'LIC-002', type: 'Licence export', holder: 'FreightFlow Pro', number: 'EXP-DZ-2026-0087', issuedDate: '2025-03-01', expiryDate: '2026-03-15', status: 'expiring' as const },
+  { id: 'LIC-001', type: 'Licence import', holder: 'LogisWay', number: 'IMP-DZ-2026-0012', issuedDate: '2025-06-15', expiryDate: '2026-06-15', status: 'valid' as const },
+  { id: 'LIC-002', type: 'Licence export', holder: 'LogisWay', number: 'EXP-DZ-2026-0087', issuedDate: '2025-03-01', expiryDate: '2026-03-15', status: 'expiring' as const },
   { id: 'LIC-003', type: 'Certificat ADR', holder: 'Transport Express SA', number: 'ADR-2024-456', issuedDate: '2024-09-01', expiryDate: '2026-03-20', status: 'expiring' as const },
   { id: 'LIC-004', type: 'Licence courtier douane', holder: 'Douane Services Plus', number: 'BC-DZ-2025-033', issuedDate: '2025-01-10', expiryDate: '2026-01-10', status: 'expired' as const },
   { id: 'LIC-005', type: 'Certificat IATA', holder: 'Air Cargo Algérie', number: 'IATA-23-89012', issuedDate: '2025-07-01', expiryDate: '2027-07-01', status: 'valid' as const },
   { id: 'LIC-006', type: 'Licence import', holder: 'MedTech Algérie', number: 'IMP-DZ-2026-0045', issuedDate: '2025-04-20', expiryDate: '2026-04-20', status: 'valid' as const },
-  { id: 'LIC-007', type: 'Certificat ADR', holder: 'FreightFlow Pro', number: 'ADR-2025-789', issuedDate: '2025-02-01', expiryDate: '2026-02-28', status: 'expired' as const },
+  { id: 'LIC-007', type: 'Certificat ADR', holder: 'LogisWay', number: 'ADR-2025-789', issuedDate: '2025-02-01', expiryDate: '2026-02-28', status: 'expired' as const },
   { id: 'LIC-008', type: 'Licence export', holder: 'Atlas Shipping', number: 'EXP-DZ-2026-0112', issuedDate: '2025-08-15', expiryDate: '2026-08-15', status: 'valid' as const },
-  { id: 'LIC-009', type: 'Certificat IATA', holder: 'FreightFlow Pro', number: 'IATA-24-55432', issuedDate: '2025-05-10', expiryDate: '2026-05-10', status: 'valid' as const },
+  { id: 'LIC-009', type: 'Certificat IATA', holder: 'LogisWay', number: 'IATA-24-55432', issuedDate: '2025-05-10', expiryDate: '2026-05-10', status: 'valid' as const },
   { id: 'LIC-010', type: 'Licence courtier douane', holder: 'ClearPort Agency', number: 'BC-DZ-2025-078', issuedDate: '2025-03-15', expiryDate: '2026-04-30', status: 'expiring' as const },
   { id: 'LIC-011', type: 'Licence import', holder: 'Pharma Dist DZ', number: 'IMP-DZ-2025-0099', issuedDate: '2024-12-01', expiryDate: '2025-12-01', status: 'expired' as const },
   { id: 'LIC-012', type: 'Certificat ADR', holder: 'Sahara Logistics', number: 'ADR-2025-1023', issuedDate: '2025-10-01', expiryDate: '2027-10-01', status: 'valid' as const },
@@ -466,7 +466,7 @@ export default function CompliancePage() {
             Conformité Réglementaire
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Gestion de la conformité, sanctions, licences et KYC — FreightFlow Pro
+            Gestion de la conformité, sanctions, licences et KYC — LogisWay
           </p>
         </div>
       </div>

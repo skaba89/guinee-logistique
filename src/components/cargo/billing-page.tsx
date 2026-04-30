@@ -137,6 +137,27 @@ export default function BillingPage() {
     setNewInvoice({ clientName: '', amount: '', dateEcheance: '' });
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N° Facture', 'Client', 'Montant (DA)', 'Statut', 'Date Émission', 'Date Échéance', 'Expéditions'];
+    const rows = filtered.map(inv => [
+      inv.invoiceNumber,
+      inv.clientName,
+      String(inv.amount),
+      invoiceStatusLabels[inv.status] || inv.status,
+      inv.dateEmission,
+      inv.dateEcheance,
+      String(inv.shipments.length),
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-billing-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const kpiCards = [
     {
       title: 'Total facturé',
@@ -173,7 +194,7 @@ export default function BillingPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Gérez vos factures et paiements</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>

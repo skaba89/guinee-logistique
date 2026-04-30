@@ -352,7 +352,7 @@ const mockTickets: PortalTicket[] = [
     subject: 'Retard de livraison FFP-0005-2026', description: 'Mon expédition FFP-0005-2026 est en retard depuis plus de 2 semaines. Veuillez me fournir une mise à jour sur le statut.',
     createdAt: '2026-02-15', updatedAt: '2026-02-16', shipmentRef: 'FFP-0005-2026',
     responses: [
-      { date: '2026-02-16', author: 'Support FreightFlow', message: 'Bonjour, nous vérifions le statut de votre expédition. Le retard est dû à des conditions météorologiques défavorables dans les Alpes. Nous vous tiendrons informé.' },
+      { date: '2026-02-16', author: 'Support LogisWay', message: 'Bonjour, nous vérifions le statut de votre expédition. Le retard est dû à des conditions météorologiques défavorables dans les Alpes. Nous vous tiendrons informé.' },
     ],
   },
   {
@@ -366,7 +366,7 @@ const mockTickets: PortalTicket[] = [
     subject: 'Problème de dédouanement FFP-0007-2026', description: 'Le colis FFP-0007-2026 est bloqué en douane à Casablanca. Les documents fournis ne sont pas conformes.',
     createdAt: '2026-03-01', updatedAt: '2026-03-02', shipmentRef: 'FFP-0007-2026',
     responses: [
-      { date: '2026-03-02', author: 'Support FreightFlow', message: 'Nous avons contacté notre agent en douane à Casablanca. Des documents complémentaires vous seront demandés par email.' },
+      { date: '2026-03-02', author: 'Support LogisWay', message: 'Nous avons contacté notre agent en douane à Casablanca. Des documents complémentaires vous seront demandés par email.' },
     ],
   },
   {
@@ -374,7 +374,7 @@ const mockTickets: PortalTicket[] = [
     subject: 'Question sur l\'assurance transport', description: 'Quelle est la couverture d\'assurance incluse dans mon contrat pour les expéditions maritimes ?',
     createdAt: '2026-01-25', updatedAt: '2026-01-26',
     responses: [
-      { date: '2026-01-26', author: 'Support FreightFlow', message: 'Votre contrat inclut une assurance tous risques couvrant la valeur déclarée de la marchandise jusqu\'à 150% du CIF. Pour plus de détails, consultez la section assurance de votre portail.' },
+      { date: '2026-01-26', author: 'Support LogisWay', message: 'Votre contrat inclut une assurance tous risques couvrant la valeur déclarée de la marchandise jusqu\'à 150% du CIF. Pour plus de détails, consultez la section assurance de votre portail.' },
     ],
   },
   {
@@ -742,6 +742,30 @@ export default function CustomerPortalPage() {
     });
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N° Suivi', 'Type', 'Statut', 'Origine', 'Destination', 'Poids (kg)', 'Prix (DA)', 'Date Création', 'Livraison Estimée', 'Notes'];
+    const rows = filteredShipments.map(s => [
+      s.trackingNumber,
+      shipmentTypeLabels[s.type] || s.type,
+      shipmentStatusLabels[s.status] || s.status,
+      s.origin,
+      s.destination,
+      String(s.weight),
+      String(s.price),
+      s.dateCreation,
+      s.dateLivraisonEstimee,
+      s.notes,
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-customer-portal-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -763,7 +787,7 @@ export default function CustomerPortalPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Bienvenue, Entreprise Bouzidi & Fils — Suivez vos expéditions, factures et demandes</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>

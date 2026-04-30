@@ -1,5 +1,5 @@
 /**
- * Module Configuration System — FreightFlow Pro
+ * Module Configuration System — LogisWay
  * Centralized configuration for feature modules, navigation, and feature flags.
  * This is the single source of truth for what modules exist, their metadata,
  * and whether they are enabled.

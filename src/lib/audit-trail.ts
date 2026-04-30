@@ -1,5 +1,5 @@
 /**
- * Audit Trail & Enhanced Permissions System — FreightFlow Pro
+ * Audit Trail & Enhanced Permissions System — LogisWay
  * Journal d'audit complet, permissions granulaires par champ,
  * délégation de permissions et traçabilité des actions.
  */
@@ -47,7 +47,7 @@ export interface AuditEntry {
 
 // ─── Persistance du journal d'audit ────────────────────────────
 
-const AUDIT_TRAIL_KEY = 'freightflow-audit-trail';
+const AUDIT_TRAIL_KEY = 'logisway-audit-trail';
 
 export function loadAuditTrail(): AuditEntry[] {
   if (typeof window === 'undefined') return [];
@@ -348,7 +348,7 @@ export interface PermissionDelegation {
   approvedBy?: string;
 }
 
-const DELEGATIONS_KEY = 'freightflow-delegations';
+const DELEGATIONS_KEY = 'logisway-delegations';
 
 export function loadDelegations(): PermissionDelegation[] {
   if (typeof window === 'undefined') return [];

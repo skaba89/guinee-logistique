@@ -168,14 +168,14 @@ interface SyncJob {
 }
 
 const syncJobs: SyncJob[] = [
-  { id: 'sj1', source: 'CMA CGM', destination: 'FreightFlow', direction: 'inbound', lastSync: '14:32', nextSync: '14:47', records: 1245, status: 'success' },
-  { id: 'sj2', source: 'MSC', destination: 'FreightFlow', direction: 'inbound', lastSync: '14:20', nextSync: '14:50', records: 892, status: 'success' },
-  { id: 'sj3', source: 'SIDA', destination: 'FreightFlow', direction: 'bidirectional', lastSync: '14:15', nextSync: '14:45', records: 3421, status: 'success' },
-  { id: 'sj4', source: 'FreightFlow', destination: 'Sage 100', direction: 'outbound', lastSync: '14:00', nextSync: '15:00', records: 567, status: 'partial' },
-  { id: 'sj5', source: 'MarineTraffic', destination: 'FreightFlow', direction: 'inbound', lastSync: '14:35', nextSync: '14:40', records: 8920, status: 'success' },
-  { id: 'sj6', source: 'HS Codes', destination: 'FreightFlow', direction: 'inbound', lastSync: '13:00', nextSync: '14:00', records: 15678, status: 'success' },
-  { id: 'sj7', source: 'Air Algérie', destination: 'FreightFlow', direction: 'inbound', lastSync: '13:45', nextSync: '14:15', records: 2100, status: 'failed' },
-  { id: 'sj8', source: 'FreightFlow', destination: 'FlightAware', direction: 'outbound', lastSync: '14:30', nextSync: '14:45', records: 3400, status: 'success' },
+  { id: 'sj1', source: 'CMA CGM', destination: 'LogisWay', direction: 'inbound', lastSync: '14:32', nextSync: '14:47', records: 1245, status: 'success' },
+  { id: 'sj2', source: 'MSC', destination: 'LogisWay', direction: 'inbound', lastSync: '14:20', nextSync: '14:50', records: 892, status: 'success' },
+  { id: 'sj3', source: 'SIDA', destination: 'LogisWay', direction: 'bidirectional', lastSync: '14:15', nextSync: '14:45', records: 3421, status: 'success' },
+  { id: 'sj4', source: 'LogisWay', destination: 'Sage 100', direction: 'outbound', lastSync: '14:00', nextSync: '15:00', records: 567, status: 'partial' },
+  { id: 'sj5', source: 'MarineTraffic', destination: 'LogisWay', direction: 'inbound', lastSync: '14:35', nextSync: '14:40', records: 8920, status: 'success' },
+  { id: 'sj6', source: 'HS Codes', destination: 'LogisWay', direction: 'inbound', lastSync: '13:00', nextSync: '14:00', records: 15678, status: 'success' },
+  { id: 'sj7', source: 'Air Algérie', destination: 'LogisWay', direction: 'inbound', lastSync: '13:45', nextSync: '14:15', records: 2100, status: 'failed' },
+  { id: 'sj8', source: 'LogisWay', destination: 'FlightAware', direction: 'outbound', lastSync: '14:30', nextSync: '14:45', records: 3400, status: 'success' },
 ];
 
 const webhookEventOptions = [

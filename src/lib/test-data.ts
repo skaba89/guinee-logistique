@@ -221,7 +221,7 @@ export const users: User[] = [
     password: 'admin123',
     name: 'Ahmed Benali',
     role: 'Administrateur',
-    email: 'ahmed.benali@freightflow.pro',
+    email: 'ahmed.benali@logisway.pro',
   },
   {
     id: '2',
@@ -229,7 +229,7 @@ export const users: User[] = [
     password: 'user123',
     name: 'Fatima Khelifi',
     role: 'Agent',
-    email: 'fatima.khelifi@freightflow.pro',
+    email: 'fatima.khelifi@logisway.pro',
   },
 ];
 

@@ -178,20 +178,20 @@ const departments = [
 ];
 
 const employees: Employee[] = [
-  { id: 'e1', nom: 'Kaci', prenom: 'Rachid', departement: 'Fret Maritime', poste: 'Chef d\'équipe Maritime', statut: 'actif', dateEmbauche: '2020-03-15', salaire: 185000, email: 'r.kaci@freightflow.pro', telephone: '0555111222', evaluation: 4.5 },
-  { id: 'e2', nom: 'Boudiaf', prenom: 'Nadia', departement: 'Douanes', poste: 'Agent Douanes Senior', statut: 'actif', dateEmbauche: '2021-06-01', salaire: 145000, email: 'n.boudiaf@freightflow.pro', telephone: '0555333444', evaluation: 4.2 },
-  { id: 'e3', nom: 'Hamdi', prenom: 'Yacine', departement: 'Fret Aérien', poste: 'Responsable Aérien', statut: 'actif', dateEmbauche: '2019-09-20', salaire: 210000, email: 'y.hamdi@freightflow.pro', telephone: '0555555666', evaluation: 4.8 },
-  { id: 'e4', nom: 'Khelifi', prenom: 'Fatima', departement: 'Transport Terrestre', poste: 'Chef Quart Transport', statut: 'en_conge', dateEmbauche: '2022-01-10', salaire: 155000, email: 'f.khelifi@freightflow.pro', telephone: '0555777888', evaluation: 4.0 },
-  { id: 'e5', nom: 'Mezdad', prenom: 'Ali', departement: 'Transport Terrestre', poste: 'Conducteur Principal', statut: 'actif', dateEmbauche: '2020-09-01', salaire: 120000, email: 'a.mezdad@freightflow.pro', telephone: '0555999000', evaluation: 4.7 },
-  { id: 'e6', nom: 'Benali', prenom: 'Sofiane', departement: 'Entrepôt', poste: 'Responsable Entrepôt', statut: 'actif', dateEmbauche: '2021-12-15', salaire: 160000, email: 's.benali@freightflow.pro', telephone: '0555121202', evaluation: 4.3 },
-  { id: 'e7', nom: 'Djebbar', prenom: 'Karim', departement: 'Fret Aérien', poste: 'Agent Fret Aérien', statut: 'actif', dateEmbauche: '2023-04-01', salaire: 130000, email: 'k.djebbar@freightflow.pro', telephone: '0555141516', evaluation: 3.9 },
-  { id: 'e8', nom: 'Mansouri', prenom: 'Youcef', departement: 'Comptabilité', poste: 'Comptable Senior', statut: 'actif', dateEmbauche: '2022-08-20', salaire: 140000, email: 'y.mansouri@freightflow.pro', telephone: '0555171819', evaluation: 4.1 },
-  { id: 'e9', nom: 'Rahmani', prenom: 'Amina', departement: 'RH', poste: 'Responsable RH', statut: 'actif', dateEmbauche: '2019-02-01', salaire: 195000, email: 'a.rahmani@freightflow.pro', telephone: '0555202122', evaluation: 4.6 },
-  { id: 'e10', nom: 'Talbi', prenom: 'Mourad', departement: 'Entrepôt', poste: 'Manutentionnaire', statut: 'essai', dateEmbauche: '2026-01-15', salaire: 85000, email: 'm.talbi@freightflow.pro', telephone: '0555232425', evaluation: 3.5 },
-  { id: 'e11', nom: 'Ferhat', prenom: 'Nabil', departement: 'IT', poste: 'Ingénieur Systèmes', statut: 'actif', dateEmbauche: '2021-10-01', salaire: 220000, email: 'n.ferhat@freightflow.pro', telephone: '0555262728', evaluation: 4.4 },
-  { id: 'e12', nom: 'Ait Kaci', prenom: 'Samira', departement: 'Douanes', poste: 'Spécialiste Réglementation', statut: 'actif', dateEmbauche: '2023-01-20', salaire: 150000, email: 's.aitkaci@freightflow.pro', telephone: '0555293031', evaluation: 4.3 },
-  { id: 'e13', nom: 'Bouzid', prenom: 'Karim', departement: 'Transport Terrestre', poste: 'Conducteur', statut: 'inactif', dateEmbauche: '2023-06-10', salaire: 95000, email: 'k.bouzid@freightflow.pro', telephone: '0555323334', evaluation: 3.2 },
-  { id: 'e14', nom: 'Kherrazi', prenom: 'Bilal', departement: 'Fret Maritime', poste: 'Opérateur Portuaire', statut: 'actif', dateEmbauche: '2022-11-01', salaire: 115000, email: 'b.kherrazi@freightflow.pro', telephone: '0555353637', evaluation: 4.0 },
+  { id: 'e1', nom: 'Kaci', prenom: 'Rachid', departement: 'Fret Maritime', poste: 'Chef d\'équipe Maritime', statut: 'actif', dateEmbauche: '2020-03-15', salaire: 185000, email: 'r.kaci@logisway.pro', telephone: '0555111222', evaluation: 4.5 },
+  { id: 'e2', nom: 'Boudiaf', prenom: 'Nadia', departement: 'Douanes', poste: 'Agent Douanes Senior', statut: 'actif', dateEmbauche: '2021-06-01', salaire: 145000, email: 'n.boudiaf@logisway.pro', telephone: '0555333444', evaluation: 4.2 },
+  { id: 'e3', nom: 'Hamdi', prenom: 'Yacine', departement: 'Fret Aérien', poste: 'Responsable Aérien', statut: 'actif', dateEmbauche: '2019-09-20', salaire: 210000, email: 'y.hamdi@logisway.pro', telephone: '0555555666', evaluation: 4.8 },
+  { id: 'e4', nom: 'Khelifi', prenom: 'Fatima', departement: 'Transport Terrestre', poste: 'Chef Quart Transport', statut: 'en_conge', dateEmbauche: '2022-01-10', salaire: 155000, email: 'f.khelifi@logisway.pro', telephone: '0555777888', evaluation: 4.0 },
+  { id: 'e5', nom: 'Mezdad', prenom: 'Ali', departement: 'Transport Terrestre', poste: 'Conducteur Principal', statut: 'actif', dateEmbauche: '2020-09-01', salaire: 120000, email: 'a.mezdad@logisway.pro', telephone: '0555999000', evaluation: 4.7 },
+  { id: 'e6', nom: 'Benali', prenom: 'Sofiane', departement: 'Entrepôt', poste: 'Responsable Entrepôt', statut: 'actif', dateEmbauche: '2021-12-15', salaire: 160000, email: 's.benali@logisway.pro', telephone: '0555121202', evaluation: 4.3 },
+  { id: 'e7', nom: 'Djebbar', prenom: 'Karim', departement: 'Fret Aérien', poste: 'Agent Fret Aérien', statut: 'actif', dateEmbauche: '2023-04-01', salaire: 130000, email: 'k.djebbar@logisway.pro', telephone: '0555141516', evaluation: 3.9 },
+  { id: 'e8', nom: 'Mansouri', prenom: 'Youcef', departement: 'Comptabilité', poste: 'Comptable Senior', statut: 'actif', dateEmbauche: '2022-08-20', salaire: 140000, email: 'y.mansouri@logisway.pro', telephone: '0555171819', evaluation: 4.1 },
+  { id: 'e9', nom: 'Rahmani', prenom: 'Amina', departement: 'RH', poste: 'Responsable RH', statut: 'actif', dateEmbauche: '2019-02-01', salaire: 195000, email: 'a.rahmani@logisway.pro', telephone: '0555202122', evaluation: 4.6 },
+  { id: 'e10', nom: 'Talbi', prenom: 'Mourad', departement: 'Entrepôt', poste: 'Manutentionnaire', statut: 'essai', dateEmbauche: '2026-01-15', salaire: 85000, email: 'm.talbi@logisway.pro', telephone: '0555232425', evaluation: 3.5 },
+  { id: 'e11', nom: 'Ferhat', prenom: 'Nabil', departement: 'IT', poste: 'Ingénieur Systèmes', statut: 'actif', dateEmbauche: '2021-10-01', salaire: 220000, email: 'n.ferhat@logisway.pro', telephone: '0555262728', evaluation: 4.4 },
+  { id: 'e12', nom: 'Ait Kaci', prenom: 'Samira', departement: 'Douanes', poste: 'Spécialiste Réglementation', statut: 'actif', dateEmbauche: '2023-01-20', salaire: 150000, email: 's.aitkaci@logisway.pro', telephone: '0555293031', evaluation: 4.3 },
+  { id: 'e13', nom: 'Bouzid', prenom: 'Karim', departement: 'Transport Terrestre', poste: 'Conducteur', statut: 'inactif', dateEmbauche: '2023-06-10', salaire: 95000, email: 'k.bouzid@logisway.pro', telephone: '0555323334', evaluation: 3.2 },
+  { id: 'e14', nom: 'Kherrazi', prenom: 'Bilal', departement: 'Fret Maritime', poste: 'Opérateur Portuaire', statut: 'actif', dateEmbauche: '2022-11-01', salaire: 115000, email: 'b.kherrazi@logisway.pro', telephone: '0555353637', evaluation: 4.0 },
 ];
 
 const leaveRequests: LeaveRequest[] = [
@@ -370,6 +370,16 @@ export default function HRPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [leaveFilter, setLeaveFilter] = useState<string>('all');
 
+  // Mutable state for employees and leave requests
+  const [employeesList, setEmployeesList] = useState<Employee[]>(employees);
+  const [leaveRequestsList, setLeaveRequestsList] = useState<LeaveRequest[]>(leaveRequests);
+
+  // View/Edit employee dialog state
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [viewingEmployee, setViewingEmployee] = useState<Employee | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+
   // Add employee form state
   const [newEmployee, setNewEmployee] = useState({
     prenom: '',
@@ -381,9 +391,44 @@ export default function HRPage() {
     telephone: '',
   });
 
+  // Handle adding a new employee
+  const handleAddEmployee = () => {
+    if (!newEmployee.prenom || !newEmployee.nom || !newEmployee.departement) return;
+    const newEmp: Employee = {
+      id: `e${Date.now()}`,
+      nom: newEmployee.nom,
+      prenom: newEmployee.prenom,
+      departement: newEmployee.departement,
+      poste: newEmployee.poste || 'Non assigné',
+      statut: 'essai',
+      dateEmbauche: new Date().toISOString().split('T')[0],
+      salaire: parseInt(newEmployee.salaire) || 0,
+      email: newEmployee.email || '',
+      telephone: newEmployee.telephone || '',
+      evaluation: 0,
+    };
+    setEmployeesList(prev => [...prev, newEmp]);
+    setNewEmployee({ prenom: '', nom: '', departement: '', poste: '', salaire: '', email: '', telephone: '' });
+    setShowAddDialog(false);
+  };
+
+  // Handle approving a leave request
+  const handleApproveLeave = (leaveId: string) => {
+    setLeaveRequestsList(prev =>
+      prev.map(l => l.id === leaveId ? { ...l, statut: 'approuve' as LeaveStatus } : l)
+    );
+  };
+
+  // Handle rejecting a leave request
+  const handleRejectLeave = (leaveId: string) => {
+    setLeaveRequestsList(prev =>
+      prev.map(l => l.id === leaveId ? { ...l, statut: 'rejete' as LeaveStatus } : l)
+    );
+  };
+
   // Computed: filtered employees
   const filteredEmployees = useMemo(() => {
-    let result = [...employees];
+    let result = [...employeesList];
     if (deptFilter !== 'all') result = result.filter(e => e.departement === deptFilter);
     if (statusFilter !== 'all') result = result.filter(e => e.statut === statusFilter);
     if (searchQuery) {
@@ -395,26 +440,50 @@ export default function HRPage() {
       );
     }
     return result;
-  }, [searchQuery, deptFilter, statusFilter]);
+  }, [searchQuery, deptFilter, statusFilter, employeesList]);
 
   // Computed: filtered leave requests
   const filteredLeaves = useMemo(() => {
-    if (leaveFilter === 'all') return leaveRequests;
-    return leaveRequests.filter(l => l.statut === leaveFilter);
-  }, [leaveFilter]);
+    if (leaveFilter === 'all') return leaveRequestsList;
+    return leaveRequestsList.filter(l => l.statut === leaveFilter);
+  }, [leaveFilter, leaveRequestsList]);
+
+  const handleExportCSV = () => {
+    const headers = ['Nom', 'Prénom', 'Département', 'Poste', 'Statut', 'Date Embauche', 'Salaire (DA)', 'Email', 'Téléphone', 'Évaluation'];
+    const rows = filteredEmployees.map(e => [
+      e.nom,
+      e.prenom,
+      e.departement,
+      e.poste,
+      statusConfig[e.statut]?.label || e.statut,
+      e.dateEmbauche,
+      String(e.salaire),
+      e.email,
+      e.telephone,
+      String(e.evaluation),
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-hr-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // KPI calculations
-  const totalEmployes = employees.length;
-  const presentsAujourdhui = employees.filter(e => e.statut === 'actif' || e.statut === 'essai').length;
-  const enConge = employees.filter(e => e.statut === 'en_conge').length;
+  const totalEmployes = employeesList.length;
+  const presentsAujourdhui = employeesList.filter(e => e.statut === 'actif' || e.statut === 'essai').length;
+  const enConge = employeesList.filter(e => e.statut === 'en_conge').length;
   const postesVacants = jobOpenings.filter(j => j.statut === 'ouvert' || j.statut === 'en_cours').length;
   const tauxRotation = '4.2%';
-  const masseSalariale = employees.reduce((sum, e) => sum + e.salaire, 0);
+  const masseSalariale = employeesList.reduce((sum, e) => sum + e.salaire, 0);
 
   const kpis = [
     { title: 'Total Employés', value: totalEmployes, icon: Users, gradient: 'from-teal-500 to-teal-600', change: '+2 ce mois', changeUp: true },
     { title: 'Présents Aujourd\'hui', value: presentsAujourdhui, icon: UserCheck, gradient: 'from-emerald-500 to-green-600', change: `${Math.round((presentsAujourdhui / totalEmployes) * 100)}%`, changeUp: true },
-    { title: 'En Congé', value: enConge, icon: CalendarDays, gradient: 'from-amber-500 to-amber-600', change: `${leaveRequests.filter(l => l.statut === 'en_attente').length} en attente`, changeUp: false },
+    { title: 'En Congé', value: enConge, icon: CalendarDays, gradient: 'from-amber-500 to-amber-600', change: `${leaveRequestsList.filter(l => l.statut === 'en_attente').length} en attente`, changeUp: false },
     { title: 'Postes Vacants', value: postesVacants, icon: Briefcase, gradient: 'from-rose-500 to-rose-600', change: `${jobOpenings.filter(j => j.statut === 'ouvert').length} ouverts`, changeUp: false },
     { title: 'Taux de Rotation', value: tauxRotation, icon: TrendingUp, gradient: 'from-orange-500 to-orange-600', change: '-0.5% vs S1', changeUp: true },
     { title: 'Masse Salariale', value: formatCurrency(masseSalariale), icon: DollarSign, gradient: 'from-cyan-500 to-cyan-600', change: '+3.2% vs S2', changeUp: false },
@@ -440,7 +509,7 @@ export default function HRPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-9">
+          <Button variant="outline" size="sm" className="h-9" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1.5" />
             Exporter
           </Button>
@@ -607,7 +676,7 @@ export default function HRPage() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Demandes de congé en attente</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{leaveRequests.filter(l => l.statut === 'en_attente').length}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{leaveRequestsList.filter(l => l.statut === 'en_attente').length}</p>
                       </div>
                     </div>
                     <Button variant="outline" size="sm" className="w-full text-xs h-8" onClick={() => setActiveTab('conges')}>
@@ -768,10 +837,10 @@ export default function HRPage() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1">
-                                    <button className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Voir">
+                                    <button className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Voir" onClick={() => { setViewingEmployee(emp); setShowViewDialog(true); }}>
                                       <Eye className="w-3.5 h-3.5 text-gray-400" />
                                     </button>
-                                    <button className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Modifier">
+                                    <button className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Modifier" onClick={() => { setEditingEmployee({...emp}); setShowEditDialog(true); }}>
                                       <Edit3 className="w-3.5 h-3.5 text-gray-400" />
                                     </button>
                                   </div>
@@ -784,7 +853,7 @@ export default function HRPage() {
                     </Table>
                   </div>
                   <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-                    <p className="text-xs text-gray-500">{filteredEmployees.length} employé(s) affiché(s) sur {employees.length}</p>
+                    <p className="text-xs text-gray-500">{filteredEmployees.length} employé(s) affiché(s) sur {employeesList.length}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -800,19 +869,19 @@ export default function HRPage() {
               <div className="grid grid-cols-3 gap-3">
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-amber-600">{leaveRequests.filter(l => l.statut === 'en_attente').length}</p>
+                    <p className="text-2xl font-bold text-amber-600">{leaveRequestsList.filter(l => l.statut === 'en_attente').length}</p>
                     <p className="text-xs text-gray-500">En attente</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-emerald-600">{leaveRequests.filter(l => l.statut === 'approuve').length}</p>
+                    <p className="text-2xl font-bold text-emerald-600">{leaveRequestsList.filter(l => l.statut === 'approuve').length}</p>
                     <p className="text-xs text-gray-500">Approuvées</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-red-600">{leaveRequests.filter(l => l.statut === 'rejete').length}</p>
+                    <p className="text-2xl font-bold text-red-600">{leaveRequestsList.filter(l => l.statut === 'rejete').length}</p>
                     <p className="text-xs text-gray-500">Rejetées</p>
                   </CardContent>
                 </Card>
@@ -893,12 +962,14 @@ export default function HRPage() {
                                     <button
                                       className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
                                       title="Approuver"
+                                      onClick={() => handleApproveLeave(leave.id)}
                                     >
                                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                                     </button>
                                     <button
                                       className="p-1.5 rounded-md bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                                       title="Rejeter"
+                                      onClick={() => handleRejectLeave(leave.id)}
                                     >
                                       <XCircle className="w-3.5 h-3.5 text-red-600" />
                                     </button>
@@ -1435,7 +1506,7 @@ export default function HRPage() {
               <Label htmlFor="email" className="text-xs">Email</Label>
               <Input
                 id="email"
-                placeholder="prenom.nom@freightflow.pro"
+                placeholder="prenom.nom@logisway.pro"
                 type="email"
                 value={newEmployee.email}
                 onChange={e => setNewEmployee({ ...newEmployee, email: e.target.value })}
@@ -1449,10 +1520,123 @@ export default function HRPage() {
             <Button
               className="text-white"
               style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
-              onClick={() => setShowAddDialog(false)}
+              onClick={handleAddEmployee}
             >
               <UserPlus className="w-4 h-4 mr-1.5" />
               Ajouter l&apos;employé
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Employee Dialog */}
+      <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-teal-500" />
+              Détails de l&apos;employé
+            </DialogTitle>
+            <DialogDescription>Informations détaillées sur l&apos;employé</DialogDescription>
+          </DialogHeader>
+          {viewingEmployee && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
+                  {viewingEmployee.prenom.charAt(0)}{viewingEmployee.nom.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">{viewingEmployee.prenom} {viewingEmployee.nom}</p>
+                  <p className="text-sm text-gray-500">{viewingEmployee.poste}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-gray-500">Département :</span><p className="font-medium text-gray-900 dark:text-white">{viewingEmployee.departement}</p></div>
+                <div><span className="text-gray-500">Statut :</span><p><Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusConfig[viewingEmployee.statut].color}`}><span className={`w-1.5 h-1.5 rounded-full ${statusConfig[viewingEmployee.statut].dot} mr-1 inline-block`} />{statusConfig[viewingEmployee.statut].label}</Badge></p></div>
+                <div><span className="text-gray-500">Date d&apos;embauche :</span><p className="font-medium text-gray-900 dark:text-white">{formatDate(viewingEmployee.dateEmbauche)}</p></div>
+                <div><span className="text-gray-500">Salaire :</span><p className="font-medium text-gray-900 dark:text-white">{formatCurrency(viewingEmployee.salaire)}</p></div>
+                <div><span className="text-gray-500">Email :</span><p className="font-medium text-gray-900 dark:text-white break-all">{viewingEmployee.email}</p></div>
+                <div><span className="text-gray-500">Téléphone :</span><p className="font-medium text-gray-900 dark:text-white">{viewingEmployee.telephone}</p></div>
+                <div className="col-span-2"><span className="text-gray-500">Évaluation :</span><div className="mt-1">{renderStars(viewingEmployee.evaluation)}<span className="text-xs text-gray-500 ml-2">{viewingEmployee.evaluation}/5</span></div></div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit3 className="w-5 h-5 text-teal-500" />
+              Modifier l&apos;employé
+            </DialogTitle>
+            <DialogDescription>Modifier les informations de l&apos;employé</DialogDescription>
+          </DialogHeader>
+          {editingEmployee && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Prénom</Label>
+                  <Input className="h-9" value={editingEmployee.prenom} onChange={e => setEditingEmployee({ ...editingEmployee, prenom: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Nom</Label>
+                  <Input className="h-9" value={editingEmployee.nom} onChange={e => setEditingEmployee({ ...editingEmployee, nom: e.target.value })} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Département</Label>
+                <Select value={editingEmployee.departement} onValueChange={v => setEditingEmployee({ ...editingEmployee, departement: v })}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Poste</Label>
+                <Input className="h-9" value={editingEmployee.poste} onChange={e => setEditingEmployee({ ...editingEmployee, poste: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Salaire (DA)</Label>
+                  <Input type="number" className="h-9" value={editingEmployee.salaire} onChange={e => setEditingEmployee({ ...editingEmployee, salaire: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Statut</Label>
+                  <Select value={editingEmployee.statut} onValueChange={v => setEditingEmployee({ ...editingEmployee, statut: v as EmployeeStatus })}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="actif">Actif</SelectItem>
+                      <SelectItem value="en_conge">En congé</SelectItem>
+                      <SelectItem value="essai">Période d&apos;essai</SelectItem>
+                      <SelectItem value="inactif">Inactif</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Email</Label>
+                <Input type="email" className="h-9" value={editingEmployee.email} onChange={e => setEditingEmployee({ ...editingEmployee, email: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Téléphone</Label>
+                <Input className="h-9" value={editingEmployee.telephone} onChange={e => setEditingEmployee({ ...editingEmployee, telephone: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
+            <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => {
+              if (editingEmployee) {
+                setEmployeesList(prev => prev.map(e => e.id === editingEmployee.id ? editingEmployee : e));
+              }
+              setShowEditDialog(false);
+            }}>
+              <Edit3 className="w-4 h-4 mr-1.5" />
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>

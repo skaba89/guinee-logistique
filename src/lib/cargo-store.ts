@@ -6,6 +6,26 @@ import { users, type User } from './test-data';
 import { type RoleKey, mapRoleString, canViewPage, canEditPage } from './permissions';
 import { loadPermissionsConfig, type PermissionsConfig } from './permissions';
 
+// ─── Migration: rename old localStorage key ───────────────────────
+// Migrate data from the old 'freightflow-storage' key to 'logisway-storage'
+// so existing user sessions are preserved after the rebrand.
+if (typeof window !== 'undefined') {
+  try {
+    const OLD_KEY = 'freightflow-storage';
+    const NEW_KEY = 'logisway-storage';
+    const oldData = localStorage.getItem(OLD_KEY);
+    if (oldData && !localStorage.getItem(NEW_KEY)) {
+      localStorage.setItem(NEW_KEY, oldData);
+      localStorage.removeItem(OLD_KEY);
+    } else if (oldData) {
+      // New key already exists — just remove the old one
+      localStorage.removeItem(OLD_KEY);
+    }
+  } catch {
+    // Silently ignore migration errors (e.g. storage not accessible)
+  }
+}
+
 export type PageType = 'dashboard' | 'shipments' | 'tracking' | 'clients' | 'billing' | 'fleet' | 'settings' | 'maritime' | 'air-freight' | 'ground-transport' | 'parcels' | 'customs' | 'analytics' | 'warehouse' | 'quotations' | 'documents' | 'insurance' | 'partners' | 'incoterms' | 'reports' | 'drivers' | 'integrations' | 'claims' | 'multimodal' | 'contracts' | 'tasks' | 'calendar' | 'customer-portal' | 'rates' | 'sustainability' | 'users' | 'chat' | 'scanner' | 'dangerous-goods' | 'temperature-controlled' | 'credit-management' | 'compliance' | 'hr' | 'expenses';
 
 interface CargoState {
@@ -98,7 +118,7 @@ export const useCargoStore = create<CargoState>()(
       },
     }),
     {
-      name: 'freightflow-storage',
+      name: 'logisway-storage',
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         user: state.user,

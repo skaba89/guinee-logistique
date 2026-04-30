@@ -241,6 +241,31 @@ export default function QuotationsPage() {
     );
   };
 
+  const handleExportCSV = () => {
+    const headers = ['N° Devis', 'Client', 'Type Fret', 'Origine', 'Destination', 'Poids (kg)', 'Montant Estimé (DA)', 'Statut', 'Date Création', 'Valide Jusqu\'au', 'Notes'];
+    const rows = filtered.map(q => [
+      q.quoteNumber,
+      q.clientName,
+      freightTypeLabels[q.freightType] || q.freightType,
+      q.origin,
+      q.destination,
+      String(q.weight),
+      String(q.estimatedAmount),
+      statusLabels[q.status] || q.status,
+      q.createdAt,
+      q.validUntil,
+      q.notes,
+    ]);
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-quotations-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ─── KPI Cards Config ────────────────────────────────────────────────────
 
   const kpiCards = [
@@ -281,7 +306,7 @@ export default function QuotationsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Gérez vos devis et quotations</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs">
+          <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>

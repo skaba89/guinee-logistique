@@ -281,11 +281,21 @@ export default function ChatPage() {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showEscalateDialog, setShowEscalateDialog] = useState(false);
   const [escalateReason, setEscalateReason] = useState('');
+  const [showChatSearch, setShowChatSearch] = useState(false);
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showCallDialog, setShowCallDialog] = useState(false);
+  const [callType, setCallType] = useState<'phone' | 'video' | null>(null);
+  const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Get current conversation messages
-  const currentMessages = messages.filter((m) => m.conversationId === activeConversation);
+  const currentMessages = messages.filter((m) => {
+    if (m.conversationId !== activeConversation) return false;
+    if (showChatSearch && chatSearchQuery && !m.content.toLowerCase().includes(chatSearchQuery.toLowerCase())) return false;
+    return true;
+  });
 
   // Determine if active conversation is channel or DM
   const activeChannel = channels.find((c) => c.id === activeConversation);
@@ -624,23 +634,60 @@ export default function ChatPage() {
       <div className="flex items-center gap-1">
         {isDM && (
           <>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCallType('phone'); setShowCallDialog(true); }}>
               <Phone className="w-4 h-4 text-gray-500" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCallType('video'); setShowCallDialog(true); }}>
               <Video className="w-4 h-4 text-gray-500" />
             </Button>
           </>
         )}
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+          const lastMsg = currentMessages[currentMessages.length - 1];
+          if (lastMsg) {
+            setPinnedMessageIds(prev => {
+              const next = new Set(prev);
+              if (next.has(lastMsg.id)) { next.delete(lastMsg.id); } else { next.add(lastMsg.id); }
+              return next;
+            });
+          }
+          alert(pinnedMessageIds.has(currentMessages[currentMessages.length - 1]?.id) ? 'Message désépinglé' : 'Message épinglé');
+        }}>
           <Pin className="w-4 h-4 text-gray-500" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button variant="ghost" size="icon" className={`h-8 w-8 ${showChatSearch ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`} onClick={() => { setShowChatSearch(!showChatSearch); if (showChatSearch) setChatSearchQuery(''); }}>
           <Search className="w-4 h-4 text-gray-500" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreVertical className="w-4 h-4 text-gray-500" />
-        </Button>
+        <Popover open={showMoreMenu} onOpenChange={setShowMoreMenu}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreVertical className="w-4 h-4 text-gray-500" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-1" align="end" sideOffset={8}>
+            <button
+              onClick={() => { setMessages(prev => prev.map(m => m.conversationId === activeConversation ? { ...m, read: true } : m)); setShowMoreMenu(false); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <CheckCheck className="w-4 h-4 text-gray-400" />
+              Marquer comme lu
+            </button>
+            <button
+              onClick={() => { setShowMoreMenu(false); alert('Sourdine activée pour ce canal'); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Clock className="w-4 h-4 text-gray-400" />
+              Sourdine
+            </button>
+            <button
+              onClick={() => { setShowMoreMenu(false); alert('Vous avez quitté le canal'); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Quitter le canal
+            </button>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );
@@ -727,6 +774,37 @@ export default function ChatPage() {
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-950">
       {chatHeader}
 
+      {/* Chat search bar */}
+      <AnimatePresence>
+        {showChatSearch && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="overflow-hidden border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+          >
+            <div className="px-4 py-2 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Input
+                  placeholder="Rechercher dans la conversation..."
+                  value={chatSearchQuery}
+                  onChange={(e) => setChatSearchQuery(e.target.value)}
+                  className="pl-8 h-8 text-sm bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                  autoFocus
+                />
+              </div>
+              {chatSearchQuery && (
+                <span className="text-xs text-gray-400 whitespace-nowrap">
+                  {currentMessages.length} résultat{currentMessages.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Messages */}
       <ScrollArea className="flex-1">
         <div className="py-4">
@@ -765,6 +843,16 @@ export default function ChatPage() {
           )}
 
           <Separator className="mb-4" />
+
+          {/* Pinned message indicator */}
+          {pinnedMessageIds.size > 0 && currentMessages.some(m => pinnedMessageIds.has(m.id)) && (
+            <div className="mx-4 mb-3 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 flex items-center gap-2">
+              <Pin className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                Message épinglé ({pinnedMessageIds.size})
+              </span>
+            </div>
+          )}
 
           {currentMessages.map((msg, index) => (
             <MessageBubble key={msg.id} msg={msg} index={index} />

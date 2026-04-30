@@ -218,12 +218,12 @@ interface ScheduledReport {
 }
 
 const initialScheduledReports: ScheduledReport[] = [
-  { id: 'sch1', name: 'Rapport Revenus Mensuel', frequency: 'Mensuel (1er)', nextRun: '2026-04-01', format: 'PDF', recipients: ['ahmed.benali@freightflow.pro', 'direction@freightflow.pro'], enabled: true },
-  { id: 'sch2', name: 'Performance Hebdomadaire', frequency: 'Hebdomadaire (Lundi)', nextRun: '2026-03-10', format: 'Excel', recipients: ['fatima.khelifi@freightflow.pro'], enabled: true },
-  { id: 'sch3', name: 'Rapport Flotte', frequency: 'Hebdomadaire (Vendredi)', nextRun: '2026-03-07', format: 'PDF', recipients: ['ahmed.benali@freightflow.pro', 'ops@freightflow.pro'], enabled: true },
-  { id: 'sch4', name: 'Empreinte Carbone', frequency: 'Mensuel (15)', nextRun: '2026-04-15', format: 'CSV', recipients: ['rse@freightflow.pro'], enabled: false },
-  { id: 'sch5', name: 'Conformité Douanière', frequency: 'Trimestriel', nextRun: '2026-06-30', format: 'PDF', recipients: ['legal@freightflow.pro', 'direction@freightflow.pro'], enabled: true },
-  { id: 'sch6', name: 'Activité Clients', frequency: 'Mensuel (5)', nextRun: '2026-04-05', format: 'Excel', recipients: ['commercial@freightflow.pro'], enabled: true },
+  { id: 'sch1', name: 'Rapport Revenus Mensuel', frequency: 'Mensuel (1er)', nextRun: '2026-04-01', format: 'PDF', recipients: ['ahmed.benali@logisway.pro', 'direction@logisway.pro'], enabled: true },
+  { id: 'sch2', name: 'Performance Hebdomadaire', frequency: 'Hebdomadaire (Lundi)', nextRun: '2026-03-10', format: 'Excel', recipients: ['fatima.khelifi@logisway.pro'], enabled: true },
+  { id: 'sch3', name: 'Rapport Flotte', frequency: 'Hebdomadaire (Vendredi)', nextRun: '2026-03-07', format: 'PDF', recipients: ['ahmed.benali@logisway.pro', 'ops@logisway.pro'], enabled: true },
+  { id: 'sch4', name: 'Empreinte Carbone', frequency: 'Mensuel (15)', nextRun: '2026-04-15', format: 'CSV', recipients: ['rse@logisway.pro'], enabled: false },
+  { id: 'sch5', name: 'Conformité Douanière', frequency: 'Trimestriel', nextRun: '2026-06-30', format: 'PDF', recipients: ['legal@logisway.pro', 'direction@logisway.pro'], enabled: true },
+  { id: 'sch6', name: 'Activité Clients', frequency: 'Mensuel (5)', nextRun: '2026-04-05', format: 'Excel', recipients: ['commercial@logisway.pro'], enabled: true },
 ];
 
 // Chart data for preview dialog

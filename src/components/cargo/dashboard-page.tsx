@@ -181,6 +181,25 @@ export default function DashboardPage() {
     new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime()
   ).slice(0, 5);
 
+  const handleExportCSV = () => {
+    const headers = ['Indicateur', 'Valeur'];
+    const rows = kpiCards.map(card => [card.title, String(card.value)]);
+    rows.push([]);
+    rows.push(['Expéditions récentes']);
+    rows.push(['N° Suivi', 'Type', 'Client', 'Origine', 'Destination', 'Statut', 'Date', 'Prix']);
+    recentShipments.forEach(s => {
+      rows.push([s.trackingNumber, typeLabels[s.type] || s.type, s.clientName, s.origin, s.destination, statusLabels[s.status] || s.status, formatDate(s.dateCreation), String(s.price)]);
+    });
+    const csv = '\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-dashboard-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const pieData = [
     { name: 'Maritime', value: dashboardStats.shipmentsByType.find(s => s.type === 'maritime')?.count || 0, color: '#0d9488' },
     { name: 'Aérien', value: dashboardStats.shipmentsByType.find(s => s.type === 'aerien')?.count || 0, color: '#0ea5e9' },
@@ -199,7 +218,7 @@ export default function DashboardPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Vue d&apos;ensemble de votre activité logistique internationale</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" className="text-xs">
+          <Button size="sm" variant="outline" className="text-xs" onClick={handleExportCSV}>
             <TrendingUp className="w-4 h-4 mr-1" />
             Exporter
           </Button>
