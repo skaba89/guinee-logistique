@@ -42,6 +42,8 @@ import {
   Gauge,
   ClipboardCheck,
   AlertTriangle,
+  Briefcase,
+  Wallet,
 } from 'lucide-react';
 import type { PageType } from './cargo-store';
 
@@ -201,6 +203,8 @@ export const iconNameToComponent: Record<string, React.ElementType> = {
   Gauge,
   ClipboardCheck,
   AlertTriangle,
+  Briefcase,
+  Wallet,
 };
 
 // ─── Module Definitions (Single Source of Truth) ────────────────
@@ -511,6 +515,30 @@ export const moduleDefinitions: ModuleDefinition[] = [
     premium: false,
     description: 'Calendrier des opérations — départs, arrivées, échéances',
     defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+  },
+
+  // Ressources Humaines
+  {
+    id: 'hr',
+    label: 'Ressources Humaines',
+    icon: 'Briefcase',
+    group: 'gestion',
+    order: 8,
+    enabled: true,
+    premium: false,
+    description: 'Gestion RH — employés, congés, recrutement, paie, formations, performances',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+  },
+  {
+    id: 'expenses',
+    label: 'Gestion des Dépenses',
+    icon: 'Wallet',
+    group: 'gestion',
+    order: 9,
+    enabled: true,
+    premium: false,
+    description: 'Suivi des dépenses — notes de frais, budgets, approbations, rapports',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
   },
 
   // Communication

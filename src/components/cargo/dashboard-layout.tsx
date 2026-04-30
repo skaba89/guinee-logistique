@@ -82,6 +82,7 @@ import {
 import { useCargoStore, type PageType } from '@/lib/cargo-store';
 import { shipments, containers, flights, parcels, customsDeclarations, clients } from '@/lib/test-data';
 import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
+import ChatbotWidget from '@/components/cargo/chatbot-widget';
 import {
   getNotificationsForRole,
   markNotificationRead as markNotificationReadLib,
@@ -130,6 +131,8 @@ const pageNameMap: Record<PageType, string> = {
   'dangerous-goods': 'Marchandises Dangereuses',
   'credit-management': 'Crédit & Risque',
   compliance: 'Conformité Réglementaire',
+  hr: 'Ressources Humaines',
+  expenses: 'Gestion des Dépenses',
 };
 
 // Notification type icon mapping
@@ -627,6 +630,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* FlowBot Chatbot Widget */}
+      <ChatbotWidget />
 
       {/* Command Palette Dialog */}
       <CommandDialog

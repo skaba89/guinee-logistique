@@ -48,6 +48,8 @@ import CreditManagementPage from '@/components/cargo/credit-management-page';
 import DangerousGoodsPage from '@/components/cargo/dangerous-goods-page';
 import TemperatureControlledPage from '@/components/cargo/temperature-controlled-page';
 import CompliancePage from '@/components/cargo/compliance-page';
+import HrPage from '@/components/cargo/hr-page';
+import ExpensesPage from '@/components/cargo/expenses-page';
 
 // ─── Access Denied Page ─────────────────────────────────────────
 
@@ -175,6 +177,10 @@ function PageRenderer() {
       return <TemperatureControlledPage />;
     case 'compliance':
       return <CompliancePage />;
+    case 'hr':
+      return <HrPage />;
+    case 'expenses':
+      return <ExpensesPage />;
     default:
       return <DashboardPage />;
   }
