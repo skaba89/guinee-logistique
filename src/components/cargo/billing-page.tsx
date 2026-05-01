@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Plus,
@@ -21,6 +21,15 @@ import {
   FileText,
   XCircle,
   TrendingUp,
+  Bell,
+  BellRing,
+  Send,
+  Settings2,
+  Mail,
+  MessageSquare,
+  FileCheck,
+  RotateCcw,
+  ChevronDown,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -62,6 +72,18 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
   BarChart,
   Bar,
   XAxis,
@@ -82,6 +104,27 @@ import { useCurrency } from '@/lib/use-currency';
 import ExportButtons from '@/components/cargo/export-buttons';
 import AdvancedFilters from '@/components/cargo/advanced-filters';
 import { applyFiltersToArray, type FilterState } from '@/hooks/use-filters';
+import { useToastAction } from '@/components/cargo/toast-provider';
+import {
+  type Reminder,
+  type ReminderConfig,
+  type ReminderChannel,
+  type ReminderLevel,
+  type InvoiceForReminder,
+  DEFAULT_REMINDER_CONFIG,
+  reminderLevelLabels,
+  reminderLevelColors,
+  reminderChannelLabels,
+  loadReminderConfig,
+  saveReminderConfig,
+  loadReminders,
+  saveReminders,
+  generateAutoReminders,
+  sendReminder,
+  getRequiredReminderLevel,
+  getDaysLate,
+  getDaysUntilDue,
+} from '@/lib/reminder-system';
 
 // ── Status styling ──────────────────────────────────────────────────────
 const statusColors: Record<string, string> = {
@@ -113,6 +156,7 @@ const ITEMS_PER_PAGE = 8;
 export default function BillingPage() {
   const canEditPage = useCargoStore((s) => s.canEdit('billing'));
   const { format: formatPrice, symbol } = useCurrency();
+  const { toast } = useToastAction();
 
   // Data state
   const [data, setData] = useState<Invoice[]>(initialInvoices);
@@ -127,6 +171,16 @@ export default function BillingPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [showReminderConfigDialog, setShowReminderConfigDialog] = useState(false);
+  const [showReminderPreviewDialog, setShowReminderPreviewDialog] = useState(false);
+  const [showReminderHistoryDialog, setShowReminderHistoryDialog] = useState(false);
+  const [showSendReminderDialog, setShowSendReminderDialog] = useState(false);
+
+  // Reminder state
+  const [reminders, setReminders] = useState<Reminder[]>(loadReminders);
+  const [reminderConfig, setReminderConfig] = useState<ReminderConfig>(loadReminderConfig);
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
+  const [pendingReminderLevel, setPendingReminderLevel] = useState<ReminderLevel | null>(null);
 
   // Selected invoice for actions
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -183,6 +237,17 @@ export default function BillingPage() {
   const totalPending = data.filter(i => i.status === 'en_attente').reduce((a, b) => a + b.amount, 0);
   const totalOverdue = data.filter(i => i.status === 'en_retard').reduce((a, b) => a + b.amount, 0);
 
+  // ── Reminder stats ─────────────────────────────────────────────────
+  const unpaidInvoices = data.filter(i => i.status === 'en_attente' || i.status === 'en_retard');
+  const invoicesNeedingReminder = useMemo(() => {
+    return unpaidInvoices.filter(inv => {
+      const level = getRequiredReminderLevel(inv as InvoiceForReminder, reminderConfig);
+      return level !== null;
+    });
+  }, [unpaidInvoices, reminderConfig]);
+
+  const sentReminders = reminders.filter(r => r.status === 'sent');
+
   // ── Monthly revenue chart data ─────────────────────────────────────
   const monthlyData = useMemo(() => {
     const months: Record<string, number> = {};
@@ -209,8 +274,19 @@ export default function BillingPage() {
       },
     ];
 
+    // Add reminder events
+    const invoiceReminders = sentReminders.filter(r => r.invoiceId === inv.id);
+    invoiceReminders.forEach(rem => {
+      timeline.push({
+        date: rem.sentAt.split('T')[0],
+        label: reminderLevelLabels[rem.level],
+        description: `Relance envoyée par ${reminderChannelLabels[rem.channel]} — ${rem.subject}`,
+        type: 'reminder',
+      });
+    });
+
     if (inv.status === 'en_attente') {
-      const daysUntilDue = Math.ceil((new Date(inv.dateEcheance).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const daysUntilDue = getDaysUntilDue(inv.dateEcheance);
       if (daysUntilDue < 0) {
         timeline.push({
           date: inv.dateEcheance,
@@ -234,7 +310,7 @@ export default function BillingPage() {
         });
       }
     } else if (inv.status === 'en_retard') {
-      const daysLate = Math.ceil((Date.now() - new Date(inv.dateEcheance).getTime()) / (1000 * 60 * 60 * 24));
+      const daysLate = getDaysLate(inv.dateEcheance);
       timeline.push({
         date: inv.dateEcheance,
         label: 'Échéance dépassée',
@@ -257,7 +333,7 @@ export default function BillingPage() {
       });
     }
 
-    return timeline;
+    return timeline.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
   // ── Handlers ───────────────────────────────────────────────────────
@@ -276,6 +352,7 @@ export default function BillingPage() {
     setData([invoice, ...data]);
     setShowAddDialog(false);
     setNewInvoice({ clientName: '', amount: '', dateEcheance: '', shipments: '' });
+    toast.success('Facture créée', `Facture ${invoice.invoiceNumber} ajoutée`);
   };
 
   const handleEditInvoice = () => {
@@ -293,6 +370,7 @@ export default function BillingPage() {
     ));
     setShowEditDialog(false);
     setSelectedInvoice(null);
+    toast.success('Facture modifiée', 'Les modifications ont été enregistrées');
   };
 
   const handleDeleteInvoice = () => {
@@ -300,6 +378,7 @@ export default function BillingPage() {
     setData(data.filter(inv => inv.id !== selectedInvoice.id));
     setShowDeleteDialog(false);
     setSelectedInvoice(null);
+    toast.success('Facture supprimée', `${selectedInvoice.invoiceNumber} a été supprimée`);
   };
 
   const handleStatusChange = () => {
@@ -308,8 +387,80 @@ export default function BillingPage() {
       inv.id === selectedInvoice.id ? { ...inv, status: pendingStatus } : inv
     ));
     setShowStatusDialog(false);
+    const statusLabel = invoiceStatusLabels[pendingStatus];
+    toast.success('Statut mis à jour', `${selectedInvoice.invoiceNumber} → ${statusLabel}`);
     setSelectedInvoice(null);
     setPendingStatus(null);
+  };
+
+  // ── Reminder Handlers ──────────────────────────────────────────────
+
+  const handleAutoReminders = useCallback(() => {
+    const invoiceForReminders: InvoiceForReminder[] = unpaidInvoices.map(inv => ({
+      id: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      clientName: inv.clientName,
+      amount: inv.amount,
+      status: inv.status,
+      dateEmission: inv.dateEmission,
+      dateEcheance: inv.dateEcheance,
+    }));
+
+    const newReminders = generateAutoReminders(invoiceForReminders, reminderConfig, reminders);
+
+    if (newReminders.length === 0) {
+      toast.info('Relances automatiques', 'Aucune nouvelle relance nécessaire');
+      return;
+    }
+
+    // Simulate sending all pending reminders
+    const sentNewReminders = newReminders.map(r => sendReminder(r));
+    const updatedReminders = [...reminders, ...sentNewReminders];
+    setReminders(updatedReminders);
+    saveReminders(updatedReminders);
+
+    toast.success('Relances envoyées', `${sentNewReminders.length} relance(s) envoyée(s) automatiquement`);
+  }, [unpaidInvoices, reminderConfig, reminders, toast]);
+
+  const handleSendManualReminder = (invoice: Invoice, level: ReminderLevel, channel: ReminderChannel) => {
+    const { generateReminderSubject, generateReminderBody } = require('@/lib/reminder-system');
+    const subject = generateReminderSubject(level, invoice.invoiceNumber);
+    const body = generateReminderBody(level, invoice.clientName, invoice.invoiceNumber, invoice.amount, invoice.dateEcheance, symbol);
+
+    const reminder: Reminder = {
+      id: `rem-${Date.now()}-${invoice.id}-${level}`,
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      clientName: invoice.clientName,
+      amount: invoice.amount,
+      level,
+      channel,
+      sentAt: new Date().toISOString(),
+      status: 'sent',
+      subject,
+      body,
+    };
+
+    const updatedReminders = [...reminders, reminder];
+    setReminders(updatedReminders);
+    saveReminders(updatedReminders);
+
+    // If invoice is en_attente and overdue, mark as en_retard
+    if (invoice.status === 'en_attente' && getDaysLate(invoice.dateEcheance) > 0) {
+      setData(data.map(inv =>
+        inv.id === invoice.id ? { ...inv, status: 'en_retard' as InvoiceStatus } : inv
+      ));
+    }
+
+    toast.success('Relance envoyée', `${reminderLevelLabels[level]} envoyée à ${invoice.clientName}`);
+    setShowSendReminderDialog(false);
+  };
+
+  const handleSaveConfig = (config: ReminderConfig) => {
+    setReminderConfig(config);
+    saveReminderConfig(config);
+    setShowReminderConfigDialog(false);
+    toast.success('Configuration sauvegardée', 'Les paramètres de relance ont été mis à jour');
   };
 
   const openDetailDialog = (inv: Invoice) => {
@@ -340,7 +491,7 @@ export default function BillingPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['N Facture', 'Client', `Montant (${symbol})`, 'Statut', 'Date Emission', 'Date Echeance', 'Expeditions'];
+    const headers = ['N° Facture', 'Client', `Montant (${symbol})`, 'Statut', 'Date Émission', 'Date Échéance', 'Expéditions'];
     const rows = filtered.map(inv => [
       inv.invoiceNumber,
       inv.clientName,
@@ -355,15 +506,15 @@ export default function BillingPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-billing-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `logisway-factures-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   // ── KPI cards config ───────────────────────────────────────────────
   const kpiCards = [
-    { title: 'Total facture', value: formatPrice(totalInvoiced), icon: DollarSign, color: 'from-blue-500 to-blue-600' },
-    { title: 'Paye', value: formatPrice(totalPaid), icon: CheckCircle2, color: 'from-green-500 to-green-600' },
+    { title: 'Total facturé', value: formatPrice(totalInvoiced), icon: DollarSign, color: 'from-blue-500 to-blue-600' },
+    { title: 'Payé', value: formatPrice(totalPaid), icon: CheckCircle2, color: 'from-green-500 to-green-600' },
     { title: 'En attente', value: formatPrice(totalPending), icon: Clock, color: 'from-yellow-500 to-yellow-600' },
     { title: 'En retard', value: formatPrice(totalOverdue), icon: AlertTriangle, color: 'from-red-500 to-red-600' },
   ];
@@ -382,7 +533,7 @@ export default function BillingPage() {
   const getStatusActions = (inv: Invoice): { label: string; status: InvoiceStatus; icon: React.ElementType; variant: string }[] => {
     const actions: { label: string; status: InvoiceStatus; icon: React.ElementType; variant: string }[] = [];
     if (inv.status === 'en_attente' || inv.status === 'en_retard') {
-      actions.push({ label: 'Marquer payee', status: 'payee', icon: CreditCard, variant: 'green' });
+      actions.push({ label: 'Marquer payée', status: 'payee', icon: CreditCard, variant: 'green' });
     }
     if (inv.status === 'en_attente') {
       actions.push({ label: 'Marquer en retard', status: 'en_retard', icon: AlertCircle, variant: 'orange' });
@@ -391,7 +542,7 @@ export default function BillingPage() {
       actions.push({ label: 'Annuler', status: 'annulee', icon: Ban, variant: 'red' });
     }
     if (inv.status === 'payee') {
-      actions.push({ label: 'Reouvrir', status: 'en_attente', icon: TrendingUp, variant: 'blue' });
+      actions.push({ label: 'Réouvrir', status: 'en_attente', icon: RotateCcw, variant: 'blue' });
     }
     return actions;
   };
@@ -406,15 +557,147 @@ export default function BillingPage() {
     }
   };
 
+  // ── Get reminder level badge for an invoice ────────────────────────
+  const getReminderBadge = (inv: Invoice) => {
+    if (inv.status === 'payee' || inv.status === 'annulee') return null;
+    const level = getRequiredReminderLevel(inv as InvoiceForReminder, reminderConfig);
+    if (!level) return null;
+    return (
+      <Badge className={`text-[9px] px-1 py-0 ml-1 ${reminderLevelColors[level]}`}>
+        Niv. {level}
+      </Badge>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Facturation</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Gerez vos factures et paiements</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Gérez vos factures, paiements et relances</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Reminder actions */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="text-xs relative">
+                <BellRing className="w-4 h-4 mr-1" />
+                Relances
+                {invoicesNeedingReminder.length > 0 && (
+                  <span className="ml-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+                    {invoicesNeedingReminder.length}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
+              <div className="px-4 py-3 border-b">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-teal-500" />
+                  Centre de relances
+                </h3>
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  {invoicesNeedingReminder.length} facture(s) nécessitent une relance
+                </p>
+              </div>
+              <ScrollArea className="max-h-[320px]">
+                <div className="divide-y">
+                  {invoicesNeedingReminder.length === 0 ? (
+                    <div className="px-4 py-6 text-center">
+                      <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-xs text-gray-500">Aucune relance nécessaire</p>
+                    </div>
+                  ) : (
+                    invoicesNeedingReminder.map(inv => {
+                      const level = getRequiredReminderLevel(inv as InvoiceForReminder, reminderConfig);
+                      if (!level) return null;
+                      const daysInfo = inv.status === 'en_retard'
+                        ? `En retard de ${getDaysLate(inv.dateEcheance)} jours`
+                        : `Échéance dans ${getDaysUntilDue(inv.dateEcheance)} jours`;
+                      return (
+                        <div key={inv.id} className="px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs font-semibold font-mono">{inv.invoiceNumber}</span>
+                            <Badge className={`text-[9px] px-1.5 py-0 ${reminderLevelColors[level]}`}>
+                              Niv. {level}
+                            </Badge>
+                          </div>
+                          <p className="text-[11px] text-gray-700 dark:text-gray-300 font-medium">{inv.clientName}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-[10px] text-gray-400">{daysInfo}</span>
+                            <span className="text-[11px] font-semibold">{formatPrice(inv.amount)}</span>
+                          </div>
+                          <div className="mt-1.5 flex gap-1">
+                            <Button
+                              size="sm"
+                              className="h-6 text-[10px] text-white px-2"
+                              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                              onClick={() => {
+                                handleSendManualReminder(inv, level, 'email');
+                              }}
+                            >
+                              <Send className="w-2.5 h-2.5 mr-0.5" />
+                              Envoyer
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-[10px] px-2"
+                              onClick={() => {
+                                setSelectedInvoice(inv);
+                                setShowSendReminderDialog(true);
+                              }}
+                            >
+                              Personnaliser
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </ScrollArea>
+              <div className="px-4 py-2.5 border-t bg-gray-50 dark:bg-gray-800/50 rounded-b-lg flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[10px] flex-1"
+                  onClick={handleAutoReminders}
+                  disabled={invoicesNeedingReminder.length === 0}
+                >
+                  <Send className="w-3 h-3 mr-1" />
+                  Envoyer tout
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-[10px] flex-1"
+                  onClick={() => setShowReminderConfigDialog(true)}
+                >
+                  <Settings2 className="w-3 h-3 mr-1" />
+                  Config
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Reminder history */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => setShowReminderHistoryDialog(true)}
+          >
+            <FileCheck className="w-4 h-4 mr-1" />
+            Historique
+            {sentReminders.length > 0 && (
+              <Badge className="ml-1 text-[9px] bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 px-1 py-0">
+                {sentReminders.length}
+              </Badge>
+            )}
+          </Button>
+
           <ExportButtons
             data={filteredInvoices as unknown as Record<string, unknown>[]}
             columns={[
@@ -430,7 +713,7 @@ export default function BillingPage() {
           />
           <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
-            Exporter
+            CSV
           </Button>
           {canEditPage && (
             <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
@@ -465,8 +748,8 @@ export default function BillingPage() {
       {/* Revenue Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Revenus encaisses</CardTitle>
-          <CardDescription>Montant des factures payees par mois</CardDescription>
+          <CardTitle className="text-base">Revenus encaissés</CardTitle>
+          <CardDescription>Montant des factures payées par mois</CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="h-56">
@@ -493,7 +776,7 @@ export default function BillingPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Rechercher par N facture ou client..."
+                placeholder="Rechercher par N° facture ou client..."
                 className="pl-9"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
@@ -505,10 +788,10 @@ export default function BillingPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="payee">Payee</SelectItem>
+                <SelectItem value="payee">Payée</SelectItem>
                 <SelectItem value="en_attente">En attente</SelectItem>
                 <SelectItem value="en_retard">En retard</SelectItem>
-                <SelectItem value="annulee">Annulee</SelectItem>
+                <SelectItem value="annulee">Annulée</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -541,13 +824,13 @@ export default function BillingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-xs">N Facture</TableHead>
+                  <TableHead className="text-xs">N° Facture</TableHead>
                   <TableHead className="text-xs">Client</TableHead>
                   <TableHead className="text-xs">Montant</TableHead>
                   <TableHead className="text-xs">Statut</TableHead>
-                  <TableHead className="text-xs hidden sm:table-cell">Date emission</TableHead>
-                  <TableHead className="text-xs hidden md:table-cell">Date echeance</TableHead>
-                  <TableHead className="text-xs hidden lg:table-cell">Expeditions</TableHead>
+                  <TableHead className="text-xs hidden sm:table-cell">Date émission</TableHead>
+                  <TableHead className="text-xs hidden md:table-cell">Échéance</TableHead>
+                  <TableHead className="text-xs hidden lg:table-cell">Expéditions</TableHead>
                   <TableHead className="text-xs">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -555,7 +838,7 @@ export default function BillingPage() {
                 {paginated.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                      Aucune facture trouvee
+                      Aucune facture trouvée
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -567,10 +850,13 @@ export default function BillingPage() {
                         <TableCell className="text-xs font-medium">{invoice.clientName}</TableCell>
                         <TableCell className="text-xs font-semibold">{formatPrice(invoice.amount)}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusColors[invoice.status]}`}>
-                            <StatusIcon className="w-3 h-3 mr-1" />
-                            {invoiceStatusLabels[invoice.status]}
-                          </Badge>
+                          <div className="flex items-center">
+                            <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusColors[invoice.status]}`}>
+                              <StatusIcon className="w-3 h-3 mr-1" />
+                              {invoiceStatusLabels[invoice.status]}
+                            </Badge>
+                            {getReminderBadge(invoice)}
+                          </div>
                         </TableCell>
                         <TableCell className="text-xs hidden sm:table-cell">{formatDate(invoice.dateEmission)}</TableCell>
                         <TableCell className="text-xs hidden md:table-cell">{formatDate(invoice.dateEcheance)}</TableCell>
@@ -583,9 +869,18 @@ export default function BillingPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20" title="Voir les details" onClick={() => openDetailDialog(invoice)}>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20" title="Voir les détails" onClick={() => openDetailDialog(invoice)}>
                               <Eye className="w-3.5 h-3.5" />
                             </Button>
+                            {/* Quick reminder button for unpaid invoices */}
+                            {(invoice.status === 'en_attente' || invoice.status === 'en_retard') && (
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-amber-600 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-900/20" title="Envoyer une relance" onClick={() => {
+                                const level = getRequiredReminderLevel(invoice as InvoiceForReminder, reminderConfig) || 1;
+                                handleSendManualReminder(invoice, level, 'email');
+                              }}>
+                                <Bell className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
                             {canEditPage && (
                               <>
                                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-green-600 hover:text-green-800 hover:bg-green-50 dark:hover:bg-green-900/20" title="Modifier" onClick={() => openEditDialog(invoice)}>
@@ -631,10 +926,10 @@ export default function BillingPage() {
       </Card>
 
       {/* ══════════════════════════════════════════════════════════════════
-          DETAIL DIALOG — Vue détaillée avec timeline de paiement
+          DETAIL DIALOG — Vue détaillée avec timeline de paiement + relances
       ══════════════════════════════════════════════════════════════════ */}
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           {selectedInvoice && (
             <>
               <DialogHeader>
@@ -642,19 +937,45 @@ export default function BillingPage() {
                   <FileText className="w-5 h-5" />
                   {selectedInvoice.invoiceNumber}
                 </DialogTitle>
-                <DialogDescription>Details de la facture</DialogDescription>
+                <DialogDescription>Détails de la facture</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4">
                 {/* Status + Montant */}
                 <div className="flex items-center justify-between">
-                  <Badge variant="secondary" className={`text-xs px-3 py-1 ${statusColors[selectedInvoice.status]}`}>
-                    {invoiceStatusLabels[selectedInvoice.status]}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className={`text-xs px-3 py-1 ${statusColors[selectedInvoice.status]}`}>
+                      {invoiceStatusLabels[selectedInvoice.status]}
+                    </Badge>
+                    {getReminderBadge(selectedInvoice)}
+                  </div>
                   <p className="text-xl font-bold text-gray-900 dark:text-white">
                     {formatPrice(selectedInvoice.amount)}
                   </p>
                 </div>
+
+                {/* Days info for unpaid */}
+                {(selectedInvoice.status === 'en_attente' || selectedInvoice.status === 'en_retard') && (
+                  <div className={`p-3 rounded-lg ${selectedInvoice.status === 'en_retard' ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800' : 'bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800'}`}>
+                    <div className="flex items-center gap-2">
+                      {selectedInvoice.status === 'en_retard' ? (
+                        <>
+                          <AlertTriangle className="w-4 h-4 text-red-500" />
+                          <span className="text-xs font-semibold text-red-700 dark:text-red-400">
+                            En retard de {getDaysLate(selectedInvoice.dateEcheance)} jours
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="w-4 h-4 text-yellow-500" />
+                          <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-400">
+                            Échéance dans {getDaysUntilDue(selectedInvoice.dateEcheance)} jours
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <Separator />
 
@@ -669,19 +990,19 @@ export default function BillingPage() {
                     <p className="font-semibold text-gray-900 dark:text-white">{formatPrice(selectedInvoice.amount)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Date emission</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Date d&apos;émission</p>
                     <p className="font-medium text-gray-900 dark:text-white">{formatDate(selectedInvoice.dateEmission)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Date echeance</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Date d&apos;échéance</p>
                     <p className="font-medium text-gray-900 dark:text-white">{formatDate(selectedInvoice.dateEcheance)}</p>
                   </div>
                 </div>
 
-                {/* Expeditions liees */}
+                {/* Expéditions liées */}
                 {selectedInvoice.shipments.length > 0 && (
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Expeditions liees</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Expéditions liées</p>
                     <div className="flex flex-wrap gap-1">
                       {selectedInvoice.shipments.map((s, i) => (
                         <Badge key={i} variant="outline" className="text-xs font-mono">
@@ -716,14 +1037,14 @@ export default function BillingPage() {
                   </div>
                 </div>
 
-                {/* Status action buttons */}
-                {canEditPage && getStatusActions(selectedInvoice).length > 0 && (
+                {/* Status action buttons + Reminder button */}
+                {(canEditPage || selectedInvoice.status === 'en_attente' || selectedInvoice.status === 'en_retard') && (
                   <>
                     <Separator />
                     <div>
                       <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Actions</p>
                       <div className="flex flex-wrap gap-2">
-                        {getStatusActions(selectedInvoice).map((action) => (
+                        {canEditPage && getStatusActions(selectedInvoice).map((action) => (
                           <Button
                             key={action.status}
                             size="sm"
@@ -734,6 +1055,20 @@ export default function BillingPage() {
                             {action.label}
                           </Button>
                         ))}
+                        {/* Manual reminder button */}
+                        {(selectedInvoice.status === 'en_attente' || selectedInvoice.status === 'en_retard') && (
+                          <Button
+                            size="sm"
+                            className="text-xs h-8 bg-amber-500 hover:bg-amber-600 text-white"
+                            onClick={() => {
+                              setShowDetailDialog(false);
+                              setShowSendReminderDialog(true);
+                            }}
+                          >
+                            <Send className="w-3.5 h-3.5 mr-1" />
+                            Envoyer une relance
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </>
@@ -745,13 +1080,109 @@ export default function BillingPage() {
       </Dialog>
 
       {/* ══════════════════════════════════════════════════════════════════
+          SEND REMINDER DIALOG — Envoyer une relance personnalisée
+      ══════════════════════════════════════════════════════════════════ */}
+      <Dialog open={showSendReminderDialog} onOpenChange={setShowSendReminderDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-amber-500" />
+              Envoyer une relance
+            </DialogTitle>
+            <DialogDescription>
+              {selectedInvoice && `Relance pour la facture ${selectedInvoice.invoiceNumber} — ${selectedInvoice.clientName}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedInvoice && (
+            <SendReminderForm
+              invoice={selectedInvoice}
+              symbol={symbol}
+              config={reminderConfig}
+              onSend={(level, channel) => handleSendManualReminder(selectedInvoice, level, channel)}
+              onCancel={() => setShowSendReminderDialog(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          REMINDER HISTORY DIALOG
+      ══════════════════════════════════════════════════════════════════ */}
+      <Dialog open={showReminderHistoryDialog} onOpenChange={setShowReminderHistoryDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileCheck className="w-5 h-5 text-teal-500" />
+              Historique des relances
+            </DialogTitle>
+            <DialogDescription>
+              {sentReminders.length} relance(s) envoyée(s)
+            </DialogDescription>
+          </DialogHeader>
+
+          {sentReminders.length === 0 ? (
+            <div className="py-8 text-center">
+              <Bell className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">Aucune relance envoyée pour le moment</p>
+              <p className="text-xs text-gray-400 mt-1">Les relances apparaîtront ici après envoi</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {[...sentReminders].reverse().map(rem => (
+                <div key={rem.id} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-[9px] px-1.5 py-0 ${reminderLevelColors[rem.level]}`}>
+                        {reminderLevelLabels[rem.level]}
+                      </Badge>
+                      <span className="text-xs font-mono font-semibold">{rem.invoiceNumber}</span>
+                    </div>
+                    <span className="text-[10px] text-gray-400">{formatDate(rem.sentAt.split('T')[0])}</span>
+                  </div>
+                  <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{rem.clientName}</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">{rem.subject}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="outline" className="text-[9px] px-1 py-0">
+                      {reminderChannelLabels[rem.channel]}
+                    </Badge>
+                    <span className="text-[10px] font-semibold">{formatPrice(rem.amount)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          REMINDER CONFIG DIALOG
+      ══════════════════════════════════════════════════════════════════ */}
+      <Dialog open={showReminderConfigDialog} onOpenChange={setShowReminderConfigDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Settings2 className="w-5 h-5 text-teal-500" />
+              Configuration des relances
+            </DialogTitle>
+            <DialogDescription>Paramétrez les règles de relance automatique</DialogDescription>
+          </DialogHeader>
+          <ReminderConfigForm
+            config={reminderConfig}
+            onSave={handleSaveConfig}
+            onCancel={() => setShowReminderConfigDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* ══════════════════════════════════════════════════════════════════
           ADD INVOICE DIALOG
       ══════════════════════════════════════════════════════════════════ */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Nouvelle facture</DialogTitle>
-            <DialogDescription>Creer une nouvelle facture</DialogDescription>
+            <DialogDescription>Créer une nouvelle facture</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -763,18 +1194,18 @@ export default function BillingPage() {
               <Input type="number" value={newInvoice.amount} onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })} placeholder="0" />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Date d&apos;echeance</Label>
+              <Label className="text-xs">Date d&apos;échéance</Label>
               <Input type="date" value={newInvoice.dateEcheance} onChange={(e) => setNewInvoice({ ...newInvoice, dateEcheance: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Expeditions liees (separees par virgules)</Label>
+              <Label className="text-xs">Expéditions liées (séparées par virgules)</Label>
               <Input value={newInvoice.shipments} onChange={(e) => setNewInvoice({ ...newInvoice, shipments: e.target.value })} placeholder="FFP-0001-2026, FFP-0002-2026" />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
             <Button onClick={handleAddInvoice} disabled={!newInvoice.clientName || !newInvoice.amount} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
-              Creer la facture
+              Créer la facture
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -799,11 +1230,11 @@ export default function BillingPage() {
               <Input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Date d&apos;echeance</Label>
+              <Label className="text-xs">Date d&apos;échéance</Label>
               <Input type="date" value={editForm.dateEcheance} onChange={(e) => setEditForm({ ...editForm, dateEcheance: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Expeditions liees (separees par virgules)</Label>
+              <Label className="text-xs">Expéditions liées (séparées par virgules)</Label>
               <Input value={editForm.shipments} onChange={(e) => setEditForm({ ...editForm, shipments: e.target.value })} placeholder="FFP-0001-2026, FFP-0002-2026" />
             </div>
           </div>
@@ -824,8 +1255,8 @@ export default function BillingPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la facture</AlertDialogTitle>
             <AlertDialogDescription>
-              Etes-vous sur de vouloir supprimer la facture {selectedInvoice?.invoiceNumber} ?
-              Cette action est irreversible.
+              Êtes-vous sûr de vouloir supprimer la facture {selectedInvoice?.invoiceNumber} ?
+              Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -847,8 +1278,8 @@ export default function BillingPage() {
             <AlertDialogDescription>
               {pendingStatus === 'payee' && `Confirmer le paiement de la facture ${selectedInvoice?.invoiceNumber} (${selectedInvoice ? formatPrice(selectedInvoice.amount) : ''}) ?`}
               {pendingStatus === 'en_retard' && `Marquer la facture ${selectedInvoice?.invoiceNumber} comme en retard ?`}
-              {pendingStatus === 'annulee' && `Annuler la facture ${selectedInvoice?.invoiceNumber} ? Cette action peut etre reversee.`}
-              {pendingStatus === 'en_attente' && `Reouvrir la facture ${selectedInvoice?.invoiceNumber} et la remettre en attente ?`}
+              {pendingStatus === 'annulee' && `Annuler la facture ${selectedInvoice?.invoiceNumber} ? Cette action peut être reversée.`}
+              {pendingStatus === 'en_attente' && `Réouvrir la facture ${selectedInvoice?.invoiceNumber} et la remettre en attente ?`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -861,4 +1292,234 @@ export default function BillingPage() {
       </AlertDialog>
     </div>
   );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+//    SUB-COMPONENTS
+// ══════════════════════════════════════════════════════════════════════
+
+// ── Send Reminder Form ───────────────────────────────────────────────
+
+function SendReminderForm({
+  invoice,
+  symbol,
+  config,
+  onSend,
+  onCancel,
+}: {
+  invoice: Invoice;
+  symbol: string;
+  config: ReminderConfig;
+  onSend: (level: ReminderLevel, channel: ReminderChannel) => void;
+  onCancel: () => void;
+}) {
+  const [selectedLevel, setSelectedLevel] = useState<ReminderLevel>(() => {
+    const level = getRequiredReminderLevel(invoice as InvoiceForReminder, config);
+    return level || 1;
+  });
+  const [selectedChannel, setSelectedChannel] = useState<ReminderChannel>('email');
+
+  const { generateReminderSubject, generateReminderBody } = require('@/lib/reminder-system');
+  const subject = generateReminderSubject(selectedLevel, invoice.invoiceNumber);
+  const body = generateReminderBody(selectedLevel, invoice.clientName, invoice.invoiceNumber, invoice.amount, invoice.dateEcheance, symbol);
+
+  return (
+    <div className="space-y-4">
+      {/* Invoice info */}
+      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-mono font-semibold">{invoice.invoiceNumber}</span>
+          <span className="text-xs font-bold">{formatCurrency(invoice.amount)} {symbol}</span>
+        </div>
+        <p className="text-[11px] text-gray-600 dark:text-gray-400">{invoice.clientName}</p>
+        <p className="text-[10px] text-gray-400">Échéance : {formatDate(invoice.dateEcheance)}</p>
+      </div>
+
+      {/* Level selector */}
+      <div className="space-y-2">
+        <Label className="text-xs">Niveau de relance</Label>
+        <Select value={String(selectedLevel)} onValueChange={(v) => setSelectedLevel(Number(v) as ReminderLevel)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {([1, 2, 3, 4, 5] as ReminderLevel[]).map(level => (
+              <SelectItem key={level} value={String(level)}>
+                <div className="flex items-center gap-2">
+                  <Badge className={`text-[9px] px-1 py-0 ${reminderLevelColors[level]}`}>Niv. {level}</Badge>
+                  <span>{reminderLevelLabels[level]}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Channel selector */}
+      <div className="space-y-2">
+        <Label className="text-xs">Canal d&apos;envoi</Label>
+        <div className="grid grid-cols-4 gap-2">
+          {(['email', 'sms', 'whatsapp', 'courrier'] as ReminderChannel[]).map(ch => (
+            <button
+              key={ch}
+              onClick={() => setSelectedChannel(ch)}
+              className={`p-2 rounded-lg border text-center transition-all text-xs ${
+                selectedChannel === ch
+                  ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 font-semibold'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <div className="text-lg mb-0.5">{ch === 'email' ? '📧' : ch === 'sms' ? '📱' : ch === 'whatsapp' ? '💬' : '📬'}</div>
+              {reminderChannelLabels[ch]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Preview */}
+      <div className="space-y-2">
+        <Label className="text-xs">Aperçu du message</Label>
+        <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">{subject}</p>
+          <p className="text-[11px] text-gray-600 dark:text-gray-400 whitespace-pre-line">{body}</p>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>Annuler</Button>
+        <Button
+          onClick={() => onSend(selectedLevel, selectedChannel)}
+          className="text-white bg-amber-500 hover:bg-amber-600"
+        >
+          <Send className="w-4 h-4 mr-2" />
+          Envoyer la relance
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+// ── Reminder Config Form ─────────────────────────────────────────────
+
+function ReminderConfigForm({
+  config,
+  onSave,
+  onCancel,
+}: {
+  config: ReminderConfig;
+  onSave: (config: ReminderConfig) => void;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState<ReminderConfig>({ ...config });
+
+  return (
+    <div className="space-y-4">
+      {/* Enable/Disable */}
+      <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+        <div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">Relances automatiques</p>
+          <p className="text-[10px] text-gray-500">Activer l&apos;envoi automatique des relances</p>
+        </div>
+        <button
+          onClick={() => setForm({ ...form, enabled: !form.enabled })}
+          className={`w-11 h-6 rounded-full transition-all duration-200 ${
+            form.enabled ? 'bg-teal-500' : 'bg-gray-300 dark:bg-gray-600'
+          }`}
+        >
+          <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+            form.enabled ? 'translate-x-5.5' : 'translate-x-0.5'
+          }`} />
+        </button>
+      </div>
+
+      {/* Days before due */}
+      <div className="space-y-2">
+        <Label className="text-xs">1ère relance : jours avant l&apos;échéance</Label>
+        <Input
+          type="number"
+          value={form.daysBeforeDue}
+          onChange={(e) => setForm({ ...form, daysBeforeDue: parseInt(e.target.value) || 7 })}
+          min={1}
+          max={30}
+        />
+        <p className="text-[10px] text-gray-400">Un rappel préventif sera envoyé N jours avant l&apos;échéance</p>
+      </div>
+
+      {/* Days after due */}
+      <div className="space-y-2">
+        <Label className="text-xs">Jours après échéance pour chaque niveau</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {form.daysAfterDue.map((days, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Badge className={`text-[9px] px-1.5 py-0 ${reminderLevelColors[(index + 2) as ReminderLevel]}`}>
+                Niv. {index + 2}
+              </Badge>
+              <Input
+                type="number"
+                value={days}
+                onChange={(e) => {
+                  const newDays = [...form.daysAfterDue];
+                  newDays[index] = parseInt(e.target.value) || 0;
+                  setForm({ ...form, daysAfterDue: newDays });
+                }}
+                className="h-8 text-xs"
+                min={0}
+                max={90}
+              />
+              <span className="text-[10px] text-gray-400">j</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Default channel */}
+      <div className="space-y-2">
+        <Label className="text-xs">Canal par défaut</Label>
+        <Select value={form.defaultChannel} onValueChange={(v) => setForm({ ...form, defaultChannel: v as ReminderChannel })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(['email', 'sms', 'whatsapp', 'courrier'] as ReminderChannel[]).map(ch => (
+              <SelectItem key={ch} value={ch}>{reminderChannelLabels[ch]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Include options */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={form.includePending}
+            onChange={(e) => setForm({ ...form, includePending: e.target.checked })}
+            className="rounded border-gray-300"
+          />
+          <Label className="text-xs">Inclure les factures en attente</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={form.includeOverdue}
+            onChange={(e) => setForm({ ...form, includeOverdue: e.target.checked })}
+            className="rounded border-gray-300"
+          />
+          <Label className="text-xs">Inclure les factures en retard</Label>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>Annuler</Button>
+        <Button onClick={() => onSave(form)} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+          Enregistrer
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+// ── Helper ──────────────────────────────────────────────────────────
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('fr-FR').format(amount);
 }
