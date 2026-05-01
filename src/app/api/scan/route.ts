@@ -125,9 +125,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { code, action } = body;
 
+    // Action: batch — process multiple codes (must check before single code validation)
+    if (action === 'batch' && Array.isArray(code)) {
+      const results = code.map((c: string) => {
+        if (typeof c !== 'string') return { code: String(c), type: 'unknown', status: 'Non reconnu', details: { 'Erreur': 'Format de code invalide' } };
+        return lookupCode(c.trim().toUpperCase());
+      });
+      await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500));
+      return NextResponse.json({
+        success: true,
+        results,
+        count: results.length,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     if (!code || typeof code !== 'string') {
       return NextResponse.json(
-        { error: 'Code requis pour le scan' },
+        { error: 'Code requis pour le scan (chaîne pour lookup/validate, tableau pour batch)' },
         { status: 400 }
       );
     }
@@ -155,18 +170,6 @@ export async function POST(request: NextRequest) {
         valid: isValid,
         type,
         code: trimmedCode,
-      });
-    }
-
-    // Action: batch — process multiple codes
-    if (action === 'batch' && Array.isArray(code)) {
-      const results = code.map((c: string) => lookupCode(c.trim().toUpperCase()));
-      await new Promise((resolve) => setTimeout(resolve, 500 + Math.random() * 500));
-      return NextResponse.json({
-        success: true,
-        results,
-        count: results.length,
-        timestamp: new Date().toISOString(),
       });
     }
 

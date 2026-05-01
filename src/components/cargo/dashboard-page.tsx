@@ -436,7 +436,7 @@ export default function DashboardPage() {
                 <CardTitle className="text-base">Activité récente</CardTitle>
                 <CardDescription>Derniers événements</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" className="text-xs">
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => setPage('shipments')}>
                 Voir tout
               </Button>
             </div>

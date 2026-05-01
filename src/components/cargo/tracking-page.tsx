@@ -194,15 +194,121 @@ export default function TrackingPage() {
   };
 
   const handleDownloadPDF = () => {
-    // Simulate PDF download
-    const element = document.createElement('a');
-    const content = `LogisWay - Bon de Suivi\n\nN° Suivi: ${selectedShipment?.trackingNumber}\nClient: ${selectedShipment?.clientName}\nOrigine: ${selectedShipment?.origin}\nDestination: ${selectedShipment?.destination}\nStatut: ${statusLabels[selectedShipment?.status || 'en_attente']}\nPoids: ${selectedShipment?.weight} kg\nPrix: ${formatDZD(selectedShipment?.price || 0)}\nDate création: ${selectedShipment?.dateCreation}\nLivraison estimée: ${selectedShipment?.dateLivraisonEstimee}`;
-    const file = new Blob([content], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `suivi-${selectedShipment?.trackingNumber}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    // Generate a proper PDF using the browser's print functionality
+    const printContent = `
+      <html>
+      <head>
+        <title>Bon de Suivi - ${selectedShipment?.trackingNumber}</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; color: #1a1a1a; }
+          .header { display: flex; align-items: center; gap: 16px; border-bottom: 3px solid #0d9488; padding-bottom: 20px; margin-bottom: 24px; }
+          .logo { font-size: 24px; font-weight: bold; color: #0d9488; }
+          .subtitle { font-size: 10px; color: #666; letter-spacing: 2px; text-transform: uppercase; }
+          .title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+          .field { margin-bottom: 12px; }
+          .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+          .value { font-size: 14px; font-weight: 600; }
+          .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #fef3c7; color: #92400e; }
+          .section-title { font-size: 14px; font-weight: 600; color: #0d9488; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
+          .timeline-step { display: flex; gap: 12px; margin-bottom: 8px; }
+          .step-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+          .step-completed { background: #22c55e; }
+          .step-pending { background: #d1d5db; }
+          .step-label { font-size: 13px; }
+          .step-location { font-size: 11px; color: #666; }
+          .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #999; text-align: center; }
+          @media print { body { margin: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="logo">LogisWay</div>
+            <div class="subtitle">Logistique Internationale</div>
+          </div>
+          <div style="margin-left: auto; text-align: right;">
+            <div class="title">Bon de Suivi</div>
+            <div style="font-size: 12px; color: #666;">${new Date().toLocaleDateString('fr-FR')}</div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div>
+            <div class="field">
+              <div class="label">N° Suivi</div>
+              <div class="value">${selectedShipment?.trackingNumber}</div>
+            </div>
+            <div class="field">
+              <div class="label">Client</div>
+              <div class="value">${selectedShipment?.clientName}</div>
+            </div>
+            <div class="field">
+              <div class="label">Téléphone</div>
+              <div class="value">${selectedShipment?.clientPhone}</div>
+            </div>
+            <div class="field">
+              <div class="label">Type</div>
+              <div class="value">${typeLabels[selectedShipment?.type || 'maritime']}</div>
+            </div>
+          </div>
+          <div>
+            <div class="field">
+              <div class="label">Origine</div>
+              <div class="value">${selectedShipment?.origin}</div>
+            </div>
+            <div class="field">
+              <div class="label">Destination</div>
+              <div class="value">${selectedShipment?.destination}</div>
+            </div>
+            <div class="field">
+              <div class="label">Poids</div>
+              <div class="value">${selectedShipment?.weight} kg</div>
+            </div>
+            <div class="field">
+              <div class="label">Statut</div>
+              <div class="status-badge">${statusLabels[selectedShipment?.status || 'en_attente']}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="field">
+            <div class="label">Date de création</div>
+            <div class="value">${selectedShipment?.dateCreation ? formatDate(selectedShipment.dateCreation) : 'N/A'}</div>
+          </div>
+          <div class="field">
+            <div class="label">Livraison estimée</div>
+            <div class="value">${selectedShipment?.dateLivraisonEstimee ? formatDate(selectedShipment.dateLivraisonEstimee) : 'N/A'}</div>
+          </div>
+        </div>
+
+        <div class="section-title">Historique de suivi</div>
+        ${timeline.map((step) => `
+          <div class="timeline-step">
+            <div class="step-dot ${step.stepState === 'completed' ? 'step-completed' : 'step-pending'}"></div>
+            <div>
+              <div class="step-label">${step.label}${step.date ? ' — ' + formatDate(step.date) : ''}</div>
+              ${step.location ? '<div class="step-location">' + step.location + '</div>' : ''}
+            </div>
+          </div>
+        `).join('')}
+
+        <div class="footer">
+          LogisWay — Plateforme de Logistique Internationale | Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
   };
 
   const timeline = selectedShipment ? getTimelineForShipment(selectedShipment) : [];

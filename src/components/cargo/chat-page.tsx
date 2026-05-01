@@ -31,6 +31,7 @@ import {
   Package,
   ExternalLink,
   Ticket,
+  Volume2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
 
@@ -287,6 +290,10 @@ export default function ChatPage() {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [callType, setCallType] = useState<'phone' | 'video' | null>(null);
   const [pinnedMessageIds, setPinnedMessageIds] = useState<Set<string>>(new Set());
+  const [mutedChannels, setMutedChannels] = useState<Set<string>>(new Set());
+  const [leftChannels, setLeftChannels] = useState<Set<string>>(new Set());
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -642,18 +649,20 @@ export default function ChatPage() {
             </Button>
           </>
         )}
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
+        <Button variant="ghost" size="icon" className={`h-8 w-8 ${pinnedMessageIds.has(currentMessages[currentMessages.length - 1]?.id) ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`} onClick={() => {
           const lastMsg = currentMessages[currentMessages.length - 1];
           if (lastMsg) {
             setPinnedMessageIds(prev => {
               const next = new Set(prev);
-              if (next.has(lastMsg.id)) { next.delete(lastMsg.id); } else { next.add(lastMsg.id); }
+              const isPinned = next.has(lastMsg.id);
+              if (isPinned) { next.delete(lastMsg.id); } else { next.add(lastMsg.id); }
+              setToastMessage(isPinned ? 'Message désépinglé' : 'Message épinglé');
+              setTimeout(() => setToastMessage(''), 2000);
               return next;
             });
           }
-          alert(pinnedMessageIds.has(currentMessages[currentMessages.length - 1]?.id) ? 'Message désépinglé' : 'Message épinglé');
         }}>
-          <Pin className="w-4 h-4 text-gray-500" />
+          <Pin className={`w-4 h-4 ${pinnedMessageIds.has(currentMessages[currentMessages.length - 1]?.id) ? 'text-teal-500 fill-teal-500' : 'text-gray-500'}`} />
         </Button>
         <Button variant="ghost" size="icon" className={`h-8 w-8 ${showChatSearch ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`} onClick={() => { setShowChatSearch(!showChatSearch); if (showChatSearch) setChatSearchQuery(''); }}>
           <Search className="w-4 h-4 text-gray-500" />
@@ -673,14 +682,23 @@ export default function ChatPage() {
               Marquer comme lu
             </button>
             <button
-              onClick={() => { setShowMoreMenu(false); alert('Sourdine activée pour ce canal'); }}
+              onClick={() => {
+                setShowMoreMenu(false);
+                setMutedChannels(prev => {
+                  const next = new Set(prev);
+                  if (next.has(activeConversation)) { next.delete(activeConversation); } else { next.add(activeConversation); }
+                  return next;
+                });
+                setToastMessage(mutedChannels.has(activeConversation) ? 'Sourdine désactivée' : 'Sourdine activée');
+                setTimeout(() => setToastMessage(''), 2000);
+              }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <Clock className="w-4 h-4 text-gray-400" />
-              Sourdine
+              {mutedChannels.has(activeConversation) ? <Volume2 className="w-4 h-4 text-teal-500" /> : <Clock className="w-4 h-4 text-gray-400" />}
+              {mutedChannels.has(activeConversation) ? 'Annuler sourdine' : 'Sourdine'}
             </button>
             <button
-              onClick={() => { setShowMoreMenu(false); alert('Vous avez quitté le canal'); }}
+              onClick={() => { setShowMoreMenu(false); setShowLeaveDialog(true); }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />

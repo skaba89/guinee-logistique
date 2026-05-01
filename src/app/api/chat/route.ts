@@ -35,7 +35,7 @@ Règles :
 // Simulated logistics data for realistic responses
 const TRACKING_RESPONSES: Record<string, string> = {
   'FFP': (num: string) => `📦 **Suivi de l'expédition ${num}**\n\n✅ Statut : **En transit**\n🚢 Transport : Maritime\n📍 Position actuelle : Méditerranée centrale\n🕐 Arrivée estimée : Dans 3 jours\n\nDernière mise à jour : Le conteneur a été chargé sur le navire MSC GÜLSÜN au port de Marseille. Transit prévu via le détroit de Gibraltar.`,
-  'MSKU': (num: string) => `集装箱 **Conteneur ${num}**\n\n✅ Statut : **Chargé sur navire**\n🚢 Navire : CMA CGM MARCO POLO\n📍 Port de chargement : Le Havre\n🏁 Port de déchargement : Casablanca\n📅 ETA : 48 heures\n\nLe conteneur est en bonne état et suit son itinéraire prévu.`,
+  'MSKU': (num: string) => `**Conteneur ${num}**\n\n✅ Statut : **Chargé sur navire**\n🚢 Navire : CMA CGM MARCO POLO\n📍 Port de chargement : Le Havre\n🏁 Port de déchargement : Casablanca\n📅 ETA : 48 heures\n\nLe conteneur est en bonne état et suit son itinéraire prévu.`,
   'PRC': (num: string) => `📮 **Colis ${num}**\n\n✅ Statut : **En livraison**\n🚛 Transporteur : Chronopost\n📍 Centre de tri : Paris Nord\n🕐 Livraison prévue : Aujourd'hui 14h-18h\n\nLe colis est sorti du centre de tri ce matin à 7h30.`,
 };
 

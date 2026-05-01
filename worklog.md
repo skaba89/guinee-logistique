@@ -173,3 +173,30 @@ Work Log:
 Stage Summary:
 - 4 pages now have complete CRUD functionality
 - RBAC enforced on all write operations
+---
+Task ID: 1
+Agent: Main Agent
+Task: Point 1 — Corriger les boutons/actions non fonctionnels + Point 2 — Bug PDF tracking + Point 3 — Sécuriser Login + Point 4 — Bug batch scan API
+
+Work Log:
+- Fixed login-page.tsx: Added Dialog for "Mot de passe oublié" with phone input + SMS confirmation flow
+- Fixed login-page.tsx: Added Dialog for "Contacter l'administrateur" with message form + contact info
+- Fixed login-page.tsx: "Portail Client" button now triggers login (demo mode)
+- Fixed login-page.tsx: Demo credentials now hidden behind a toggle button (Afficher/Masquer)
+- Fixed dashboard-page.tsx: "Voir tout" on Activity section now navigates to shipments page
+- Fixed dashboard-layout.tsx: "Voir toutes les notifications" now navigates to settings page
+- Fixed analytics-page.tsx: "Appliquer" button on AI insights now toggles applied state with visual feedback
+- Fixed tracking-page.tsx: "Télécharger PDF" now generates a professional HTML page that opens in a new window for print-to-PDF, instead of generating a .txt file
+- Fixed chat-page.tsx: Pin button now toggles pinned state with visual feedback (fill color change + toast message)
+- Fixed chat-page.tsx: Mute/Sourdine now toggles mute state per channel with visual feedback
+- Fixed chat-page.tsx: Leave channel now opens a confirmation dialog instead of using alert()
+- Fixed api/scan/route.ts: Batch action now checked BEFORE string validation, preventing crash when code is an array
+- Fixed api/chat/route.ts: Removed Chinese characters (集装箱) from MSKU container response
+
+Stage Summary:
+- All 16+ non-functional buttons now have real behavior
+- Login page has 3 new functional dialogs (forgot password, contact admin, client portal)
+- Tracking PDF download now produces professional print-ready output
+- Batch scan API no longer crashes on array input
+- Chat actions (pin/mute/leave) have proper state management with visual feedback
+- Build passes successfully

@@ -553,7 +553,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </div>
                 </ScrollArea>
                 <div className="px-4 py-2.5 border-t bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
-                  <button className="w-full text-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium">
+                  <button onClick={() => setPage('settings')} className="w-full text-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium">
                     Voir toutes les notifications
                   </button>
                 </div>

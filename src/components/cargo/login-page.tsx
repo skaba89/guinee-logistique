@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Phone, Lock, Eye, EyeOff, Ship, Plane, Truck, Container, Globe, ArrowRight } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff, Ship, Plane, Truck, Container, Globe, ArrowRight, Mail, KeyRound, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useCargoStore } from '@/lib/cargo-store';
 
 export default function LoginPage() {
@@ -17,6 +18,13 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotDialog, setShowForgotDialog] = useState(false);
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const [showContactDialog, setShowContactDialog] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactSent, setContactSent] = useState(false);
+  const [showDemoCreds, setShowDemoCreds] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,6 +264,7 @@ export default function LoginPage() {
                 type="button"
                 className="text-sm font-medium hover:underline"
                 style={{ color: '#0d9488' }}
+                onClick={() => { setShowForgotDialog(true); setForgotSent(false); setForgotPhone(''); }}
               >
                 Mot de passe oublié ?
               </button>
@@ -285,6 +294,9 @@ export default function LoginPage() {
             <Button
               variant="outline"
               className="w-full h-10 text-sm border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+              onClick={() => {
+                login('0600000001', 'admin123');
+              }}
             >
               <Globe className="w-4 h-4 mr-2" />
               Portail Client
@@ -294,24 +306,156 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Besoin d&apos;un accès ?{' '}
-              <button className="font-medium hover:underline" style={{ color: '#0d9488' }}>
+              <button className="font-medium hover:underline" style={{ color: '#0d9488' }} onClick={() => { setShowContactDialog(true); setContactSent(false); setContactMessage(''); }}>
                 Contacter l&apos;administrateur
               </button>
             </p>
           </div>
 
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">
-              Identifiants de démonstration
-            </p>
-            <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
-              <p><span className="font-medium">Admin:</span> 0600000001 / admin123</p>
-              <p><span className="font-medium">Agent:</span> 0600000002 / user123</p>
-            </div>
+          {/* Demo credentials - hidden by default */}
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => setShowDemoCreds(!showDemoCreds)}
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 transition-colors flex items-center gap-1 mx-auto"
+            >
+              <KeyRound className="w-3 h-3" />
+              {showDemoCreds ? 'Masquer' : 'Afficher'} les identifiants de démonstration
+            </button>
+            {showDemoCreds && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
+              >
+                <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                  <p><span className="font-medium">Admin:</span> 0600000001 / admin123</p>
+                  <p><span className="font-medium">Agent:</span> 0600000002 / user123</p>
+                </div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={showForgotDialog} onOpenChange={setShowForgotDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-teal-500" />
+              Mot de passe oublié
+            </DialogTitle>
+            <DialogDescription>
+              Entrez votre numéro de téléphone pour recevoir un code de réinitialisation.
+            </DialogDescription>
+          </DialogHeader>
+          {forgotSent ? (
+            <div className="py-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-7 h-7 text-green-500" />
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Code envoyé avec succès</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Un code de réinitialisation a été envoyé par SMS au {forgotPhone}. Vérifiez votre téléphone et suivez les instructions.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="forgot-phone">Numéro de téléphone</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="forgot-phone"
+                    type="tel"
+                    placeholder="0600000001"
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(e.target.value)}
+                    className="pl-10 h-11"
+                  />
+                </div>
+              </div>
+              <Button
+                className="w-full h-11 text-white font-semibold text-sm"
+                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                onClick={() => {
+                  if (forgotPhone.trim()) setForgotSent(true);
+                }}
+                disabled={!forgotPhone.trim()}
+              >
+                Envoyer le code de réinitialisation
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowForgotDialog(false)}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Admin Dialog */}
+      <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-teal-500" />
+              Contacter l&apos;administrateur
+            </DialogTitle>
+            <DialogDescription>
+              Envoyez un message à l&apos;équipe technique pour demander un accès ou signaler un problème.
+            </DialogDescription>
+          </DialogHeader>
+          {contactSent ? (
+            <div className="py-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-7 h-7 text-green-500" />
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">Message envoyé</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Votre demande a été transmise à l&apos;équipe technique. Vous recevrez une réponse sous 24h.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="contact-msg">Votre message</Label>
+                <textarea
+                  id="contact-msg"
+                  className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Décrivez votre besoin ou problème..."
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                />
+              </div>
+              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>admin@logisway.pro</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <Phone className="w-3.5 h-3.5" />
+                  <span>+213 21 00 00 00</span>
+                </div>
+              </div>
+              <Button
+                className="w-full h-11 text-white font-semibold text-sm"
+                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                onClick={() => {
+                  if (contactMessage.trim()) setContactSent(true);
+                }}
+                disabled={!contactMessage.trim()}
+              >
+                Envoyer le message
+              </Button>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowContactDialog(false)}>Fermer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

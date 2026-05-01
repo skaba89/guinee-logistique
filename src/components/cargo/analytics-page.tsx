@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   ArrowDownToLine,
   ArrowUpFromLine,
+  Check,
 } from 'lucide-react';
 import {
   Card,
@@ -209,6 +210,20 @@ const tooltipStyle = {
 };
 
 export default function AnalyticsPage() {
+  const [appliedInsights, setAppliedInsights] = useState<Set<number>>(new Set());
+
+  const handleApplyInsight = (insightId: number) => {
+    setAppliedInsights(prev => {
+      const next = new Set(prev);
+      if (next.has(insightId)) {
+        next.delete(insightId);
+      } else {
+        next.add(insightId);
+      }
+      return next;
+    });
+  };
+
   const totalCurrentCost = costOptimizations.reduce((a, b) => a + b.current, 0);
   const totalOptimizedCost = costOptimizations.reduce((a, b) => a + b.optimized, 0);
   const totalSavings = totalCurrentCost - totalOptimizedCost;
@@ -284,8 +299,12 @@ export default function AnalyticsPage() {
                           <Zap className="w-3 h-3 text-teal-500" />
                           <span className="text-[10px] font-medium text-teal-600">{insight.savings}</span>
                         </div>
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px] text-teal-500 hover:text-teal-700 p-0">
-                          Appliquer <ArrowRight className="w-3 h-3 ml-1" />
+                        <Button variant="ghost" size="sm" className="h-6 text-[10px] text-teal-500 hover:text-teal-700 p-0" onClick={() => handleApplyInsight(insight.id)}>
+                          {appliedInsights.has(insight.id) ? (
+                            <><Check className="w-3 h-3 mr-1" />Appliqué</>
+                          ) : (
+                            <><>Appliquer</><ArrowRight className="w-3 h-3 ml-1" /></>
+                          )}
                         </Button>
                       </div>
                     </div>
