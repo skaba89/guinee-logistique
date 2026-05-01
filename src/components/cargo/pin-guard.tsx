@@ -1,19 +1,11 @@
 /**
  * pin-guard.tsx — Wrapper de protection par code PIN pour LogisWay
  *
- * BRANCHEMENT : Encadrez n'importe quelle section sensible avec <PinGuard>.
- * Aucune modification du code existant n'est nécessaire.
+ * Supporte les codes PIN par utilisateur. Le composant récupère
+ * automatiquement le PIN et l'ID de l'utilisateur connecté depuis
+ * le store Zustand pour vérifier l'authentification.
  *
- * Exemple :
- *   import PinGuard from '@/components/cargo/pin-guard';
- *
- *   <PinGuard pin="1234" timeout={120}>
- *     <SensitivePage />
- *   </PinGuard>
- *
- * Props :
- *   - pin : Code PIN à utiliser (défaut: "1234"). En production, utilisez
- *     une variable d'environnement côté serveur.
+ * Props optionnelles pour personnaliser le comportement :
  *   - timeout : Durée de la session en secondes avant re-demande (défaut: 120)
  *   - title : Titre affiché dans la modale
  *   - description : Description dans la modale
@@ -23,7 +15,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Eye, EyeOff, Clock, Shield } from 'lucide-react';
+import { Lock, Eye, EyeOff, Clock, Shield, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -42,12 +34,11 @@ import {
   getPinSessionRemainingTime,
   storePinHash,
 } from '@/lib/pin-auth';
+import { useCargoStore } from '@/lib/cargo-store';
 
 // ─── Props ──────────────────────────────────────────────────────
 
 export interface PinGuardProps {
-  /** Code PIN (défaut: "1234") */
-  pin?: string;
   /** Durée de session en secondes (défaut: 120 = 2 minutes) */
   timeout?: number;
   /** Titre de la modale */
@@ -65,7 +56,6 @@ export interface PinGuardProps {
 // ─── Composant ──────────────────────────────────────────────────
 
 export default function PinGuard({
-  pin = '1234',
   timeout = 120,
   title = 'Accès sécurisé',
   description = 'Entrez votre code PIN pour accéder à cette section.',
@@ -73,6 +63,7 @@ export default function PinGuard({
   onAuthenticated,
   onAuthenticationFailed,
 }: PinGuardProps) {
+  const user = useCargoStore((s) => s.user);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showDialog, setShowDialog] = useState(true);
   const [pinInput, setPinInput] = useState('');
@@ -81,15 +72,22 @@ export default function PinGuard({
   const [attempts, setAttempts] = useState(0);
   const [remainingTime, setRemainingTime] = useState(0);
 
+  // L'utilisateur courant et son PIN
+  const userId = user?.id || '';
+  const userPin = user?.pin || '1234'; // fallback pour compatibilité
+  const userName = user?.name || 'Utilisateur';
+
   // Initialiser le hash du PIN et vérifier la session existante
   useEffect(() => {
-    storePinHash(pin);
+    if (!userId) return;
 
-    if (isPinSessionActive()) {
+    storePinHash(userPin, userId);
+
+    if (isPinSessionActive(userId)) {
       setIsAuthenticated(true);
       setShowDialog(false);
     }
-  }, [pin]);
+  }, [userId, userPin]);
 
   // Timer de session
   useEffect(() => {
@@ -111,7 +109,7 @@ export default function PinGuard({
 
   // Soumettre le PIN
   const handleSubmit = useCallback(async () => {
-    const isValid = await authenticateWithPin(pinInput, timeout);
+    const isValid = await authenticateWithPin(pinInput, userId, timeout);
 
     if (isValid) {
       setIsAuthenticated(true);
@@ -135,7 +133,7 @@ export default function PinGuard({
         }, 30000); // 30 secondes de verrouillage
       }
     }
-  }, [pinInput, timeout, attempts, onAuthenticated, onAuthenticationFailed]);
+  }, [pinInput, userId, timeout, attempts, onAuthenticated, onAuthenticationFailed]);
 
   // Afficher le contenu protégé
   if (isAuthenticated) {
@@ -170,6 +168,20 @@ export default function PinGuard({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Info utilisateur */}
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              {userName.split(' ').map((n: string) => n[0]).join('')}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{userName}</p>
+              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                <User className="w-2.5 h-2.5" />
+                {user?.role || 'Utilisateur'}
+              </p>
+            </div>
+          </div>
+
           {/* Champ PIN */}
           <div className="space-y-2">
             <div className="relative">
@@ -239,4 +251,3 @@ export default function PinGuard({
     </Dialog>
   );
 }
-

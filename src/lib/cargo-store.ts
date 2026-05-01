@@ -5,6 +5,7 @@ import { persist } from 'zustand/middleware';
 import { users, type User } from './test-data';
 import { type RoleKey, mapRoleString, canViewPage, canEditPage } from './permissions';
 import { loadPermissionsConfig, type PermissionsConfig } from './permissions';
+import { clearPinSession } from './pin-auth';
 
 // ─── Migration: rename old localStorage key ───────────────────────
 // Migrate data from the old 'freightflow-storage' key to 'logisway-storage'
@@ -136,6 +137,8 @@ export const useCargoStore = create<CargoState>()(
       },
 
       logout: () => {
+        // Effacer la session PIN lors de la déconnexion
+        clearPinSession();
         set({
           isAuthenticated: false,
           user: null,

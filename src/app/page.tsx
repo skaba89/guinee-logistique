@@ -189,16 +189,16 @@ function PageRenderer() {
       return <ValidationPageWrapper />;
     case 'messaging':
       return <MessagingPage />;
-    // Pages protégées par PIN
+    // Pages protégées par PIN (le code PIN est récupéré automatiquement depuis l'utilisateur connecté)
     case 'settings':
       return (
-        <PinGuard pin="1234" timeout={120} title="Accès Paramètres">
+        <PinGuard timeout={120} title="Accès Paramètres">
           <SettingsPage />
         </PinGuard>
       );
     case 'users':
       return (
-        <PinGuard pin="1234" timeout={120} title="Accès Utilisateurs">
+        <PinGuard timeout={120} title="Accès Utilisateurs">
           <UsersPage />
         </PinGuard>
       );

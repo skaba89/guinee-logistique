@@ -14,6 +14,8 @@ export interface User {
   role: string;
   email: string;
   avatar?: string;
+  /** Code PIN de sécurité (4-8 chiffres) pour l'accès aux sections protégées */
+  pin: string;
 }
 
 export interface Shipment {
@@ -222,6 +224,7 @@ export const users: User[] = [
     name: 'Ahmed Benali',
     role: 'Administrateur',
     email: 'ahmed.benali@logisway.pro',
+    pin: '1987',
   },
   {
     id: '2',
@@ -230,6 +233,7 @@ export const users: User[] = [
     name: 'Fatima Khelifi',
     role: 'Agent',
     email: 'fatima.khelifi@logisway.pro',
+    pin: '2456',
   },
   {
     id: '3',
@@ -238,6 +242,7 @@ export const users: User[] = [
     name: 'Karim Bouzidi',
     role: 'Client',
     email: 'karim.bouzidi@spa-hydro.dz',
+    pin: '3674',
   },
 ];
 

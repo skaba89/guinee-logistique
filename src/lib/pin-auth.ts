@@ -1,17 +1,13 @@
 /**
  * pin-auth.ts — Système d'authentification par code PIN pour LogisWay
  *
- * BRANCHEMENT : Importez PinAuth depuis ce fichier et utilisez-le
- * comme wrapper autour des sections sensibles de votre application.
+ * Supporte les codes PIN par utilisateur. Chaque utilisateur a son propre
+ * PIN stocké dans les données de test (user.pin). Le hash est calculé
+ * avec le PIN + l'ID utilisateur comme sel supplémentaire, ce qui garantit
+ * que deux utilisateurs avec le même PIN auront des hashes différents.
  *
- * Le PIN est stocké hashé côté serveur (env variable) ou en localStorage
- * pour le mode prototype. En production, utilisez une vraie API.
- *
- * Exemple :
- *   import PinGuard from '@/components/cargo/pin-guard';
- *   <PinGuard pin="1234" timeout={120}>
- *     <SensitiveContent />
- *   </PinGuard>
+ * En mode prototype, les hashes sont stockés en localStorage.
+ * En production, utilisez une vraie API côté serveur.
  */
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -20,58 +16,76 @@ export interface PinSession {
   authenticated: boolean;
   authenticatedAt: string;
   expiresAt: string;
+  /** ID de l'utilisateur authentifié */
+  userId: string;
 }
 
 // ─── Hashing simple (SHA-256) ───────────────────────────────────
 
-export async function hashPin(pin: string): Promise<string> {
+/**
+ * Hacher un PIN avec l'ID utilisateur comme sel additionnel.
+ * Cela garantit que deux utilisateurs avec le même PIN auront des hashes différents.
+ */
+export async function hashPin(pin: string, userId?: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(pin + 'logisway-salt-2026');
+  const salt = `logisway-salt-2026${userId ? `:${userId}` : ''}`;
+  const data = encoder.encode(pin + salt);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function verifyPin(pin: string, storedHash: string): Promise<boolean> {
-  const hash = await hashPin(pin);
+export async function verifyPin(pin: string, storedHash: string, userId?: string): Promise<boolean> {
+  const hash = await hashPin(pin, userId);
   return hash === storedHash;
 }
 
 // ─── Gestion de la session PIN ─────────────────────────────────
 
 const PIN_SESSION_KEY = 'logisway-pin-session';
-const PIN_HASH_KEY = 'logisway-pin-hash';
+const PIN_HASH_KEY_PREFIX = 'logisway-pin-hash-';
 
 /**
- * Stocker le hash du PIN (appelé à l'initialisation ou au changement de PIN)
+ * Obtenir la clé de stockage du hash pour un utilisateur donné
  */
-export async function storePinHash(pin: string): Promise<void> {
+function getPinHashKey(userId: string): string {
+  return `${PIN_HASH_KEY_PREFIX}${userId}`;
+}
+
+/**
+ * Stocker le hash du PIN pour un utilisateur spécifique
+ */
+export async function storePinHash(pin: string, userId: string): Promise<void> {
   if (typeof window === 'undefined') return;
-  const hash = await hashPin(pin);
-  localStorage.setItem(PIN_HASH_KEY, hash);
+  const hash = await hashPin(pin, userId);
+  localStorage.setItem(getPinHashKey(userId), hash);
 }
 
 /**
- * Vérifier si le hash du PIN est configuré
+ * Vérifier si un PIN est configuré pour un utilisateur donné
  */
-export function isPinConfigured(): boolean {
+export function isPinConfigured(userId: string): boolean {
   if (typeof window === 'undefined') return false;
-  return !!localStorage.getItem(PIN_HASH_KEY);
+  return !!localStorage.getItem(getPinHashKey(userId));
 }
 
 /**
- * Authentifier avec un PIN
+ * Authentifier avec un PIN pour un utilisateur donné
  */
-export async function authenticateWithPin(pin: string, timeoutSeconds: number = 120): Promise<boolean> {
-  const storedHash = localStorage.getItem(PIN_HASH_KEY);
-  if (!storedHash) {
-    // Si aucun PIN n'est configuré, utiliser le PIN par défaut
-    await storePinHash(pin);
-    return true;
-  }
+export async function authenticateWithPin(
+  pin: string,
+  userId: string,
+  timeoutSeconds: number = 120
+): Promise<boolean> {
+  const storedHash = localStorage.getItem(getPinHashKey(userId));
 
-  const isValid = await verifyPin(pin, storedHash);
-  if (!isValid) return false;
+  if (!storedHash) {
+    // Si aucun PIN n'est configuré pour cet utilisateur, stocker ce PIN
+    await storePinHash(pin, userId);
+  } else {
+    const isValid = await verifyPin(pin, storedHash, userId);
+    if (!isValid) return false;
+  }
 
   // Créer la session
   const now = new Date();
@@ -80,6 +94,7 @@ export async function authenticateWithPin(pin: string, timeoutSeconds: number = 
     authenticated: true,
     authenticatedAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
+    userId,
   };
   localStorage.setItem(PIN_SESSION_KEY, JSON.stringify(session));
 
@@ -87,15 +102,17 @@ export async function authenticateWithPin(pin: string, timeoutSeconds: number = 
 }
 
 /**
- * Vérifier si la session PIN est active
+ * Vérifier si la session PIN est active pour un utilisateur donné
  */
-export function isPinSessionActive(): boolean {
+export function isPinSessionActive(userId: string): boolean {
   if (typeof window === 'undefined') return false;
   try {
     const raw = localStorage.getItem(PIN_SESSION_KEY);
     if (!raw) return false;
     const session: PinSession = JSON.parse(raw);
     if (!session.authenticated) return false;
+    // Vérifier que la session appartient à l'utilisateur courant
+    if (session.userId !== userId) return false;
     return new Date(session.expiresAt) > new Date();
   } catch {
     return false;
@@ -124,4 +141,35 @@ export function getPinSessionRemainingTime(): number {
   } catch {
     return 0;
   }
+}
+
+// ─── Rétrocompatibilité ────────────────────────────────────────
+
+/**
+ * @deprecated Utiliser storePinHash(pin, userId) à la place
+ */
+export async function storePinHashLegacy(pin: string): Promise<void> {
+  return storePinHash(pin, '');
+}
+
+/**
+ * @deprecated Utiliser isPinConfigured(userId) à la place
+ */
+export function isPinConfiguredLegacy(): boolean {
+  if (typeof window === 'undefined') return false;
+  return !!localStorage.getItem('logisway-pin-hash');
+}
+
+/**
+ * @deprecated Utiliser authenticateWithPin(pin, userId, timeout) à la place
+ */
+export async function authenticateWithPinLegacy(pin: string, timeoutSeconds: number = 120): Promise<boolean> {
+  return authenticateWithPin(pin, '', timeoutSeconds);
+}
+
+/**
+ * @deprecated Utiliser isPinSessionActive(userId) à la place
+ */
+export function isPinSessionActiveLegacy(): boolean {
+  return isPinSessionActive('');
 }

@@ -391,6 +391,7 @@ export default function LoginPage() {
                     >
                       <span className="w-14 font-medium text-teal-600 dark:text-teal-400">Admin</span>
                       <span className="text-gray-400">0600000001 / admin123</span>
+                      <span className="ml-auto text-[10px] text-amber-500 dark:text-amber-400 font-mono">PIN: 1987</span>
                     </button>
                     <button
                       className="flex w-full items-center gap-2 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -398,6 +399,7 @@ export default function LoginPage() {
                     >
                       <span className="w-14 font-medium text-amber-600 dark:text-amber-400">Agent</span>
                       <span className="text-gray-400">0600000002 / user123</span>
+                      <span className="ml-auto text-[10px] text-amber-500 dark:text-amber-400 font-mono">PIN: 2456</span>
                     </button>
                     <button
                       className="flex w-full items-center gap-2 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -405,6 +407,7 @@ export default function LoginPage() {
                     >
                       <span className="w-14 font-medium text-violet-600 dark:text-violet-400">Client</span>
                       <span className="text-gray-400">0600000003 / client123</span>
+                      <span className="ml-auto text-[10px] text-amber-500 dark:text-amber-400 font-mono">PIN: 3674</span>
                     </button>
                   </div>
                 </motion.div>
