@@ -436,3 +436,33 @@ Stage Summary:
 - Aucun fichier existant modifié (règle absolue respectée)
 - Toutes les fonctionnalités sont branchées via feature-bridge.ts
 - Instructions d'intégration détaillées dans feature-bridge.ts et en-têtes de chaque fichier
+
+---
+Task ID: collapsible-sidebar
+Agent: Super Z (main)
+Task: Implémenter les menus en liste déroulante par catégorie dans la sidebar
+
+Work Log:
+- Analysé la structure existante: 9 groupes de navigation (principal, fret, services, commercial, gestion, communication, conformite, portail, systeme)
+- La sidebar actuelle affiche les items en liste plate sans accordion/collapsible
+- Créé src/hooks/use-sidebar-collapse.ts — Hook de gestion d'état ouvert/fermé par groupe avec persistance localStorage
+- Créé src/components/cargo/collapsible-sidebar-nav.tsx — Nouveau composant sidebar avec menus déroulants par catégorie
+  - Utilise Collapsible de Radix/shadcn-ui pour chaque groupe
+  - Chevron animé pour indiquer l'état ouvert/fermé
+  - Icône distinctive par catégorie (LayoutDashboard, Ship, Wrench, Briefcase, etc.)
+  - Couleur d'accent différente par groupe
+  - Compteur d'items dans l'en-tête du groupe
+  - Auto-ouverture du groupe contenant la page active
+  - Animation Framer Motion pour l'expansion/réduction
+  - Indicateur de page active avec point animé
+  - Bouton déconnexion en pied de sidebar
+- Intégré dans dashboard-layout.tsx: remplacé la section <nav> plate par <CollapsibleSidebarNav />
+- Ajouté l'import du composant dans dashboard-layout.tsx
+- Build vérifié: compilé avec succès sans erreurs
+
+Stage Summary:
+- Sidebar transformée: menus déroulants par catégorie au lieu de liste plate
+- 9 catégories collapsibles: Principal, Fret, Services, Commercial, Gestion, Communication, Conformité, Portail, Système
+- Persistance de l'état ouvert/fermé dans localStorage (logisway-sidebar-collapse)
+- Auto-ouverture du groupe actif lors de la navigation
+- Style visuel cohérent avec le design existant (fond dégradé sombre, accents teal)

@@ -83,6 +83,7 @@ import { useCargoStore, type PageType, CURRENCIES } from '@/lib/cargo-store';
 import { shipments, containers, flights, parcels, customsDeclarations, clients } from '@/lib/test-data';
 import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
 import ChatbotWidget from '@/components/cargo/chatbot-widget';
+import CollapsibleSidebarNav from '@/components/cargo/collapsible-sidebar-nav';
 import {
   getNotificationsForRole,
   markNotificationRead as markNotificationReadLib,
@@ -381,77 +382,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }`}
         style={{ background: 'linear-gradient(180deg, #0f172a 0%, #0a2520 100%)' }}
       >
-        <div className="flex flex-col h-full">
-          {/* Sidebar header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
-                <Ship className="w-5 h-5 text-white" />
-                <div className="absolute -right-0.5 -top-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center" style={{ background: '#0f172a', border: '1.5px solid #0d9488' }}>
-                  <ArrowRight className="w-2 h-2 text-teal-400" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-base font-bold text-white tracking-tight">LogisWay</h1>
-                <p className="text-[9px] text-teal-300/50 uppercase tracking-widest">Logistique</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-white/60 hover:text-white p-1"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation — Dynamically filtered by role & permissions */}
-          <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto">
-            {filteredNavGroups.map((group) => (
-              <div key={group.key}>
-                <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-teal-400/50">
-                  {group.label}
-                </p>
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const isActive = currentPage === item.id;
-                    const IconComponent = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => setPage(item.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          isActive
-                            ? 'bg-teal-500/15 text-white shadow-sm border-l-2 border-teal-400'
-                            : 'text-slate-300/70 hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        <IconComponent className={`w-4.5 h-4.5 flex-shrink-0 ${isActive ? 'text-teal-400' : ''}`} />
-                        <span>{item.label}</span>
-                        {isActive && (
-                          <motion.div
-                            layoutId="sidebar-indicator"
-                            className="ml-auto w-1.5 h-1.5 rounded-full bg-teal-400"
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
-
-          {/* Sidebar footer */}
-          <div className="px-3 py-4 border-t border-white/10">
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-300/80 hover:bg-red-500/10 hover:text-red-300 transition-all"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Déconnexion</span>
-            </button>
-          </div>
-        </div>
+        <CollapsibleSidebarNav />
       </aside>
 
       {/* Main content area */}
