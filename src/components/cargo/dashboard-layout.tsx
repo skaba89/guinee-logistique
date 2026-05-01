@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -95,8 +95,6 @@ import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
 import ChatbotWidget from '@/components/cargo/chatbot-widget';
 import CollapsibleSidebarNav from '@/components/cargo/collapsible-sidebar-nav';
 import ThemeSwitcher from '@/components/cargo/theme-switcher';
-import { DashboardSkeleton, GenericPageSkeleton } from '@/components/cargo/page-skeleton';
-import { ToastProvider } from '@/components/cargo/toast-provider';
 import { brandGradient } from '@/lib/design-tokens';
 import {
   getNotificationsForRole,
@@ -327,19 +325,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [notifications, setNotifications] = useState<LibNotification[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [commandOpen, setCommandOpen] = useState(false);
-  const [pageLoading, setPageLoading] = useState(false);
-  const [prevPage, setPrevPage] = useState(currentPage);
-
-  // Detect page transitions for skeleton loading
-  useEffect(() => {
-    if (currentPage !== prevPage) {
-      setPageLoading(true);
-      setPrevPage(currentPage);
-      const timer = setTimeout(() => setPageLoading(false), 350);
-      return () => clearTimeout(timer);
-    }
-  }, [currentPage, prevPage]);
-
   // Load notifications from real system
   useEffect(() => {
     setNotifications(getNotificationsForRole(roleKey));
@@ -666,30 +651,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </nav>
           </div>
 
-          {/* ─── Page content with skeleton loading ──────────────────── */}
+          {/* ─── Page content ──────────────────────────────────────────── */}
           <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
             <AnimatePresence mode="wait">
-              {pageLoading ? (
-                <motion.div
-                  key={`skeleton-${currentPage}`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {currentPage === 'dashboard' ? <DashboardSkeleton /> : <GenericPageSkeleton />}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={currentPage}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-                >
-                  {children}
-                </motion.div>
-              )}
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+              >
+                {children}
+              </motion.div>
             </AnimatePresence>
           </main>
         </div>
