@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -51,6 +51,10 @@ import {
   RotateCcw,
   Printer,
   DollarSign,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Home,
+  ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +62,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,12 +84,20 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { useCargoStore, type PageType, CURRENCIES } from '@/lib/cargo-store';
 import { shipments, containers, flights, parcels, customsDeclarations, clients } from '@/lib/test-data';
 import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
 import ChatbotWidget from '@/components/cargo/chatbot-widget';
 import CollapsibleSidebarNav from '@/components/cargo/collapsible-sidebar-nav';
 import ThemeSwitcher from '@/components/cargo/theme-switcher';
+import { DashboardSkeleton, GenericPageSkeleton } from '@/components/cargo/page-skeleton';
+import { ToastProvider } from '@/components/cargo/toast-provider';
+import { brandGradient } from '@/lib/design-tokens';
 import {
   getNotificationsForRole,
   markNotificationRead as markNotificationReadLib,
@@ -306,11 +319,26 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { currentPage, setPage, user, logout, sidebarOpen, toggleSidebar, setSidebarOpen, roleKey, permissionsConfig } = useCargoStore();
+  const sidebarCollapsed = useCargoStore((s) => s.sidebarCollapsed);
+  const toggleSidebarCollapsed = useCargoStore((s) => s.toggleSidebarCollapsed);
+  const pageHistory = useCargoStore((s) => s.pageHistory);
   const currency = useCargoStore((s) => s.currency);
   const setCurrency = useCargoStore((s) => s.setCurrency);
   const [notifications, setNotifications] = useState<LibNotification[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [prevPage, setPrevPage] = useState(currentPage);
+
+  // Detect page transitions for skeleton loading
+  useEffect(() => {
+    if (currentPage !== prevPage) {
+      setPageLoading(true);
+      setPrevPage(currentPage);
+      const timer = setTimeout(() => setPageLoading(false), 350);
+      return () => clearTimeout(timer);
+    }
+  }, [currentPage, prevPage]);
 
   // Load notifications from real system
   useEffect(() => {
@@ -364,341 +392,413 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return recentSearches.filter((item) => canViewPage(item.page, roleKey, permissionsConfig));
   }, [roleKey, permissionsConfig]);
 
+  // Breadcrumb: can go back?
+  const previousPage = pageHistory.length > 0 ? pageHistory[pageHistory.length - 1] : null;
+
   return (
-    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-950">
-      {/* Mobile overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+    <TooltipProvider delayDuration={200}>
+      <div className="min-h-screen flex bg-gray-50 dark:bg-gray-950">
+        {/* ─── Desktop Sidebar (collapsible) ─────────────────────── */}
+        <motion.aside
+          className="hidden lg:flex flex-shrink-0 h-screen sticky top-0 flex-col overflow-hidden"
+          animate={{ width: sidebarCollapsed ? 68 : 256 }}
+          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+          style={{ background: 'linear-gradient(180deg, #0f172a 0%, #0a2520 100%)' }}
+        >
+          <CollapsibleSidebarNav collapsed={sidebarCollapsed} />
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-64 flex-shrink-0 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        style={{ background: 'linear-gradient(180deg, #0f172a 0%, #0a2520 100%)' }}
-      >
-        <CollapsibleSidebarNav />
-      </aside>
-
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top header bar */}
-        <header className="sticky top-0 z-30 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleSidebar}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            </button>
-
-            {/* Search button / command palette trigger */}
-            <button
-              onClick={() => setCommandOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-3 h-9 w-64 lg:w-80 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
-            >
-              <Search className="w-4 h-4" />
-              <span className="text-sm">Rechercher...</span>
-              <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-1.5 font-mono text-[10px] font-medium text-gray-400">
-                <span className="text-xs">Ctrl</span>K
-              </kbd>
-            </button>
+          {/* Collapse toggle button */}
+          <div className="px-2 pb-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={toggleSidebarCollapsed}
+                  className="w-full flex items-center justify-center gap-2 px-2 py-2 rounded-lg text-xs font-medium text-slate-400 hover:bg-white/5 hover:text-slate-200 transition-all"
+                >
+                  {sidebarCollapsed ? (
+                    <PanelLeftOpen className="w-4 h-4" />
+                  ) : (
+                    <>
+                      <PanelLeftClose className="w-4 h-4" />
+                      <span>Réduire</span>
+                    </>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs">
+                {sidebarCollapsed ? 'Développer le menu' : 'Réduire le menu'}
+              </TooltipContent>
+            </Tooltip>
           </div>
+        </motion.aside>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Theme Switcher */}
-            <ThemeSwitcher />
+        {/* ─── Mobile Sidebar (Sheet) ────────────────────────────── */}
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent side="left" className="p-0 w-72 sm:max-w-xs" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #0a2520 100%)' }}>
+            <SheetTitle className="sr-only">Navigation LogisWay</SheetTitle>
+            <CollapsibleSidebarNav collapsed={false} onNavigate={() => setSidebarOpen(false)} />
+          </SheetContent>
+        </Sheet>
 
-            {/* Currency Selector */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
-                  <DollarSign className="w-3.5 h-3.5 text-teal-500" />
-                  {currency}
-                  <ChevronDown className="w-3 h-3 text-gray-400" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {Object.values(CURRENCIES).map((c) => (
-                  <DropdownMenuItem
-                    key={c.code}
-                    onClick={() => setCurrency(c.code)}
-                    className={`text-xs ${currency === c.code ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 font-semibold' : ''}`}
+        {/* ─── Main content area ─────────────────────────────────── */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* ─── Top header bar ─────────────────────────────────────── */}
+          <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/80 dark:border-gray-800/80 flex items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-3">
+              {/* Mobile menu button */}
+              <button
+                onClick={toggleSidebar}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95"
+              >
+                <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
+
+              {/* Desktop collapse button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleSidebarCollapsed}
+                    className="hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95"
                   >
-                    <span className="font-medium w-10">{c.code}</span>
-                    <span className="text-gray-400 mx-1">·</span>
-                    <span className="text-gray-500 dark:text-gray-400 truncate">{c.symbol} {c.name}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <Menu className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  {sidebarCollapsed ? 'Développer le menu' : 'Réduire le menu'}
+                </TooltipContent>
+              </Tooltip>
 
-            {/* Notification Center */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                  <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
-                      {unreadCount}
-                    </span>
-                  )}
-                  {pendingApprovals > 0 && (
-                    <span className="absolute -bottom-0.5 -left-0.5 min-w-[16px] h-[16px] rounded-full bg-amber-500 text-white text-[8px] font-bold flex items-center justify-center px-0.5">
-                      {pendingApprovals}
-                    </span>
-                  )}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 sm:w-96 p-0" align="end" sideOffset={8}>
-                <div className="flex items-center justify-between px-4 py-3 border-b">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">Notifications</h3>
+              {/* Search button / command palette trigger */}
+              <button
+                onClick={() => setCommandOpen(true)}
+                className="hidden sm:flex items-center gap-2 px-3 h-9 w-64 lg:w-80 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-400 hover:border-teal-300 dark:hover:border-teal-600 hover:shadow-sm transition-all duration-200"
+              >
+                <Search className="w-4 h-4" />
+                <span className="text-sm">Rechercher...</span>
+                <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 px-1.5 font-mono text-[10px] font-medium text-gray-400">
+                  <span className="text-xs">Ctrl</span>K
+                </kbd>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Theme Switcher */}
+              <ThemeSwitcher />
+
+              {/* Currency Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
+                    <DollarSign className="w-3.5 h-3.5 text-teal-500" />
+                    {currency}
+                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {Object.values(CURRENCIES).map((c) => (
+                    <DropdownMenuItem
+                      key={c.code}
+                      onClick={() => setCurrency(c.code)}
+                      className={`text-xs ${currency === c.code ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 font-semibold' : ''}`}
+                    >
+                      <span className="font-medium w-10">{c.code}</span>
+                      <span className="text-gray-400 mx-1">·</span>
+                      <span className="text-gray-500 dark:text-gray-400 truncate">{c.symbol} {c.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Notification Center */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-95">
+                    <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     {unreadCount > 0 && (
-                      <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px] px-1.5 py-0">
-                        {unreadCount} nouvelle{unreadCount > 1 ? 's' : ''}
-                      </Badge>
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute top-1 right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1"
+                      >
+                        {unreadCount}
+                      </motion.span>
+                    )}
+                    {pendingApprovals > 0 && (
+                      <span className="absolute -bottom-0.5 -left-0.5 min-w-[16px] h-[16px] rounded-full bg-amber-500 text-white text-[8px] font-bold flex items-center justify-center px-0.5">
+                        {pendingApprovals}
+                      </span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 sm:w-96 p-0" align="end" sideOffset={8}>
+                  <div className="flex items-center justify-between px-4 py-3 border-b">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[10px] px-1.5 py-0">
+                          {unreadCount} nouvelle{unreadCount > 1 ? 's' : ''}
+                        </Badge>
+                      )}
+                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 flex items-center gap-1 font-medium"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" />
+                        Tout marquer
+                      </button>
                     )}
                   </div>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllAsRead}
-                      className="text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 flex items-center gap-1 font-medium"
-                    >
-                      <CheckCheck className="w-3.5 h-3.5" />
-                      Tout marquer
-                    </button>
-                  )}
-                </div>
-                <ScrollArea className="h-[400px]">
-                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {notifications.map((notification) => {
-                      const NotifIcon = notificationIconMap[notification.type] || Bell;
-                      return (
-                        <button
-                          key={notification.id}
-                          onClick={() => markAsRead(notification.id)}
-                          className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
-                            !notification.read ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''
-                          }`}
-                        >
-                          <div className={`mt-0.5 flex-shrink-0 ${notificationTypeColorMap[notification.type] || 'text-gray-500'}`}>
-                            <NotifIcon className="w-4.5 h-4.5" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900 dark:text-white' : 'font-medium text-gray-700 dark:text-gray-300'}`}>
-                                {notification.title}
+                  <ScrollArea className="h-[400px]">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {notifications.map((notification) => {
+                        const NotifIcon = notificationIconMap[notification.type] || Bell;
+                        return (
+                          <button
+                            key={notification.id}
+                            onClick={() => markAsRead(notification.id)}
+                            className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                              !notification.read ? 'bg-teal-50/50 dark:bg-teal-900/10' : ''
+                            }`}
+                          >
+                            <div className={`mt-0.5 flex-shrink-0 ${notificationTypeColorMap[notification.type] || 'text-gray-500'}`}>
+                              <NotifIcon className="w-4.5 h-4.5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className={`text-sm ${!notification.read ? 'font-semibold text-gray-900 dark:text-white' : 'font-medium text-gray-700 dark:text-gray-300'}`}>
+                                  {notification.title}
+                                </p>
+                                {!notification.read && (
+                                  <div className="w-2 h-2 rounded-full bg-teal-500 flex-shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                                {notification.message}
                               </p>
-                              {!notification.read && (
-                                <div className="w-2 h-2 rounded-full bg-teal-500 flex-shrink-0" />
-                              )}
+                              <div className="flex items-center gap-1 mt-1">
+                                <Clock className="w-3 h-3 text-gray-400" />
+                                <span className="text-[10px] text-gray-400">{formatNotifTime(notification.createdAt)}</span>
+                              </div>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
-                              {notification.message}
-                            </p>
-                            <div className="flex items-center gap-1 mt-1">
-                              <Clock className="w-3 h-3 text-gray-400" />
-                              <span className="text-[10px] text-gray-400">{formatNotifTime(notification.createdAt)}</span>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                  <div className="px-4 py-2.5 border-t bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
+                    <button onClick={() => setPage('settings')} className="w-full text-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium">
+                      Voir toutes les notifications
+                    </button>
                   </div>
-                </ScrollArea>
-                <div className="px-4 py-2.5 border-t bg-gray-50 dark:bg-gray-800/50 rounded-b-lg">
-                  <button onClick={() => setPage('settings')} className="w-full text-center text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium">
-                    Voir toutes les notifications
+                </PopoverContent>
+              </Popover>
+
+              {/* User dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors active:scale-[0.98]">
+                    <Avatar className="w-8 h-8 ring-2 ring-transparent hover:ring-teal-200 dark:hover:ring-teal-800 transition-all">
+                      <AvatarFallback className="text-xs font-semibold text-white" style={{ background: brandGradient }}>
+                        {user?.name?.split(' ').map((n) => n[0]).join('') || 'AB'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="hidden md:block text-left">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight">
+                        {user?.name || 'Utilisateur'}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        {user?.role || 'Admin'}
+                      </p>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-gray-400 hidden md:block" />
                   </button>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => setPage('settings')}>
+                    <User className="w-4 h-4 mr-2" />
+                    Profil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPage('settings')}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Paramètres
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Déconnexion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
 
-            {/* User dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="text-xs font-semibold text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
-                      {user?.name?.split(' ').map((n) => n[0]).join('') || 'AB'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="hidden md:block text-left">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight">
-                      {user?.name || 'Utilisateur'}
-                    </p>
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                      {user?.role || 'Admin'}
-                    </p>
-                  </div>
-                  <ChevronDown className="w-4 h-4 text-gray-400 hidden md:block" />
+          {/* ─── Enhanced Breadcrumbs ───────────────────────────────── */}
+          <div className="px-4 sm:px-6 py-2.5 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800">
+            <nav className="flex items-center gap-2 text-sm">
+              {/* Back button if history */}
+              {previousPage && (
+                <button
+                  onClick={() => setPage(previousPage)}
+                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mr-1"
+                  title="Retour"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-gray-400" />
                 </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => setPage('settings')}>
-                  <User className="w-4 h-4 mr-2" />
-                  Profil
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPage('settings')}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Paramètres
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="text-red-600">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Déconnexion
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              )}
+              <button
+                onClick={() => setPage('dashboard')}
+                className="flex items-center gap-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium"
+              >
+                <Home className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">LogisWay</span>
+              </button>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
+              <motion.span
+                key={currentPage}
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-gray-700 dark:text-gray-200 font-semibold"
+              >
+                {pageNameMap[currentPage]}
+              </motion.span>
+            </nav>
           </div>
-        </header>
 
-        {/* Breadcrumbs */}
-        <div className="px-4 sm:px-6 py-2 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
-          <nav className="flex items-center gap-1.5 text-sm">
-            <button
-              onClick={() => setPage('dashboard')}
-              className="text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium"
-            >
-              LogisWay
-            </button>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
-            <span className="text-gray-700 dark:text-gray-200 font-medium">
-              {pageNameMap[currentPage]}
-            </span>
-          </nav>
+          {/* ─── Page content with skeleton loading ──────────────────── */}
+          <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
+            <AnimatePresence mode="wait">
+              {pageLoading ? (
+                <motion.div
+                  key={`skeleton-${currentPage}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {currentPage === 'dashboard' ? <DashboardSkeleton /> : <GenericPageSkeleton />}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={currentPage}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                >
+                  {children}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
         </div>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-x-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+        {/* FlowBot Chatbot Widget */}
+        <ChatbotWidget />
+
+        {/* Command Palette Dialog */}
+        <CommandDialog
+          open={commandOpen}
+          onOpenChange={setCommandOpen}
+          title="Recherche universelle"
+          description="Rechercher des expéditions, conteneurs, vols, clients..."
+        >
+          <CommandInput placeholder="Rechercher un colis, conteneur, vol, client..." />
+          <CommandList>
+            <CommandEmpty>Aucun résultat trouvé</CommandEmpty>
+            <CommandGroup heading="Recherches récentes">
+              {accessibleRecentSearches.map((item) => (
+                <CommandItem
+                  key={item.id}
+                  onSelect={() => handleSearchSelect(item.page)}
+                  className="cursor-pointer"
+                >
+                  <item.icon className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">{item.label}</span>
+                  <span className="text-xs text-gray-400 ml-2">{item.description}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Expéditions">
+              {accessibleSearchItems.filter((i) => i.page === 'shipments').slice(0, 5).map((item) => (
+                <CommandItem
+                  key={item.id}
+                  onSelect={() => handleSearchSelect(item.page)}
+                  className="cursor-pointer"
+                >
+                  <item.icon className="w-4 h-4 text-teal-500" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-mono font-semibold text-sm">{item.label}</span>
+                    <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
+                    Expédition
+                  </Badge>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Conteneurs">
+              {accessibleSearchItems.filter((i) => i.page === 'maritime').slice(0, 4).map((item) => (
+                <CommandItem
+                  key={item.id}
+                  onSelect={() => handleSearchSelect(item.page)}
+                  className="cursor-pointer"
+                >
+                  <item.icon className="w-4 h-4 text-sky-500" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-mono font-semibold text-sm">{item.label}</span>
+                    <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
+                    Conteneur
+                  </Badge>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Vols">
+              {accessibleSearchItems.filter((i) => i.page === 'air-freight').slice(0, 4).map((item) => (
+                <CommandItem
+                  key={item.id}
+                  onSelect={() => handleSearchSelect(item.page)}
+                  className="cursor-pointer"
+                >
+                  <item.icon className="w-4 h-4 text-orange-500" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-mono font-semibold text-sm">{item.label}</span>
+                    <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    Vol
+                  </Badge>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Clients">
+              {accessibleSearchItems.filter((i) => i.page === 'clients').slice(0, 4).map((item) => (
+                <CommandItem
+                  key={item.id}
+                  onSelect={() => handleSearchSelect(item.page)}
+                  className="cursor-pointer"
+                >
+                  <item.icon className="w-4 h-4 text-violet-500" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-semibold text-sm">{item.label}</span>
+                    <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                    Client
+                  </Badge>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </CommandDialog>
       </div>
-
-      {/* FlowBot Chatbot Widget */}
-      <ChatbotWidget />
-
-      {/* Command Palette Dialog */}
-      <CommandDialog
-        open={commandOpen}
-        onOpenChange={setCommandOpen}
-        title="Recherche universelle"
-        description="Rechercher des expéditions, conteneurs, vols, clients..."
-      >
-        <CommandInput placeholder="Rechercher un colis, conteneur, vol, client..." />
-        <CommandList>
-          <CommandEmpty>Aucun résultat trouvé</CommandEmpty>
-          <CommandGroup heading="Recherches récentes">
-            {accessibleRecentSearches.map((item) => (
-              <CommandItem
-                key={item.id}
-                onSelect={() => handleSearchSelect(item.page)}
-                className="cursor-pointer"
-              >
-                <item.icon className="w-4 h-4 text-gray-400" />
-                <span className="font-medium">{item.label}</span>
-                <span className="text-xs text-gray-400 ml-2">{item.description}</span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Expéditions">
-            {accessibleSearchItems.filter((i) => i.page === 'shipments').slice(0, 5).map((item) => (
-              <CommandItem
-                key={item.id}
-                onSelect={() => handleSearchSelect(item.page)}
-                className="cursor-pointer"
-              >
-                <item.icon className="w-4 h-4 text-teal-500" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-mono font-semibold text-sm">{item.label}</span>
-                  <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
-                </div>
-                <Badge variant="secondary" className="text-[10px] bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">
-                  Expédition
-                </Badge>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Conteneurs">
-            {accessibleSearchItems.filter((i) => i.page === 'maritime').slice(0, 4).map((item) => (
-              <CommandItem
-                key={item.id}
-                onSelect={() => handleSearchSelect(item.page)}
-                className="cursor-pointer"
-              >
-                <item.icon className="w-4 h-4 text-sky-500" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-mono font-semibold text-sm">{item.label}</span>
-                  <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
-                </div>
-                <Badge variant="secondary" className="text-[10px] bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
-                  Conteneur
-                </Badge>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Vols">
-            {accessibleSearchItems.filter((i) => i.page === 'air-freight').slice(0, 4).map((item) => (
-              <CommandItem
-                key={item.id}
-                onSelect={() => handleSearchSelect(item.page)}
-                className="cursor-pointer"
-              >
-                <item.icon className="w-4 h-4 text-orange-500" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-mono font-semibold text-sm">{item.label}</span>
-                  <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
-                </div>
-                <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                  Vol
-                </Badge>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Clients">
-            {accessibleSearchItems.filter((i) => i.page === 'clients').slice(0, 4).map((item) => (
-              <CommandItem
-                key={item.id}
-                onSelect={() => handleSearchSelect(item.page)}
-                className="cursor-pointer"
-              >
-                <item.icon className="w-4 h-4 text-violet-500" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-semibold text-sm">{item.label}</span>
-                  <span className="text-xs text-gray-400 ml-2 truncate">{item.description}</span>
-                </div>
-                <Badge variant="secondary" className="text-[10px] bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
-                  Client
-                </Badge>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
-    </div>
+    </TooltipProvider>
   );
 }

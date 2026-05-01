@@ -11,6 +11,7 @@ import { useCargoStore } from '@/lib/cargo-store';
 import { canViewPage } from '@/lib/permissions';
 import LoginPage from '@/components/cargo/login-page';
 import DashboardLayout from '@/components/cargo/dashboard-layout';
+import { ToastProvider } from '@/components/cargo/toast-provider';
 import DashboardPage from '@/components/cargo/dashboard-page';
 import ShipmentsPage from '@/components/cargo/shipments-page';
 import TrackingPage from '@/components/cargo/tracking-page';
@@ -223,8 +224,10 @@ export default function Home() {
   }
 
   return (
-    <DashboardLayout>
-      <PageRenderer />
-    </DashboardLayout>
+    <ToastProvider>
+      <DashboardLayout>
+        <PageRenderer />
+      </DashboardLayout>
+    </ToastProvider>
   );
 }

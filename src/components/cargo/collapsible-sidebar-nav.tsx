@@ -6,35 +6,18 @@
  * ══════════════════════════════════════════════════════════════════
  *
  *  Barre latérale avec menus déroulants par catégorie.
- *  Chaque groupe de navigation (Principal, Fret, Services, etc.)
- *  est un collapsible que l'utilisateur peut ouvrir/fermer.
+ *  Chaque groupe de navigation est un collapsible que l'utilisateur
+ *  peut ouvrir/fermer. Supporte le mode icônes uniquement (collapsed).
  *
  *  ─── CARACTÉRISTIQUES ──────────────────────────────────────────
  *  • Menus déroulants animés par catégorie (Collapsible Radix)
+ *  • Mode icônes uniquement avec tooltips (collapsed)
  *  • Auto-ouverture du groupe contenant la page active
  *  • Persistance de l'état ouvert/fermé (localStorage)
  *  • Indicateur visuel de page active (barre teal + point animé)
  *  • Compteur d'items par groupe dans l'en-tête
  *  • Chevron animé pour l'état ouvert/fermé
  *  • Compatible avec le système de permissions RBAC existant
- *  • Même style visuel que la sidebar originale
- *
- *  ─── INTÉGRATION ───────────────────────────────────────────────
- *  Pour remplacer la sidebar existante, dans dashboard-layout.tsx,
- *  remplacer la section <nav> (lignes ~408-442) par :
- *
- *    import CollapsibleSidebarNav from '@/components/cargo/collapsible-sidebar-nav';
- *    ...
- *    <CollapsibleSidebarNav />
- *
- *  Ou utiliser les deux en parallèle pour test :
- *    {useCollapsibleSidebar && <CollapsibleSidebarNav />}
- *
- *  ─── AUCUNE MODIFICATION DU CODE EXISTANT REQUISE ──────────────
- *  Ce composant lit les mêmes sources de données :
- *  - getFilteredNavigation() depuis @/lib/permissions
- *  - useCargoStore() depuis @/lib/cargo-store
- *  - useSidebarCollapse() depuis @/hooks/use-sidebar-collapse
  */
 
 import React, { useEffect, useMemo } from 'react';
@@ -43,7 +26,6 @@ import {
   Ship,
   ArrowRight,
   ChevronDown,
-  ChevronRight,
   LogOut,
   X,
   FolderOpen,
@@ -53,13 +35,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCargoStore } from '@/lib/cargo-store';
 import { getFilteredNavigation } from '@/lib/permissions';
 import { useSidebarCollapse } from '@/hooks/use-sidebar-collapse';
+import { brandGradient } from '@/lib/design-tokens';
 import type { NavGroupKey } from '@/lib/module-config';
 
 // ─── Icônes de groupe ──────────────────────────────────────────
-// Icône distinctive pour chaque catégorie de navigation
 import {
   LayoutDashboard,
   Ship as ShipIcon,
@@ -97,9 +80,14 @@ const groupAccentMap: Record<NavGroupKey, string> = {
   systeme: 'text-slate-400',
 };
 
-export default function CollapsibleSidebarNav() {
-  const { currentPage, setPage, sidebarOpen, setSidebarOpen, roleKey, permissionsConfig, logout } = useCargoStore();
-  const { isOpen, toggle, ensureGroupOpen } = useSidebarCollapse();
+interface CollapsibleSidebarNavProps {
+  collapsed?: boolean;
+  onNavigate?: () => void;
+}
+
+export default function CollapsibleSidebarNav({ collapsed = false, onNavigate }: CollapsibleSidebarNavProps) {
+  const { currentPage, setPage, roleKey, permissionsConfig, logout } = useCargoStore();
+  const { isOpen, toggle, ensureGroupOpen, openAll } = useSidebarCollapse();
 
   // Construire la navigation filtrée par rôle & permissions
   const filteredNavGroups = useMemo(() => {
@@ -108,14 +96,117 @@ export default function CollapsibleSidebarNav() {
 
   // Auto-ouvrir le groupe contenant la page active quand elle change
   useEffect(() => {
+    if (collapsed) return;
     const activeGroup = filteredNavGroups.find((group) =>
       group.items.some((item) => item.id === currentPage)
     );
     if (activeGroup) {
       ensureGroupOpen(activeGroup.key as NavGroupKey);
     }
-  }, [currentPage, filteredNavGroups, ensureGroupOpen]);
+  }, [currentPage, filteredNavGroups, ensureGroupOpen, collapsed]);
 
+  const handleNav = (pageId: string) => {
+    setPage(pageId as any);
+    onNavigate?.();
+  };
+
+  // ─── COLLAPSED MODE: Icon-only sidebar ──────────────────────────
+  if (collapsed) {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Logo */}
+        <div className="flex items-center justify-center py-4 border-b border-white/10">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center relative"
+            style={{ background: brandGradient }}
+          >
+            <Ship className="w-5 h-5 text-white" />
+          </div>
+        </div>
+
+        {/* Icon navigation */}
+        <nav className="flex-1 py-3 overflow-y-auto">
+          <div className="space-y-1 px-2">
+            {filteredNavGroups.map((group) => {
+              const groupKey = group.key as NavGroupKey;
+              const GroupIcon = groupIconMap[groupKey] || FolderOpen;
+              const accentColor = groupAccentMap[groupKey] || 'text-teal-400';
+              const isGroupActive = group.items.some((item) => item.id === currentPage);
+
+              return (
+                <React.Fragment key={groupKey}>
+                  {/* Group icon as section divider */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`flex items-center justify-center py-1.5 ${isGroupActive ? accentColor : 'text-slate-600'}`}>
+                        <GroupIcon className="w-3.5 h-3.5" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs font-medium">
+                      {group.label}
+                    </TooltipContent>
+                  </Tooltip>
+
+                  {/* Items as icon buttons */}
+                  {group.items.map((item) => {
+                    const isActive = currentPage === item.id;
+                    const IconComponent = item.icon;
+                    return (
+                      <Tooltip key={item.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => handleNav(item.id)}
+                            className={`
+                              w-full flex items-center justify-center py-2 rounded-lg transition-all duration-200 relative
+                              ${isActive
+                                ? 'bg-teal-500/15 text-white'
+                                : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                              }
+                            `}
+                          >
+                            <IconComponent className={`w-4.5 h-4.5 ${isActive ? 'text-teal-400' : ''}`} />
+                            {isActive && (
+                              <motion.div
+                                layoutId="sidebar-active-bar-collapsed"
+                                className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-teal-400 rounded-r-full"
+                                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                              />
+                            )}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs font-medium">
+                          {item.label}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* Logout */}
+        <div className="px-2 pb-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={logout}
+                className="w-full flex items-center justify-center py-2.5 rounded-lg text-red-300/80 hover:bg-red-500/10 hover:text-red-300 transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">
+              Déconnexion
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── EXPANDED MODE: Full sidebar with collapsible groups ─────────
   return (
     <div className="flex flex-col h-full">
       {/* ─── En-tête sidebar ──────────────────────────────────── */}
@@ -123,7 +214,7 @@ export default function CollapsibleSidebarNav() {
         <div className="flex items-center gap-2.5">
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center relative"
-            style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+            style={{ background: brandGradient }}
           >
             <Ship className="w-5 h-5 text-white" />
             <div
@@ -139,7 +230,7 @@ export default function CollapsibleSidebarNav() {
           </div>
         </div>
         <button
-          onClick={() => setSidebarOpen(false)}
+          onClick={onNavigate}
           className="lg:hidden text-white/60 hover:text-white p-1"
           aria-label="Fermer le menu"
         >
@@ -219,7 +310,7 @@ export default function CollapsibleSidebarNav() {
                           return (
                             <button
                               key={item.id}
-                              onClick={() => setPage(item.id)}
+                              onClick={() => handleNav(item.id)}
                               className={`
                                 w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium
                                 transition-all duration-200 group/item

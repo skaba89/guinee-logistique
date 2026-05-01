@@ -144,3 +144,109 @@
     background: oklch(0.55 0.02 250);
   }
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   Micro-interactions & Polish — LogisWay
+   ═════════════════════════════════════════════════════════════════ */
+
+/* Card hover effect */
+@layer components {
+  .card-hover {
+    @apply transition-all duration-200;
+  }
+  .card-hover:hover {
+    @apply shadow-md -translate-y-0.5;
+  }
+
+  /* Press effect for buttons */
+  .btn-press {
+    @apply transition-all duration-150;
+  }
+  .btn-press:active {
+    @apply scale-[0.97];
+  }
+
+  /* Focus ring improvement */
+  .focus-ring:focus-visible {
+    @apply ring-2 ring-teal-500/40 ring-offset-2 ring-offset-background;
+  }
+
+  /* Shimmer effect for loading states */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.96 0.01 250) 25%,
+      oklch(0.92 0.01 250) 50%,
+      oklch(0.96 0.01 250) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+  .dark .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.269 0.02 250) 25%,
+      oklch(0.22 0.02 250) 50%,
+      oklch(0.269 0.02 250) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Glow effect for active items */
+  .glow-teal {
+    box-shadow: 0 0 12px oklch(0.6 0.15 175 / 0.15);
+  }
+  .dark .glow-teal {
+    box-shadow: 0 0 12px oklch(0.6 0.2 175 / 0.2);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #0d9488, #059669);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Smooth transitions for all interactive elements */
+  button, a, [role="button"] {
+    @apply transition-colors duration-150;
+  }
+
+  /* Table row hover */
+  table tbody tr {
+    @apply transition-colors duration-150;
+  }
+
+  /* Badge pulse animation for new items */
+  @keyframes badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  .badge-pulse {
+    animation: badge-pulse 2s ease-in-out infinite;
+  }
+
+  /* Stagger children animation helper */
+  .stagger-children > * {
+    opacity: 0;
+    animation: fadeUp 0.3s ease-out forwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+  .stagger-children > *:nth-child(n+7) { animation-delay: 300ms; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}

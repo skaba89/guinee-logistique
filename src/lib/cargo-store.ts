@@ -82,14 +82,20 @@ interface CargoState {
   /** Normalized role key derived from user.role */
   roleKey: RoleKey;
   sidebarOpen: boolean;
+  /** Whether sidebar is collapsed to icon-only mode on desktop */
+  sidebarCollapsed: boolean;
   permissionsConfig: PermissionsConfig;
   /** Active currency code */
   currency: string;
+  /** Navigation history for breadcrumbs */
+  pageHistory: PageType[];
   login: (phone: string, password: string) => boolean;
   logout: () => void;
   setPage: (page: PageType) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  toggleSidebarCollapsed: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   setPermissionsConfig: (config: PermissionsConfig) => void;
   setCurrency: (code: string) => void;
   /** Check if current user can view a page */
@@ -106,8 +112,10 @@ export const useCargoStore = create<CargoState>()(
       user: null,
       roleKey: 'viewer' as RoleKey,
       sidebarOpen: false,
+      sidebarCollapsed: false,
       permissionsConfig: loadPermissionsConfig(),
       currency: 'DZD',
+      pageHistory: [],
 
       login: (phone: string, password: string) => {
         const found = users.find(
@@ -141,7 +149,11 @@ export const useCargoStore = create<CargoState>()(
         const state = get();
         // Enforce permission check before navigating
         if (state.canView(page)) {
-          set({ currentPage: page, sidebarOpen: false });
+          set({
+            currentPage: page,
+            sidebarOpen: false,
+            pageHistory: [...state.pageHistory.slice(-9), state.currentPage],
+          });
         }
         // If user can't view the page, silently ignore the navigation
       },
@@ -152,6 +164,14 @@ export const useCargoStore = create<CargoState>()(
 
       setSidebarOpen: (open: boolean) => {
         set({ sidebarOpen: open });
+      },
+
+      toggleSidebarCollapsed: () => {
+        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed }));
+      },
+
+      setSidebarCollapsed: (collapsed: boolean) => {
+        set({ sidebarCollapsed: collapsed });
       },
 
       setPermissionsConfig: (config: PermissionsConfig) => {
@@ -182,6 +202,7 @@ export const useCargoStore = create<CargoState>()(
         currentPage: state.currentPage,
         roleKey: state.roleKey,
         currency: state.currency,
+        sidebarCollapsed: state.sidebarCollapsed,
       }),
     }
   )

@@ -1,17 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Phone, Lock, Eye, EyeOff, Ship, Plane, Truck, Container, Globe, ArrowRight, Mail, KeyRound, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Phone, Lock, Eye, EyeOff, Ship, Plane, Truck, Container, Globe, ArrowRight, Mail, KeyRound, MessageSquare, CheckCircle2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useToastAction } from '@/components/cargo/toast-provider';
+import { brandGradient } from '@/lib/design-tokens';
 
 export default function LoginPage() {
   const login = useCargoStore((s) => s.login);
+  const { toast } = useToastAction();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +39,9 @@ export default function LoginPage() {
     const success = login(phone, password);
     if (!success) {
       setError('Numéro de téléphone ou mot de passe incorrect');
+      toast.error('Échec de connexion', 'Vérifiez vos identifiants');
+    } else {
+      toast.success('Connexion réussie', 'Bienvenue sur LogisWay');
     }
     setLoading(false);
   };
@@ -48,10 +54,17 @@ export default function LoginPage() {
     { icon: Globe, x: '80%', y: '45%', delay: 1.5, duration: 9 },
   ];
 
+  const stats = [
+    { value: '150+', label: 'Pays couverts' },
+    { value: '2M+', label: 'Expéditions/an' },
+    { value: '99.5%', label: 'Taux de livraison' },
+    { value: '24/7', label: 'Support client' },
+  ];
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Hidden on mobile */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #0d3b36 50%, #0f172a 100%)' }}>
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #0d3b36 50%, #0f172a 100%)' }}>
         {/* Animated mesh gradient */}
         <div className="absolute inset-0">
           <motion.div
@@ -109,12 +122,17 @@ export default function LoginPage() {
           >
             {/* Logo */}
             <div className="mb-8 flex items-center justify-center gap-4">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+              <motion.div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center relative"
+                style={{ background: brandGradient }}
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+              >
                 <Ship className="w-8 h-8 text-white" />
                 <div className="absolute -right-1 -top-1 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: '#0f172a', border: '2px solid #0d9488' }}>
                   <ArrowRight className="w-3 h-3 text-teal-400" />
                 </div>
-              </div>
+              </motion.div>
               <div className="text-left">
                 <h1 className="text-3xl font-bold text-white tracking-tight">LogisWay</h1>
                 <p className="text-[10px] text-teal-300/70 tracking-[0.25em] uppercase">Logistique Internationale</p>
@@ -127,12 +145,12 @@ export default function LoginPage() {
             <p className="text-teal-200/60 mb-4 text-sm">
               Maritime &bull; Aérien &bull; Terrestre &bull; Colis &bull; Douanes
             </p>
-            <p className="text-slate-400/60 text-xs max-w-md mx-auto mb-12">
+            <p className="text-slate-400/60 text-xs max-w-md mx-auto mb-8">
               Plateforme complète de gestion logistique internationale. Suivez, gérez et optimisez vos flux de marchandises à travers le monde.
             </p>
 
             {/* Animated mode cards */}
-            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+            <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto mb-10">
               {[
                 { icon: Ship, label: 'Maritime', color: 'from-teal-500 to-emerald-600' },
                 { icon: Plane, label: 'Aérien', color: 'from-cyan-500 to-teal-600' },
@@ -143,7 +161,8 @@ export default function LoginPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                  className="rounded-xl p-4 text-center backdrop-blur-sm border border-teal-500/10"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  className="rounded-xl p-4 text-center backdrop-blur-sm border border-teal-500/10 cursor-default"
                   style={{ background: 'rgba(13, 148, 136, 0.08)' }}
                 >
                   <div className={`w-11 h-11 rounded-lg mx-auto mb-2 flex items-center justify-center bg-gradient-to-br ${card.color}`}>
@@ -153,23 +172,49 @@ export default function LoginPage() {
                 </motion.div>
               ))}
             </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 + index * 0.1 }}
+                  className="text-center"
+                >
+                  <p className="text-lg font-bold text-white">{stat.value}</p>
+                  <p className="text-[10px] text-teal-300/50">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         </div>
+
+        {/* Bottom decorative line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #0d9488, transparent)' }} />
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 bg-white dark:bg-gray-950">
+      <div className="w-full lg:w-[55%] flex items-center justify-center p-6 sm:p-8 bg-white dark:bg-gray-950 relative">
+        {/* Decorative gradient orb */}
+        <div className="absolute top-0 right-0 w-64 h-64 opacity-[0.03] pointer-events-none" style={{ background: 'radial-gradient(circle, #0d9488 0%, transparent 70%)' }} />
+
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="w-full max-w-md"
+          className="w-full max-w-md relative"
         >
           {/* Mobile logo */}
           <div className="flex items-center justify-center gap-3 mb-8 lg:hidden">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+            <motion.div
+              className="w-11 h-11 rounded-xl flex items-center justify-center relative"
+              style={{ background: brandGradient }}
+              whileTap={{ scale: 0.95 }}
+            >
               <Ship className="w-6 h-6 text-white" />
-            </div>
+            </motion.div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">LogisWay</h1>
             </div>
@@ -177,7 +222,7 @@ export default function LoginPage() {
 
           {/* Logo area for desktop */}
           <div className="hidden lg:flex items-center gap-3 mb-8">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center relative" style={{ background: brandGradient }}>
               <Ship className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -186,9 +231,12 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-6">
-            <p className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: '#0d9488' }}>
-              Espace Professionnel
-            </p>
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-4 h-4" style={{ color: '#0d9488' }} />
+              <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: '#0d9488' }}>
+                Espace Professionnel
+              </p>
+            </div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Connexion</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Accédez à votre plateforme de gestion logistique internationale
@@ -197,15 +245,18 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Error message */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
-              >
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              </motion.div>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, y: -10, height: 0 }}
+                  className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                >
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Phone */}
             <div className="space-y-2">
@@ -218,7 +269,7 @@ export default function LoginPage() {
                   placeholder="0600000001"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="pl-10 h-11"
+                  className="pl-10 h-11 focus-ring"
                   required
                 />
               </div>
@@ -235,13 +286,13 @@ export default function LoginPage() {
                   placeholder="Mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11"
+                  className="pl-10 pr-10 h-11 focus-ring"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -271,31 +322,34 @@ export default function LoginPage() {
             </div>
 
             {/* Submit */}
-            <Button
-              type="submit"
-              className="w-full h-11 text-white font-semibold text-sm"
-              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
-              disabled={loading}
-            >
-              {loading ? (
-                <motion.div
-                  className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                />
-              ) : (
-                'Se connecter'
-              )}
-            </Button>
+            <motion.div whileTap={{ scale: 0.98 }}>
+              <Button
+                type="submit"
+                className="w-full h-11 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-shadow"
+                style={{ background: brandGradient }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <motion.div
+                    className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  />
+                ) : (
+                  'Se connecter'
+                )}
+              </Button>
+            </motion.div>
           </form>
 
           {/* Client Portal Link */}
           <div className="mt-4">
             <Button
               variant="outline"
-              className="w-full h-10 text-sm border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+              className="w-full h-10 text-sm border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 btn-press"
               onClick={() => {
                 login('0600000003', 'client123');
+                toast.success('Connexion Client', 'Bienvenue sur le portail client');
               }}
             >
               <Globe className="w-4 h-4 mr-2" />
@@ -312,7 +366,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Demo credentials - hidden by default */}
+          {/* Demo credentials */}
           <div className="mt-6">
             <button
               type="button"
@@ -322,20 +376,40 @@ export default function LoginPage() {
               <KeyRound className="w-3 h-3" />
               {showDemoCreds ? 'Masquer' : 'Afficher'} les identifiants de démonstration
             </button>
-            {showDemoCreds && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
-              >
-                <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
-                  <p><span className="font-medium">Admin:</span> 0600000001 / admin123</p>
-                  <p><span className="font-medium">Agent:</span> 0600000002 / user123</p>
-                  <p><span className="font-medium">Client:</span> 0600000003 / client123</p>
-                </div>
-              </motion.div>
-            )}
+            <AnimatePresence>
+              {showDemoCreds && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden"
+                >
+                  <div className="space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
+                    <button
+                      className="flex w-full items-center gap-2 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      onClick={() => { setPhone('0600000001'); setPassword('admin123'); }}
+                    >
+                      <span className="w-14 font-medium text-teal-600 dark:text-teal-400">Admin</span>
+                      <span className="text-gray-400">0600000001 / admin123</span>
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      onClick={() => { setPhone('0600000002'); setPassword('user123'); }}
+                    >
+                      <span className="w-14 font-medium text-amber-600 dark:text-amber-400">Agent</span>
+                      <span className="text-gray-400">0600000002 / user123</span>
+                    </button>
+                    <button
+                      className="flex w-full items-center gap-2 p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      onClick={() => { setPhone('0600000003'); setPassword('client123'); }}
+                    >
+                      <span className="w-14 font-medium text-violet-600 dark:text-violet-400">Client</span>
+                      <span className="text-gray-400">0600000003 / client123</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>
@@ -374,15 +448,18 @@ export default function LoginPage() {
                     placeholder="0600000001"
                     value={forgotPhone}
                     onChange={(e) => setForgotPhone(e.target.value)}
-                    className="pl-10 h-11"
+                    className="pl-10 h-11 focus-ring"
                   />
                 </div>
               </div>
               <Button
                 className="w-full h-11 text-white font-semibold text-sm"
-                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                style={{ background: brandGradient }}
                 onClick={() => {
-                  if (forgotPhone.trim()) setForgotSent(true);
+                  if (forgotPhone.trim()) {
+                    setForgotSent(true);
+                    toast.info('Code envoyé', 'Vérifiez votre téléphone');
+                  }
                 }}
                 disabled={!forgotPhone.trim()}
               >
@@ -442,9 +519,12 @@ export default function LoginPage() {
               </div>
               <Button
                 className="w-full h-11 text-white font-semibold text-sm"
-                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                style={{ background: brandGradient }}
                 onClick={() => {
-                  if (contactMessage.trim()) setContactSent(true);
+                  if (contactMessage.trim()) {
+                    setContactSent(true);
+                    toast.success('Message envoyé', 'Vous recevrez une réponse sous 24h');
+                  }
                 }}
                 disabled={!contactMessage.trim()}
               >
