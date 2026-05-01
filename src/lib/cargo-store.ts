@@ -38,20 +38,21 @@ export interface CurrencyInfo {
 }
 
 export const CURRENCIES: Record<string, CurrencyInfo> = {
+  // ─── Dinar du Maghreb ───────────────────────────────────────
   DZD: { code: 'DZD', name: 'Dinar Algérien', symbol: 'DA', locale: 'fr-DZ', rate: 1 },
-  EUR: { code: 'EUR', name: 'Euro', symbol: '€', locale: 'fr-FR', rate: 0.0068 },
-  USD: { code: 'USD', name: 'Dollar US', symbol: '$', locale: 'en-US', rate: 0.0075 },
-  GBP: { code: 'GBP', name: 'Livre Sterling', symbol: '£', locale: 'en-GB', rate: 0.0058 },
   MAD: { code: 'MAD', name: 'Dirham Marocain', symbol: 'MAD', locale: 'fr-MA', rate: 0.073 },
   TND: { code: 'TND', name: 'Dinar Tunisien', symbol: 'TND', locale: 'fr-TN', rate: 0.023 },
-  CNY: { code: 'CNY', name: 'Yuan Chinois', symbol: '¥', locale: 'zh-CN', rate: 0.054 },
-  AED: { code: 'AED', name: 'Dirham EAU', symbol: 'AED', locale: 'ar-AE', rate: 0.0275 },
-  SAR: { code: 'SAR', name: 'Riyal Saoudien', symbol: 'SAR', locale: 'ar-SA', rate: 0.028 },
-  TRY: { code: 'TRY', name: 'Livre Turque', symbol: '₺', locale: 'tr-TR', rate: 0.25 },
-  EGP: { code: 'EGP', name: 'Livre Égyptienne', symbol: 'E£', locale: 'ar-EG', rate: 0.37 },
-  XOF: { code: 'XOF', name: 'Franc CFA', symbol: 'CFA', locale: 'fr-SN', rate: 4.46 },
-  KRW: { code: 'KRW', name: 'Won Sud-Coréen', symbol: '₩', locale: 'ko-KR', rate: 10.9 },
+  LYD: { code: 'LYD', name: 'Dinar Libyen', symbol: 'LYD', locale: 'ar-LY', rate: 0.037 },
+  // ─── Devises internationales ─────────────────────────────────
+  USD: { code: 'USD', name: 'Dollar US', symbol: '$', locale: 'en-US', rate: 0.0075 },
+  EUR: { code: 'EUR', name: 'Euro', symbol: '€', locale: 'fr-FR', rate: 0.0068 },
+  GBP: { code: 'GBP', name: 'Livre Sterling', symbol: '£', locale: 'en-GB', rate: 0.0058 },
   JPY: { code: 'JPY', name: 'Yen Japonais', symbol: '¥', locale: 'ja-JP', rate: 1.13 },
+  CNY: { code: 'CNY', name: 'Yuan Chinois', symbol: '¥', locale: 'zh-CN', rate: 0.054 },
+  // ─── Devises africaines ─────────────────────────────────────
+  XOF: { code: 'XOF', name: 'Franc CFA (BCEAO)', symbol: 'CFA', locale: 'fr-SN', rate: 4.46 },
+  GNF: { code: 'GNF', name: 'Franc Guinéen', symbol: 'FG', locale: 'fr-GN', rate: 64.5 },
+  NGN: { code: 'NGN', name: 'Naira Nigérian', symbol: '₦', locale: 'en-NG', rate: 11.5 },
 };
 
 /** Format an amount in the given currency */
