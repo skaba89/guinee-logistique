@@ -58,6 +58,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { routes, routeStatusLabels, formatDate } from '@/lib/test-data';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 
 const routeStatusColors: Record<string, string> = {
   planned: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -102,6 +103,7 @@ const kpis = [
 
 export default function GroundTransportPage() {
   const canEditPage = useCargoStore((s) => s.canEdit('ground-transport'));
+  const { format: formatPrice, symbol } = useCurrency();
   const [data, setData] = useState(routes);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -304,12 +306,12 @@ export default function GroundTransportPage() {
             </div>
             <div className="space-y-1">
               <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Coût / litre</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{fuelData.costPerLiter} DA</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{fuelData.costPerLiter} {symbol}</p>
               <p className="text-[10px] text-gray-400">Prix moyen</p>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Coût mensuel</p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white">{(fuelData.monthlyCost / 1000).toFixed(0)}K DA</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white">{(fuelData.monthlyCost / 1000).toFixed(0)}K {symbol}</p>
               <div className="flex items-center gap-1">
                 {fuelData.savingsVsLastMonth < 0 ? (
                   <TrendingUp className="w-3 h-3 text-red-500" />
@@ -602,7 +604,7 @@ export default function GroundTransportPage() {
                     </div>
                     <div>
                       <p className="text-[10px] text-gray-400">Coût estimé</p>
-                      <p className="text-sm font-medium">{Math.round(selectedRoute.distance * 0.325 * 54.7).toLocaleString('fr-FR')} DA</p>
+                      <p className="text-sm font-medium">{formatPrice(Math.round(selectedRoute.distance * 0.325 * 54.7))}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-gray-400">CO2 estimé</p>

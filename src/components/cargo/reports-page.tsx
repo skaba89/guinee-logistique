@@ -254,8 +254,8 @@ const onTimeBarData = [
 
 const topClientsPreview = [...clients].sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5);
 
-const previewSummaryMetrics = [
-  { label: 'Revenu total', value: '11.8M DA', change: '+12.3%', positive: true },
+const previewSummaryMetricsBase = [
+  { label: 'Revenu total', value: '11.8M', change: '+12.3%', positive: true },
   { label: 'Expéditions', value: '48', change: '+8.2%', positive: true },
   { label: 'Taux à temps', value: '96%', change: '+2.1%', positive: true },
   { label: 'Clients actifs', value: '12', change: '-1', positive: false },
@@ -290,7 +290,11 @@ const frequencyColors: Record<string, string> = {
 
 export default function ReportsPage() {
   const { currentPage } = useCargoStore();
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
+
+  const previewSummaryMetrics = previewSummaryMetricsBase.map(m =>
+    m.label === 'Revenu total' ? { ...m, value: `${m.value} ${symbol}` } : m
+  );
 
   // Report generator state
   const [selectedType, setSelectedType] = useState<string>('');

@@ -79,6 +79,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ───────────────────────────────────────────────────────────
 type PartnerType = 'maritime' | 'aerien' | 'terrestre' | 'multi';
@@ -195,11 +196,11 @@ function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
 }
 
 // ─── Helper: Format revenue ──────────────────────────────────────────
-function formatRevenue(value: number): string {
+function formatRevenue(value: number, symbol: string): string {
   if (value >= 1000000) {
-    return `${(value / 1000000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M DA`;
+    return `${(value / 1000000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M ${symbol}`;
   }
-  return value.toLocaleString('fr-FR') + ' DA';
+  return value.toLocaleString('fr-FR') + ' ' + symbol;
 }
 
 // ─── KPI Cards Data ──────────────────────────────────────────────────
@@ -246,6 +247,7 @@ const chartData = partners.map((p) => ({
 
 // ─── Component ───────────────────────────────────────────────────────
 export default function PartnersPage() {
+  const { format: formatPrice, symbol } = useCurrency();
   const [data, setData] = useState<Partner[]>(partners);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -914,7 +916,7 @@ export default function PartnersPage() {
                 </div>
                 <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
                   <p className="text-2xl font-bold text-emerald-600">
-                    {formatRevenue(selectedPartner.revenue)}
+                    {formatRevenue(selectedPartner.revenue, symbol)}
                   </p>
                   <p className="text-xs text-gray-500">Revenu généré</p>
                 </div>
@@ -1061,7 +1063,7 @@ export default function PartnersPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Revenu (DA)</Label>
+              <Label className="text-xs">{`Revenu (${symbol})`}</Label>
               <Input
                 type="number"
                 value={editPartner.revenue}

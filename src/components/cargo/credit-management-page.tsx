@@ -363,7 +363,7 @@ function getRiskScoreBg(score: number): string {
 // ─── Main Component ─────────────────────────────────────────────
 
 export default function CreditManagementPage() {
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
   const canEdit = useCargoStore((s) => s.canEdit('credit-management'));
 
   // ── Overview Tab state
@@ -1504,7 +1504,7 @@ export default function CreditManagementPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Nouvelle limite de crédit (DA)</Label>
+                <Label className="text-xs">{`Nouvelle limite de crédit (${symbol})`}</Label>
                 <Input
                   type="number"
                   value={newCreditLimit}

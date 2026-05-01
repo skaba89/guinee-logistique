@@ -75,6 +75,7 @@ import {
   Legend,
 } from 'recharts';
 import { vehicles, formatDate } from '@/lib/test-data';
+import { useCargoStore } from '@/lib/cargo-store';
 
 // ─── Driver Data ───────────────────────────────────────────────────────────────
 
@@ -683,6 +684,9 @@ function renderStars(rating: number) {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function DriversPage() {
+  const canEditDrivers = useCargoStore((s) => s.canEdit('drivers'));
+  const setPage = useCargoStore((s) => s.setPage);
+  const [copiedPhone, setCopiedPhone] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -793,10 +797,12 @@ export default function DriversPage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Centre de gestion et suivi des performances chauffeurs</p>
         </div>
-        <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouveau chauffeur
-        </Button>
+        {canEditDrivers && (
+          <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau chauffeur
+          </Button>
+        )}
       </div>
 
       {/* KPI Cards */}
@@ -983,10 +989,10 @@ export default function DriversPage() {
 
                   {/* Quick action buttons */}
                   <div className="pt-2 border-t border-gray-100 dark:border-gray-800 mt-2 flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20" onClick={(e) => { e.stopPropagation(); alert(`Appel en cours vers ${driver.firstName} ${driver.lastName} (${driver.phone})...`); }}>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20" onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(driver.phone); setCopiedPhone(driver.id); setTimeout(() => setCopiedPhone(null), 2000); }} title={copiedPhone === driver.id ? 'Numéro copié !' : 'Copier le numéro'}>
                       <Phone className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={(e) => { e.stopPropagation(); alert(`Ouverture du chat avec ${driver.firstName} ${driver.lastName}...`); }}>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={(e) => { e.stopPropagation(); setPage('chat'); }} title="Ouvrir le chat">
                       <MessageSquare className="w-3.5 h-3.5" />
                     </Button>
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20" onClick={(e) => { e.stopPropagation(); setSelectedDriver(driver); }}>

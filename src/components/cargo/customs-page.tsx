@@ -54,8 +54,9 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { customsDeclarations, customsTypeLabels, customsStatusLabels, formatDate, formatCurrency } from '@/lib/test-data';
+import { customsDeclarations, customsTypeLabels, customsStatusLabels, formatDate, formatCurrency as formatCurrencyTest } from '@/lib/test-data';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 
 const customsStatusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
@@ -143,15 +144,18 @@ const docStatusLabels: Record<string, string> = {
   unavailable: 'Indisponible',
 };
 
-const kpis = [
-  { title: 'En attente', value: customsDeclarations.filter(d => d.status === 'submitted' || d.status === 'under_review').length, icon: Clock, color: 'from-orange-500 to-amber-600' },
-  { title: 'Dédouanées aujourd\'hui', value: customsDeclarations.filter(d => d.status === 'cleared').length, icon: CheckCircle2, color: 'from-green-500 to-emerald-600' },
-  { title: 'Droits collectés', value: formatCurrency(customsDeclarations.filter(d => d.status === 'cleared').reduce((a, b) => a + b.dutiesAndTaxes, 0)), icon: DollarSign, color: 'from-teal-500 to-teal-600' },
-  { title: 'En révision', value: customsDeclarations.filter(d => d.status === 'under_review').length, icon: AlertTriangle, color: 'from-red-500 to-rose-600' },
-];
+// kpis moved inside component to use useCurrency hook
 
 export default function CustomsPage() {
   const canEditPage = useCargoStore((s) => s.canEdit('customs'));
+  const { format: formatPrice } = useCurrency();
+
+  const kpis = [
+    { title: 'En attente', value: customsDeclarations.filter(d => d.status === 'submitted' || d.status === 'under_review').length, icon: Clock, color: 'from-orange-500 to-amber-600' },
+    { title: 'Dédouanées aujourd\'hui', value: customsDeclarations.filter(d => d.status === 'cleared').length, icon: CheckCircle2, color: 'from-green-500 to-emerald-600' },
+    { title: 'Droits collectés', value: formatPrice(customsDeclarations.filter(d => d.status === 'cleared').reduce((a, b) => a + b.dutiesAndTaxes, 0)), icon: DollarSign, color: 'from-teal-500 to-teal-600' },
+    { title: 'En révision', value: customsDeclarations.filter(d => d.status === 'under_review').length, icon: AlertTriangle, color: 'from-red-500 to-rose-600' },
+  ];
   const [data, setData] = useState(customsDeclarations);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -658,7 +662,7 @@ export default function CustomsPage() {
                     <TableCell className="text-xs hidden sm:table-cell">{decl.clientName}</TableCell>
                     <TableCell className="text-xs hidden md:table-cell">{decl.originCountry} → {decl.destinationCountry}</TableCell>
                     <TableCell className="font-mono text-[10px] hidden lg:table-cell">{decl.hsCode}</TableCell>
-                    <TableCell className="text-xs text-right font-medium">{formatCurrency(decl.declaredValue, decl.currency)}</TableCell>
+                    <TableCell className="text-xs text-right font-medium">{formatCurrencyTest(decl.declaredValue, decl.currency)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -708,8 +712,8 @@ export default function CustomsPage() {
                 <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
                   <Label className="text-xs text-gray-500">Financier</Label>
                   <div className="grid grid-cols-2 gap-3 mt-2">
-                    <div><p className="text-[10px] text-gray-400">Valeur déclarée</p><p className="text-sm font-medium">{formatCurrency(selectedDecl.declaredValue, selectedDecl.currency)}</p></div>
-                    <div><p className="text-[10px] text-gray-400">Droits et taxes</p><p className="text-sm font-medium">{formatCurrency(selectedDecl.dutiesAndTaxes, selectedDecl.currency)}</p></div>
+                    <div><p className="text-[10px] text-gray-400">Valeur déclarée</p><p className="text-sm font-medium">{formatCurrencyTest(selectedDecl.declaredValue, selectedDecl.currency)}</p></div>
+                    <div><p className="text-[10px] text-gray-400">Droits et taxes</p><p className="text-sm font-medium">{formatCurrencyTest(selectedDecl.dutiesAndTaxes, selectedDecl.currency)}</p></div>
                     <div><p className="text-[10px] text-gray-400">Date de soumission</p><p className="text-sm font-medium">{formatDate(selectedDecl.submissionDate)}</p></div>
                     <div><p className="text-[10px] text-gray-400">Date de dédouanement</p><p className="text-sm font-medium">{formatDate(selectedDecl.clearanceDate)}</p></div>
                   </div>

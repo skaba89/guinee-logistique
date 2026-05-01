@@ -95,49 +95,6 @@ const carbonData = [
   { name: 'Colis', value: 3.4, color: '#8b5cf6' },
 ];
 
-const performanceMetrics = [
-  { label: 'Temps moyen de transit', value: '5.2 jours', icon: Clock, color: 'text-teal-500' },
-  { label: 'Taux de livraison réussi', value: '94.2%', icon: CheckCircle2, color: 'text-green-500' },
-  { label: 'Coût moyen par km', value: '142 DA/km', icon: DollarSign, color: 'text-amber-500' },
-  { label: 'Réduction CO2 (trim.)', value: '-8.3%', icon: Leaf, color: 'text-emerald-500' },
-];
-
-// AI Insights data
-const aiInsights = [
-  {
-    id: 1,
-    title: 'Optimiser les rotations maritimes',
-    description: 'Regrouper les expéditions Alger→Marseille sur le navire Marco Polo pourrait réduire les coûts de 12% et améliorer le taux de remplissage de 78% à 91%.',
-    impact: 'high',
-    savings: '~1.2M DA/mois',
-    icon: Ship,
-  },
-  {
-    id: 2,
-    title: 'Anticiper le pic saisonnier Ramadan',
-    description: 'Historiquement, les volumes augmentent de 35% en pré-Ramadan. Recommandation: réserver 4 conteneurs supplémentaires et 2 vols cargo pour les semaines 10-14.',
-    impact: 'high',
-    savings: 'Prévention ruptures',
-    icon: Calendar,
-  },
-  {
-    id: 3,
-    title: 'Diversifier les routes terrestres',
-    description: 'La route Casablanca→Dakar via Nouakchott présente des retards fréquents. Alternative via Bamako: +200km mais -8h de transit moyen.',
-    impact: 'medium',
-    savings: '~320K DA/mois',
-    icon: Truck,
-  },
-  {
-    id: 4,
-    title: 'Négocier les tarifs DHL Express',
-    description: 'Avec 47% des colis express via DHL, un volume minimum garanti de 200 colis/mois permettrait d\'obtenir une remise de 15% sur le tarif standard.',
-    impact: 'medium',
-    savings: '~480K DA/mois',
-    icon: PackageCheck,
-  },
-];
-
 const impactColors: Record<string, string> = {
   high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
@@ -211,8 +168,50 @@ const tooltipStyle = {
 };
 
 export default function AnalyticsPage() {
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
   const [appliedInsights, setAppliedInsights] = useState<Set<number>>(new Set());
+
+  const performanceMetrics = [
+    { label: 'Temps moyen de transit', value: '5.2 jours', icon: Clock, color: 'text-teal-500' },
+    { label: 'Taux de livraison réussi', value: '94.2%', icon: CheckCircle2, color: 'text-green-500' },
+    { label: 'Coût moyen par km', value: `142 ${symbol}/km`, icon: DollarSign, color: 'text-amber-500' },
+    { label: 'Réduction CO2 (trim.)', value: '-8.3%', icon: Leaf, color: 'text-emerald-500' },
+  ];
+
+  const aiInsights = [
+    {
+      id: 1,
+      title: 'Optimiser les rotations maritimes',
+      description: 'Regrouper les expéditions Alger→Marseille sur le navire Marco Polo pourrait réduire les coûts de 12% et améliorer le taux de remplissage de 78% à 91%.',
+      impact: 'high',
+      savings: `~1.2M ${symbol}/mois`,
+      icon: Ship,
+    },
+    {
+      id: 2,
+      title: 'Anticiper le pic saisonnier Ramadan',
+      description: 'Historiquement, les volumes augmentent de 35% en pré-Ramadan. Recommandation: réserver 4 conteneurs supplémentaires et 2 vols cargo pour les semaines 10-14.',
+      impact: 'high',
+      savings: 'Prévention ruptures',
+      icon: Calendar,
+    },
+    {
+      id: 3,
+      title: 'Diversifier les routes terrestres',
+      description: 'La route Casablanca→Dakar via Nouakchott présente des retards fréquents. Alternative via Bamako: +200km mais -8h de transit moyen.',
+      impact: 'medium',
+      savings: `~320K ${symbol}/mois`,
+      icon: Truck,
+    },
+    {
+      id: 4,
+      title: 'Négocier les tarifs DHL Express',
+      description: 'Avec 47% des colis express via DHL, un volume minimum garanti de 200 colis/mois permettrait d\'obtenir une remise de 15% sur le tarif standard.',
+      impact: 'medium',
+      savings: `~480K ${symbol}/mois`,
+      icon: PackageCheck,
+    },
+  ];
 
   const handleApplyInsight = (insightId: number) => {
     setAppliedInsights(prev => {
@@ -389,15 +388,15 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-3 gap-4 mb-4 p-3 rounded-lg bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20">
             <div className="text-center">
               <p className="text-[10px] text-gray-500">Coût actuel</p>
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{(totalCurrentCost / 1000000).toFixed(1)}M DA</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">{(totalCurrentCost / 1000000).toFixed(1)}M {symbol}</p>
             </div>
             <div className="text-center">
               <p className="text-[10px] text-gray-500">Coût optimisé</p>
-              <p className="text-sm font-bold text-teal-600">{(totalOptimizedCost / 1000000).toFixed(1)}M DA</p>
+              <p className="text-sm font-bold text-teal-600">{(totalOptimizedCost / 1000000).toFixed(1)}M {symbol}</p>
             </div>
             <div className="text-center">
               <p className="text-[10px] text-gray-500">Économie totale</p>
-              <p className="text-sm font-bold text-emerald-600">{(totalSavings / 1000000).toFixed(1)}M DA ({totalSavingsPercent}%)</p>
+              <p className="text-sm font-bold text-emerald-600">{(totalSavings / 1000000).toFixed(1)}M {symbol} ({totalSavingsPercent}%)</p>
             </div>
           </div>
 

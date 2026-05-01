@@ -185,7 +185,7 @@ const chartData = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function InsurancePage() {
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
   const [policies, setPolicies] = useState<Policy[]>(initialPolicies);
   const [claims] = useState<Claim[]>(initialClaims);
   const [searchQuery, setSearchQuery] = useState('');
@@ -265,7 +265,7 @@ export default function InsurancePage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['N° Police', 'Client', 'Expédition', 'Type Couverture', 'Valeur Assurée (DA)', 'Prime (DA)', 'Statut', 'Date Début', 'Date Fin'];
+    const headers = ['N° Police', 'Client', 'Expédition', 'Type Couverture', `Valeur Assurée (${symbol})`, `Prime (${symbol})`, 'Statut', 'Date Début', 'Date Fin'];
     const rows = filteredPolicies.map(p => [
       p.policyNumber,
       p.clientName,
@@ -665,7 +665,7 @@ export default function InsurancePage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs">Valeur assurée (DA)</Label>
+                <Label className="text-xs">{`Valeur assurée (${symbol})`}</Label>
                 <Input
                   type="number"
                   value={newPolicy.insuredValue}
@@ -674,7 +674,7 @@ export default function InsurancePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Prime (DA)</Label>
+                <Label className="text-xs">{`Prime (${symbol})`}</Label>
                 <Input
                   type="number"
                   value={newPolicy.premium}

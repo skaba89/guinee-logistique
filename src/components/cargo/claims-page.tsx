@@ -495,7 +495,7 @@ const resolutionByTransportData = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ClaimsPage() {
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
   const [claims, setClaims] = useState<Claim[]>(initialClaims);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
@@ -643,7 +643,7 @@ export default function ClaimsPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['N° Réclamation', 'Client', 'Type', 'Mode Transport', 'Montant Réclamé (DA)', 'Statut', 'Priorité', 'Date', 'Expédition', 'Assigné à', 'Jours Ouverts'];
+    const headers = ['N° Réclamation', 'Client', 'Type', 'Mode Transport', `Montant Réclamé (${symbol})`, 'Statut', 'Priorité', 'Date', 'Expédition', 'Assigné à', 'Jours Ouverts'];
     const rows = filteredClaims.map(c => [
       c.claimNumber,
       c.clientName,
@@ -1587,7 +1587,7 @@ export default function ClaimsPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs">Montant estimé (DA)</Label>
+                <Label className="text-xs">{`Montant estimé (${symbol})`}</Label>
                 <Input
                   type="number"
                   value={newClaim.claimedAmount}

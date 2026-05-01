@@ -86,6 +86,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -312,9 +313,7 @@ const trainingStatusConfig: Record<TrainingStatus, { label: string; color: strin
   termine: { label: 'Terminé', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
 };
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('fr-DZ', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' DA';
-}
+// formatCurrency is now provided by useCurrency hook inside the component
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -363,6 +362,7 @@ const tabs = [
 // ─── Component ─────────────────────────────────────────────────
 
 export default function HRPage() {
+  const { format: formatPrice, symbol } = useCurrency();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState<string>('all');
@@ -449,7 +449,7 @@ export default function HRPage() {
   }, [leaveFilter, leaveRequestsList]);
 
   const handleExportCSV = () => {
-    const headers = ['Nom', 'Prénom', 'Département', 'Poste', 'Statut', 'Date Embauche', 'Salaire (DA)', 'Email', 'Téléphone', 'Évaluation'];
+    const headers = ['Nom', 'Prénom', 'Département', 'Poste', 'Statut', 'Date Embauche', `Salaire (${symbol})`, 'Email', 'Téléphone', 'Évaluation'];
     const rows = filteredEmployees.map(e => [
       e.nom,
       e.prenom,
@@ -486,7 +486,7 @@ export default function HRPage() {
     { title: 'En Congé', value: enConge, icon: CalendarDays, gradient: 'from-amber-500 to-amber-600', change: `${leaveRequestsList.filter(l => l.statut === 'en_attente').length} en attente`, changeUp: false },
     { title: 'Postes Vacants', value: postesVacants, icon: Briefcase, gradient: 'from-rose-500 to-rose-600', change: `${jobOpenings.filter(j => j.statut === 'ouvert').length} ouverts`, changeUp: false },
     { title: 'Taux de Rotation', value: tauxRotation, icon: TrendingUp, gradient: 'from-orange-500 to-orange-600', change: '-0.5% vs S1', changeUp: true },
-    { title: 'Masse Salariale', value: formatCurrency(masseSalariale), icon: DollarSign, gradient: 'from-cyan-500 to-cyan-600', change: '+3.2% vs S2', changeUp: false },
+    { title: 'Masse Salariale', value: formatPrice(masseSalariale), icon: DollarSign, gradient: 'from-cyan-500 to-cyan-600', change: '+3.2% vs S2', changeUp: false },
   ];
 
   // ─── Render Tabs ────────────────────────────────────────────
@@ -833,7 +833,7 @@ export default function HRPage() {
                                   {formatDate(emp.dateEmbauche)}
                                 </TableCell>
                                 <TableCell className="text-xs text-gray-600 dark:text-gray-300 hidden sm:table-cell">
-                                  {formatCurrency(emp.salaire)}
+                                  {formatPrice(emp.salaire)}
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex items-center gap-1">
@@ -1083,7 +1083,7 @@ export default function HRPage() {
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-xs text-gray-500">Masse Salariale Mensuelle</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(2980000)}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(2980000)}</p>
                     <span className="text-[10px] text-emerald-600 flex items-center gap-0.5">
                       <ArrowUpRight className="w-3 h-3" /> +2.1%
                     </span>
@@ -1092,14 +1092,14 @@ export default function HRPage() {
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-xs text-gray-500">Salaire Moyen</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(Math.round(masseSalariale / totalEmployes))}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(Math.round(masseSalariale / totalEmployes))}</p>
                     <span className="text-[10px] text-gray-400">Brut mensuel</span>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
                     <p className="text-xs text-gray-500">Charges Sociales</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatCurrency(745000)}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{formatPrice(745000)}</p>
                     <span className="text-[10px] text-gray-400">25% du brut</span>
                   </CardContent>
                 </Card>
@@ -1117,7 +1117,7 @@ export default function HRPage() {
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-teal-500" />
-                    Évolution de la Masse Salariale (×100K DA)
+                    {`Évolution de la Masse Salariale (×100K ${symbol})`}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1176,13 +1176,13 @@ export default function HRPage() {
                                 </div>
                               </TableCell>
                               <TableCell className="text-sm font-medium text-gray-900 dark:text-white">
-                                {formatCurrency(row.montant)}
+                                {formatPrice(row.montant)}
                               </TableCell>
                               <TableCell className="text-sm text-gray-600 dark:text-gray-300">
                                 {row.employes}
                               </TableCell>
                               <TableCell className="text-sm text-gray-600 dark:text-gray-300 hidden sm:table-cell">
-                                {formatCurrency(Math.round(row.montant / row.employes))}
+                                {formatPrice(Math.round(row.montant / row.employes))}
                               </TableCell>
                               <TableCell className="hidden md:table-cell">
                                 <div className="flex items-center gap-2">
@@ -1483,7 +1483,7 @@ export default function HRPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="salaire" className="text-xs">Salaire (DA)</Label>
+                <Label htmlFor="salaire" className="text-xs">{`Salaire (${symbol})`}</Label>
                 <Input
                   id="salaire"
                   placeholder="120000"
@@ -1554,7 +1554,7 @@ export default function HRPage() {
                 <div><span className="text-gray-500">Département :</span><p className="font-medium text-gray-900 dark:text-white">{viewingEmployee.departement}</p></div>
                 <div><span className="text-gray-500">Statut :</span><p><Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusConfig[viewingEmployee.statut].color}`}><span className={`w-1.5 h-1.5 rounded-full ${statusConfig[viewingEmployee.statut].dot} mr-1 inline-block`} />{statusConfig[viewingEmployee.statut].label}</Badge></p></div>
                 <div><span className="text-gray-500">Date d&apos;embauche :</span><p className="font-medium text-gray-900 dark:text-white">{formatDate(viewingEmployee.dateEmbauche)}</p></div>
-                <div><span className="text-gray-500">Salaire :</span><p className="font-medium text-gray-900 dark:text-white">{formatCurrency(viewingEmployee.salaire)}</p></div>
+                <div><span className="text-gray-500">Salaire :</span><p className="font-medium text-gray-900 dark:text-white">{formatPrice(viewingEmployee.salaire)}</p></div>
                 <div><span className="text-gray-500">Email :</span><p className="font-medium text-gray-900 dark:text-white break-all">{viewingEmployee.email}</p></div>
                 <div><span className="text-gray-500">Téléphone :</span><p className="font-medium text-gray-900 dark:text-white">{viewingEmployee.telephone}</p></div>
                 <div className="col-span-2"><span className="text-gray-500">Évaluation :</span><div className="mt-1">{renderStars(viewingEmployee.evaluation)}<span className="text-xs text-gray-500 ml-2">{viewingEmployee.evaluation}/5</span></div></div>
@@ -1601,7 +1601,7 @@ export default function HRPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-xs">Salaire (DA)</Label>
+                  <Label className="text-xs">{`Salaire (${symbol})`}</Label>
                   <Input type="number" className="h-9" value={editingEmployee.salaire} onChange={e => setEditingEmployee({ ...editingEmployee, salaire: parseInt(e.target.value) || 0 })} />
                 </div>
                 <div className="space-y-2">

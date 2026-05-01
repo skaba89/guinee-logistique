@@ -563,7 +563,7 @@ function PaginationControls({ current, total, onChange }: { current: number; tot
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CustomerPortalPage() {
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
   const [activeTab, setActiveTab] = useState('suivi');
   const [shipments] = useState<PortalShipment[]>(mockShipments);
   const [invoices] = useState<PortalInvoice[]>(mockInvoices);
@@ -744,7 +744,7 @@ export default function CustomerPortalPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['N° Suivi', 'Type', 'Statut', 'Origine', 'Destination', 'Poids (kg)', 'Prix (DA)', 'Date Création', 'Livraison Estimée', 'Notes'];
+    const headers = ['N° Suivi', 'Type', 'Statut', 'Origine', 'Destination', 'Poids (kg)', `Prix (${symbol})`, 'Date Création', 'Livraison Estimée', 'Notes'];
     const rows = filteredShipments.map(s => [
       s.trackingNumber,
       shipmentTypeLabels[s.type] || s.type,

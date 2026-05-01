@@ -54,6 +54,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Static Data ───────────────────────────────────────────────────────────
 
@@ -258,6 +259,7 @@ const activeByIncoterm: Record<string, number> = {
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default function IncotermsPage() {
+  const { format: formatPrice, symbol } = useCurrency();
   const [tabFilter, setTabFilter] = useState<string>('tous');
   const [recommenderMode, setRecommenderMode] = useState<string>('');
   const [recommenderDirection, setRecommenderDirection] = useState<string>('');
@@ -324,7 +326,7 @@ export default function IncotermsPage() {
     },
     {
       title: 'Impact revenus estimé',
-      value: '2.4M DA',
+      value: `2.4M ${symbol}`,
       icon: DollarSign,
       color: 'from-rose-500 to-rose-600',
     },

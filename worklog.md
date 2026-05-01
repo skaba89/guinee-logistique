@@ -226,3 +226,183 @@ Stage Summary:
 - Branding: All primary action buttons use consistent teal gradient
 - RBAC: 7 additional pages now enforce read-only for non-editor roles
 - Security: Password change form with validation added to Settings
+
+---
+Task ID: 3
+Agent: Super Z (main)
+Task: Fix alert() placeholder calls in shipments-page.tsx export buttons
+
+Work Log:
+- Added `symbol` destructure from `useCurrency()` hook (line 109)
+- Fixed CSV export header: replaced hardcoded 'Prix (DA)' with dynamic `` `Prix (${symbol})` `` (line 377)
+- Added `handleExportPDF()` function: generates professional print-ready HTML page with styled header, summary stats (en transit/livrées/retardées/total weight), full data table with color-coded status badges, and footer — opens in new window and triggers window.print()
+- Added `handleExportExcel()` function: generates Excel-compatible XML spreadsheet (.xls) with all 14 columns, XML-escaped cell values, and triggers download as `logisway-shipments-YYYY-MM-DD.xls`
+- Replaced both `alert('Fonctionnalité à venir')` calls with `handleExportPDF` and `handleExportExcel` respectively (lines 426, 430)
+- All 3 export formats (CSV, PDF, Excel) now use dynamic currency symbol
+- Existing CSV export functionality preserved and working
+
+Stage Summary:
+- 2 alert() placeholders replaced with real export functionality
+- PDF export: print-ready HTML with professional layout (matching tracking-page.tsx pattern)
+- Excel export: downloadable .xls file with XML spreadsheet format
+- Currency symbol now dynamic across all 3 export formats
+
+---
+Task ID: 2
+Agent: Super Z (main)
+Task: Fix RBAC (canEdit) in drivers-page.tsx and quotations-page.tsx
+
+Work Log:
+- drivers-page.tsx: Added `useCargoStore` import from `@/lib/cargo-store`
+- drivers-page.tsx: Added `canEditDrivers = useCargoStore((s) => s.canEdit('drivers'))` inside component
+- drivers-page.tsx: Added `setPage = useCargoStore((s) => s.setPage)` for chat navigation
+- drivers-page.tsx: Added `copiedPhone` state for clipboard feedback
+- drivers-page.tsx: Guarded "Nouveau chauffeur" button with `{canEditDrivers && (...)}`
+- drivers-page.tsx: Replaced `alert('Appel en cours vers...')` with `navigator.clipboard.writeText()` + brief copied state (2s timeout)
+- drivers-page.tsx: Replaced `alert('Ouverture du chat avec...')` with `setPage('chat')` navigation
+- quotations-page.tsx: Added `useCargoStore` import from `@/lib/cargo-store`
+- quotations-page.tsx: Added `canEditQuotations = useCargoStore((s) => s.canEdit('quotations'))` inside component
+- quotations-page.tsx: Guarded "Nouveau devis" button with `{canEditQuotations && (...)}`
+- quotations-page.tsx: Guarded convert-to-shipment button with `canEditQuotations && quotation.status === 'accepte'`
+- quotations-page.tsx: Guarded duplicate button with `canEditQuotations`
+- quotations-page.tsx: Guarded delete button with `canEditQuotations`
+- Lint verified: no new errors introduced
+
+Stage Summary:
+- Both drivers and quotations pages now enforce RBAC canEdit permission
+- 2 alert() calls replaced with proper UI behavior (clipboard + navigation)
+- 5 action buttons gated behind canEdit checks across both pages
+
+---
+Task ID: 4b
+Agent: Subagent
+Task: Fix hardcoded "DA" currency in billing-page.tsx and quotations-page.tsx
+
+Work Log:
+- billing-page.tsx: Added `symbol` to `useCurrency()` destructuring (was `format: formatPrice`, now `format: formatPrice, symbol`)
+- billing-page.tsx: CSV header `'Montant (DA)'` → `` `Montant (${symbol})` `` (line 330)
+- billing-page.tsx: Add dialog label `'Montant (DA)'` → `` {`Montant (${symbol})`} `` (line 717)
+- billing-page.tsx: Edit dialog label `'Montant (DA)'` → `` {`Montant (${symbol})`} `` (line 753)
+- quotations-page.tsx: Added `symbol` to `useCurrency()` destructuring (was `format: formatPrice`, now `format: formatPrice, symbol`)
+- quotations-page.tsx: CSV header `'Montant Estimé (DA)'` → `` `Montant Estimé (${symbol})` `` (line 248)
+- quotations-page.tsx: Add dialog label `'Montant estimé (DA)'` → `` {`Montant estimé (${symbol})`} `` (line 587)
+- No data values changed — only display/label text updated
+- Lint verified: no new errors introduced
+
+Stage Summary:
+- 5 hardcoded "DA" strings replaced with dynamic `symbol` from useCurrency hook
+- Both pages now respect the user's currency selection from settings
+
+---
+Task ID: 4c
+Agent: Subagent
+Task: Fix hardcoded "DA" currency in four cargo pages (hr, insurance, claims, expenses)
+
+Work Log:
+- hr-page.tsx: Added `import { useCurrency } from '@/lib/use-currency'` (was missing entirely)
+- hr-page.tsx: Added `const { format: formatPrice, symbol } = useCurrency()` inside HRPage component
+- hr-page.tsx: Removed local `formatCurrency` function (line 315-317) that hardcoded ' DA'
+- hr-page.tsx: Replaced all 8 `formatCurrency(...)` calls with `formatPrice(...)` inside the component
+- hr-page.tsx: CSV header `'Salaire (DA)'` → `` `Salaire (${symbol})` ``
+- hr-page.tsx: Chart label `Évolution de la Masse Salariale (×100K DA)` → `` {`Évolution de la Masse Salariale (×100K ${symbol})`} ``
+- hr-page.tsx: Add form label `Salaire (DA)` → `` {`Salaire (${symbol})`} ``
+- hr-page.tsx: Edit form label `Salaire (DA)` → `` {`Salaire (${symbol})`} ``
+- insurance-page.tsx: Added `symbol` to `useCurrency()` destructuring
+- insurance-page.tsx: CSV headers `'Valeur Assurée (DA)'` and `'Prime (DA)'` → dynamic with `symbol`
+- insurance-page.tsx: Form labels `Valeur assurée (DA)` and `Prime (DA)` → dynamic with `symbol`
+- claims-page.tsx: Added `symbol` to `useCurrency()` destructuring
+- claims-page.tsx: CSV header `'Montant Réclamé (DA)'` → `` `Montant Réclamé (${symbol})` ``
+- claims-page.tsx: Form label `Montant estimé (DA)` → `` {`Montant estimé (${symbol})`} ``
+- claims-page.tsx: Left line 317 alone (test data / chat message dialogue content)
+- expenses-page.tsx: Added `symbol` to `useCurrency()` destructuring
+- expenses-page.tsx: CSV header `'Montant (DA)'` → `` `Montant (${symbol})` ``
+- expenses-page.tsx: Form label `Montant (DA)` → `` {`Montant (${symbol})`} ``
+- No data values changed — only display/label/CSV header text updated
+- Lint verified: no new errors introduced (2 pre-existing errors in other files)
+
+Stage Summary:
+- 12 hardcoded "DA" strings replaced with dynamic `symbol` from useCurrency hook across 4 pages
+- hr-page.tsx: 8 formatCurrency calls + 4 label/header replacements (most impactful)
+- insurance-page.tsx: 3 replacements (2 CSV headers + 2 form labels)
+- claims-page.tsx: 2 replacements (1 CSV header + 1 form label), 1 skipped (test data)
+- expenses-page.tsx: 2 replacements (1 CSV header + 1 form label)
+- All 4 pages now fully respect the user's currency selection from settings
+---
+Task ID: 4d
+Agent: Subagent
+Task: Fix hardcoded "DA" currency in 6 cargo pages (contracts, partners, multimodal, customer-portal, incoterms, credit-management)
+
+Work Log:
+- contracts-page.tsx: Added `import { useCurrency } from '@/lib/use-currency'`
+- contracts-page.tsx: Changed `formatCurrency(val: number)` to `formatCurrency(val: number, symbol: string)` — replaced 'M DA' → `M ${symbol}`, ' DA' → `' ' + symbol`
+- contracts-page.tsx: Added `const { format: formatPrice, symbol } = useCurrency()` inside ContractsPage component
+- contracts-page.tsx: Updated 4 `formatCurrency(...)` calls to pass `symbol` (KPI card, table cell, compare table, detail dialog)
+- contracts-page.tsx: Chart line names: `'Maritime (DA/EVP)'` → `` `Maritime (${symbol}/EVP)` ``, same for Aérien and Terrestre (lines 863-865)
+- contracts-page.tsx: Table cells: `' DA'` after rate values → ` ${symbol}` (lines 1049-1051)
+- contracts-page.tsx: Form label: `'Valeur annuelle (DA)'` → `` {`Valeur annuelle (${symbol})`} ``
+- contracts-page.tsx: Detail display: `'DA/kg'`, `'DA/EVP'`, `'DA/km'` → `` ${symbol}/kg ``, etc. (line 1335)
+- contracts-page.tsx: Left contract text data (penaltyClause, specialConditions) unchanged as legal text
+- partners-page.tsx: Added `import { useCurrency } from '@/lib/use-currency'`
+- partners-page.tsx: Changed `formatRevenue(value: number)` to `formatRevenue(value: number, symbol: string)` — replaced 'M DA' → `M ${symbol}`, ' DA' → `' ' + symbol`
+- partners-page.tsx: Added `const { format: formatPrice, symbol } = useCurrency()` inside PartnersPage component
+- partners-page.tsx: Updated `formatRevenue(selectedPartner.revenue)` → `formatRevenue(selectedPartner.revenue, symbol)` (line 917)
+- partners-page.tsx: Form label: `'Revenu (DA)'` → `` {`Revenu (${symbol})`} `` (line 1064)
+- multimodal-page.tsx: Added `import { useCurrency } from '@/lib/use-currency'`
+- multimodal-page.tsx: Added `const { format: formatPrice, symbol } = useCurrency()` inside MultimodalPage component
+- multimodal-page.tsx: Leg cost display: `K DA` → `K {symbol}` (line 683)
+- multimodal-page.tsx: Chain total cost display: `K DA` → `K {symbol}` (line 693)
+- multimodal-page.tsx: Chain unimodal cost display: `K DA` → `K {symbol}` (line 697)
+- multimodal-page.tsx: Planning tool multimodal cost: `K DA` → `K ${symbol}` (line 822)
+- multimodal-page.tsx: Planning tool unimodal cost: `K DA` → `K ${symbol}` (line 826)
+- multimodal-page.tsx: Chart bar name: `'Coût (K DA)'` → `` `Coût (K ${symbol})` `` (line 1033)
+- multimodal-page.tsx: Best cost text: `'4 010K DA'` → `4 010K {symbol}` (line 1067)
+- customer-portal-page.tsx: Added `symbol` to existing `useCurrency()` destructuring
+- customer-portal-page.tsx: CSV header: `'Prix (DA)'` → `` `Prix (${symbol})` `` (line 747)
+- incoterms-page.tsx: Added `import { useCurrency } from '@/lib/use-currency'`
+- incoterms-page.tsx: Added `const { format: formatPrice, symbol } = useCurrency()` inside IncotermsPage component
+- incoterms-page.tsx: KPI value: `'2.4M DA'` → `` `2.4M ${symbol}` `` (line 327)
+- credit-management-page.tsx: Added `symbol` to existing `useCurrency()` destructuring
+- credit-management-page.tsx: Form label: `'Nouvelle limite de crédit (DA)'` → `` {`Nouvelle limite de crédit (${symbol})`} `` (line 1507)
+- Lint verified: no new errors introduced (only pre-existing errors in other files remain)
+
+Stage Summary:
+- 21 hardcoded "DA" strings replaced with dynamic `symbol` from useCurrency hook across 6 pages
+- contracts-page.tsx: 12 replacements (formatCurrency function, chart names, table cells, form label, detail display)
+- partners-page.tsx: 4 replacements (formatRevenue function, detail display, form label)
+- multimodal-page.tsx: 7 replacements (5 cost displays, chart label, best cost text)
+- customer-portal-page.tsx: 1 replacement (CSV header)
+- incoterms-page.tsx: 1 replacement (KPI value)
+- credit-management-page.tsx: 1 replacement (form label)
+- All 6 pages now fully respect the user's currency selection from settings
+- Contract text data (penaltyClause, specialConditions) left unchanged as legal text
+
+---
+Task ID: 4a
+Agent: Subagent
+Task: Fix hardcoded "DA" currency in analytics-page.tsx and ground-transport-page.tsx
+
+Work Log:
+- analytics-page.tsx: Added `symbol` to `useCurrency()` destructuring (was `format: formatPrice`, now `format: formatPrice, symbol`)
+- analytics-page.tsx: Moved `performanceMetrics` constant inside component to access `symbol`
+- analytics-page.tsx: performanceMetrics value `'142 DA/km'` → `` `142 ${symbol}/km` ``
+- analytics-page.tsx: Moved `aiInsights` constant inside component to access `symbol`
+- analytics-page.tsx: aiInsights savings `'~1.2M DA/mois'` → `` `~1.2M ${symbol}/mois` ``
+- analytics-page.tsx: aiInsights savings `'~320K DA/mois'` → `` `~320K ${symbol}/mois` ``
+- analytics-page.tsx: aiInsights savings `'~480K DA/mois'` → `` `~480K ${symbol}/mois` ``
+- analytics-page.tsx: Cost summary `{(totalCurrentCost / 1000000).toFixed(1)}M DA` → `{(totalCurrentCost / 1000000).toFixed(1)}M {symbol}`
+- analytics-page.tsx: Cost summary `{(totalOptimizedCost / 1000000).toFixed(1)}M DA` → `{(totalOptimizedCost / 1000000).toFixed(1)}M {symbol}`
+- analytics-page.tsx: Cost summary `{(totalSavings / 1000000).toFixed(1)}M DA ({totalSavingsPercent}%)` → `{(totalSavings / 1000000).toFixed(1)}M {symbol} ({totalSavingsPercent}%)`
+- ground-transport-page.tsx: Added `import { useCurrency } from '@/lib/use-currency'`
+- ground-transport-page.tsx: Added `const { format: formatPrice, symbol } = useCurrency()` inside GroundTransportPage component
+- ground-transport-page.tsx: Fuel cost/liter `{fuelData.costPerLiter} DA` → `{fuelData.costPerLiter} {symbol}`
+- ground-transport-page.tsx: Monthly cost `{(fuelData.monthlyCost / 1000).toFixed(0)}K DA` → `{(fuelData.monthlyCost / 1000).toFixed(0)}K {symbol}`
+- ground-transport-page.tsx: Route fuel cost `{Math.round(selectedRoute.distance * 0.325 * 54.7).toLocaleString('fr-FR')} DA` → `{formatPrice(Math.round(selectedRoute.distance * 0.325 * 54.7))}`
+- No data values changed — only display text updated
+- Grep confirmed: zero remaining hardcoded "DA" in either file
+- Lint verified: no new errors introduced (2 pre-existing errors in other files)
+
+Stage Summary:
+- 10 hardcoded "DA" strings replaced with dynamic `symbol` from useCurrency hook across 2 pages
+- analytics-page.tsx: 7 replacements (1 metric value, 3 insight savings, 3 cost summary lines)
+- ground-transport-page.tsx: 3 replacements (2 fuel KPI displays, 1 route dialog estimated cost)
+- Both pages now fully respect the user's currency selection from settings

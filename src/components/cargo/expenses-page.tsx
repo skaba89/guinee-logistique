@@ -190,7 +190,7 @@ type TabKey = (typeof TABS)[number]['key'];
 
 /* ─── Component ─── */
 export default function ExpensesPage() {
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -249,7 +249,7 @@ export default function ExpensesPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['N°', 'Employé', 'Catégorie', 'Montant (DA)', 'Date', 'Statut', 'Description', 'Département'];
+    const headers = ['N°', 'Employé', 'Catégorie', `Montant (${symbol})`, 'Date', 'Statut', 'Description', 'Département'];
     const rows = filteredExpenses.map(e => [
       e.id,
       e.employe,
@@ -873,7 +873,7 @@ export default function ExpensesPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Montant (DA)</label>
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">{`Montant (${symbol})`}</label>
                   <Input
                     type="number"
                     placeholder="0"

@@ -106,7 +106,7 @@ const algerianCities = [
 ];
 
 export default function ShipmentsPage() {
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
   const [data, setData] = useState<Shipment[]>(initialShipments);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -241,8 +241,140 @@ export default function ShipmentsPage() {
     }
   };
 
+  const handleExportPDF = () => {
+    const printContent = `
+      <html>
+      <head>
+        <title>LogisWay — Expéditions</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; color: #1a1a1a; }
+          .header { display: flex; align-items: center; gap: 16px; border-bottom: 3px solid #0d9488; padding-bottom: 20px; margin-bottom: 24px; }
+          .logo { font-size: 24px; font-weight: bold; color: #0d9488; }
+          .subtitle { font-size: 10px; color: #666; letter-spacing: 2px; text-transform: uppercase; }
+          .title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+          th { background: #0d9488; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+          td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; }
+          tr:nth-child(even) { background: #f9fafb; }
+          .status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+          .status-en_attente { background: #fef3c7; color: #92400e; }
+          .status-confirmee { background: #dbeafe; color: #1e40af; }
+          .status-en_transit { background: #ffedd5; color: #9a3412; }
+          .status-livree { background: #dcfce7; color: #166534; }
+          .status-retardee { background: #fee2e2; color: #991b1b; }
+          .status-annulee { background: #f3f4f6; color: #374151; }
+          .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #999; text-align: center; }
+          .summary { display: flex; gap: 32px; margin-top: 16px; }
+          .summary-item { text-align: center; }
+          .summary-value { font-size: 20px; font-weight: 700; color: #0d9488; }
+          .summary-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+          @media print { body { margin: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="logo">LogisWay</div>
+            <div class="subtitle">Logistique Internationale</div>
+          </div>
+          <div style="margin-left: auto; text-align: right;">
+            <div class="title">Liste des Expéditions</div>
+            <div style="font-size: 12px; color: #666;">${new Date().toLocaleDateString('fr-FR')} — ${filtered.length} expédition${filtered.length > 1 ? 's' : ''}</div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="summary-item">
+            <div class="summary-value">${filtered.filter(s => s.status === 'en_transit').length}</div>
+            <div class="summary-label">En transit</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${filtered.filter(s => s.status === 'livree').length}</div>
+            <div class="summary-label">Livrées</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${filtered.filter(s => s.status === 'retardee').length}</div>
+            <div class="summary-label">Retardées</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">${filtered.reduce((sum, s) => sum + s.weight, 0).toFixed(1)} kg</div>
+            <div class="summary-label">Poids total</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>N° Suivi</th><th>Type</th><th>Client</th><th>Téléphone</th><th>Origine</th><th>Destination</th><th>Statut</th><th>Date Création</th><th>Poids</th><th>Prix (${symbol})</th><th>Chauffeur</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filtered.map(s => `
+              <tr>
+                <td style="font-family:monospace;font-weight:600">${s.trackingNumber}</td>
+                <td>${typeLabels[s.type] || s.type}</td>
+                <td>${s.clientName}</td>
+                <td>${s.clientPhone}</td>
+                <td>${s.origin}</td>
+                <td>${s.destination}</td>
+                <td><span class="status status-${s.status}">${statusLabels[s.status] || s.status}</span></td>
+                <td>${formatDate(s.dateCreation)}</td>
+                <td>${s.weight} kg</td>
+                <td style="font-weight:600">${s.price.toLocaleString()}</td>
+                <td>${s.driverName || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          LogisWay — Plateforme de Logistique Internationale | Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  };
+
+  const handleExportExcel = () => {
+    const headers = ['N° Suivi', 'Type', 'Client', 'Téléphone', 'Origine', 'Destination', 'Statut', 'Date Création', 'Date Expédition', 'Livraison Estimée', 'Poids (kg)', `Prix (${symbol})`, 'Chauffeur', 'Notes'];
+    let tableHtml = '<Table><Row>';
+    headers.forEach(h => { tableHtml += `<Cell><Data ss:Type="String">${h}</Data></Cell>`; });
+    tableHtml += '</Row>';
+    filtered.forEach(s => {
+      tableHtml += '<Row>';
+      const row = [
+        s.trackingNumber, typeLabels[s.type] || s.type, s.clientName, s.clientPhone,
+        s.origin, s.destination, statusLabels[s.status] || s.status,
+        s.dateCreation, s.dateExpedition, s.dateLivraisonEstimee,
+        String(s.weight), String(s.price), s.driverName || '', s.notes || ''
+      ];
+      row.forEach(cell => { tableHtml += `<Cell><Data ss:Type="String">${cell.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</Data></Cell>`; });
+      tableHtml += '</Row>';
+    });
+    tableHtml += '</Table>';
+
+    const excelXml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Expéditions">${tableHtml}</Worksheet></Workbook>`;
+
+    const blob = new Blob([excelXml], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `logisway-shipments-${new Date().toISOString().slice(0,10)}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleExportCSV = () => {
-    const headers = ['N° Suivi', 'Type', 'Client', 'Téléphone', 'Origine', 'Destination', 'Statut', 'Date Création', 'Date Expédition', 'Livraison Estimée', 'Poids (kg)', 'Prix (DA)', 'Chauffeur', 'Notes'];
+    const headers = ['N° Suivi', 'Type', 'Client', 'Téléphone', 'Origine', 'Destination', 'Statut', 'Date Création', 'Date Expédition', 'Livraison Estimée', 'Poids (kg)', `Prix (${symbol})`, 'Chauffeur', 'Notes'];
     const rows = filtered.map(s => [
       s.trackingNumber,
       typeLabels[s.type] || s.type,
@@ -291,11 +423,11 @@ export default function ShipmentsPage() {
                 <FileSpreadsheet className="w-4 h-4 mr-2 text-green-500" />
                 Exporter CSV
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => alert('Fonctionnalité à venir')}>
+              <DropdownMenuItem onClick={handleExportPDF}>
                 <FileText className="w-4 h-4 mr-2 text-red-500" />
                 Exporter PDF
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => alert('Fonctionnalité à venir')}>
+              <DropdownMenuItem onClick={handleExportExcel}>
                 <FileDown className="w-4 h-4 mr-2 text-blue-500" />
                 Exporter Excel
               </DropdownMenuItem>

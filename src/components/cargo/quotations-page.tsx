@@ -55,6 +55,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useCurrency } from '@/lib/use-currency';
+import { useCargoStore } from '@/lib/cargo-store';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -124,7 +125,8 @@ const ITEMS_PER_PAGE = 8;
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function QuotationsPage() {
-  const { format: formatPrice } = useCurrency();
+  const canEditQuotations = useCargoStore((s) => s.canEdit('quotations'));
+  const { format: formatPrice, symbol } = useCurrency();
   const [data, setData] = useState<Quotation[]>(initialQuotations);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -243,7 +245,7 @@ export default function QuotationsPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['N° Devis', 'Client', 'Type Fret', 'Origine', 'Destination', 'Poids (kg)', 'Montant Estimé (DA)', 'Statut', 'Date Création', 'Valide Jusqu\'au', 'Notes'];
+    const headers = ['N° Devis', 'Client', 'Type Fret', 'Origine', 'Destination', 'Poids (kg)', `Montant Estimé (${symbol})`, 'Statut', 'Date Création', 'Valide Jusqu\'au', 'Notes'];
     const rows = filtered.map(q => [
       q.quoteNumber,
       q.clientName,
@@ -311,10 +313,12 @@ export default function QuotationsPage() {
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>
-          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-            <Plus className="w-4 h-4 mr-1" />
-            Nouveau devis
-          </Button>
+          {canEditQuotations && (
+            <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Nouveau devis
+            </Button>
+          )}
         </div>
       </div>
 
@@ -453,7 +457,7 @@ export default function QuotationsPage() {
                       <TableCell className="text-xs hidden lg:table-cell">{formatDate(quotation.validUntil)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          {quotation.status === 'accepte' && (
+                          {canEditQuotations && quotation.status === 'accepte' && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -464,24 +468,28 @@ export default function QuotationsPage() {
                               <ArrowRightLeft className="w-3.5 h-3.5" />
                             </Button>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
-                            title="Dupliquer"
-                            onClick={() => handleDuplicate(quotation.id)}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                            title="Supprimer"
-                            onClick={() => handleDelete(quotation.id)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                          {canEditQuotations && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                              title="Dupliquer"
+                              onClick={() => handleDuplicate(quotation.id)}
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                          {canEditQuotations && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                              title="Supprimer"
+                              onClick={() => handleDelete(quotation.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -576,7 +584,7 @@ export default function QuotationsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Montant estimé (DA)</Label>
+                <Label className="text-xs">{`Montant estimé (${symbol})`}</Label>
                 <Input
                   type="number"
                   value={newQuotation.estimatedAmount}

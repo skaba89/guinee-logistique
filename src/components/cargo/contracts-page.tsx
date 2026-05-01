@@ -80,6 +80,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from 'recharts';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ───────────────────────────────────────────────────────────
 type ContractType = 'maritime' | 'aerien' | 'terrestre' | 'multimodal';
@@ -344,9 +345,9 @@ function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-function formatCurrency(val: number): string {
-  if (val >= 1000000) return `${(val / 1000000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M DA`;
-  return val.toLocaleString('fr-FR') + ' DA';
+function formatCurrency(val: number, symbol: string): string {
+  if (val >= 1000000) return `${(val / 1000000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M ${symbol}`;
+  return val.toLocaleString('fr-FR') + ' ' + symbol;
 }
 
 function daysUntil(dateStr: string): number {
@@ -391,6 +392,7 @@ const radarData = [
 
 // ─── Component ───────────────────────────────────────────────────────
 export default function ContractsPage() {
+  const { format: formatPrice, symbol } = useCurrency();
   const [data, setData] = useState<Contract[]>(contracts);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -519,7 +521,7 @@ export default function ContractsPage() {
           { title: 'Contrats actifs', value: kpis.activeCount, icon: CheckCircle2, gradient: 'from-teal-500 to-teal-600' },
           { title: 'En négociation', value: kpis.negotiatingCount, icon: Clock, gradient: 'from-yellow-500 to-yellow-600' },
           { title: 'Expirent bientôt', value: kpis.expiringCount, icon: AlertTriangle, gradient: 'from-orange-500 to-orange-600' },
-          { title: 'Valeur totale', value: formatCurrency(kpis.totalValue), icon: DollarSign, gradient: 'from-emerald-500 to-emerald-600' },
+          { title: 'Valeur totale', value: formatCurrency(kpis.totalValue, symbol), icon: DollarSign, gradient: 'from-emerald-500 to-emerald-600' },
           { title: 'Taux conformité', value: `${kpis.avgCompliance}%`, icon: TrendingUp, gradient: 'from-cyan-500 to-cyan-600' },
         ].map((card, index) => (
           <motion.div key={card.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05 }}>
@@ -644,7 +646,7 @@ export default function ContractsPage() {
                                 {formatDate(contract.endDate)}
                               </span>
                             </TableCell>
-                            <TableCell className="text-xs font-medium hidden lg:table-cell">{formatCurrency(contract.annualValue)}</TableCell>
+                            <TableCell className="text-xs font-medium hidden lg:table-cell">{formatCurrency(contract.annualValue, symbol)}</TableCell>
                             <TableCell>
                               <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusColors[contract.status]}`}>
                                 {statusLabels[contract.status]}
@@ -860,9 +862,9 @@ export default function ContractsPage() {
                     <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} />
                     <Tooltip contentStyle={tooltipStyle} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Line type="monotone" dataKey="maritime" name="Maritime (DA/EVP)" stroke="#0d9488" strokeWidth={2} dot={{ r: 3 }} />
-                    <Line type="monotone" dataKey="aerien" name="Aérien (DA/kg)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
-                    <Line type="monotone" dataKey="terrestre" name="Terrestre (DA/km)" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="maritime" name={`Maritime (${symbol}/EVP)`} stroke="#0d9488" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="aerien" name={`Aérien (${symbol}/kg)`} stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="terrestre" name={`Terrestre (${symbol}/km)`} stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -903,7 +905,7 @@ export default function ContractsPage() {
                       </TableRow>
                       <TableRow>
                         <TableCell className="text-xs font-medium">Valeur annuelle</TableCell>
-                        {compareContracts.map(c => <TableCell key={c.id} className="text-xs text-center font-medium">{formatCurrency(c.annualValue)}</TableCell>)}
+                        {compareContracts.map(c => <TableCell key={c.id} className="text-xs text-center font-medium">{formatCurrency(c.annualValue, symbol)}</TableCell>)}
                       </TableRow>
                       <TableRow>
                         <TableCell className="text-xs font-medium">Ponctualité</TableCell>
@@ -976,7 +978,7 @@ export default function ContractsPage() {
               {/* Key metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
-                  <p className="text-lg font-bold text-teal-600">{formatCurrency(selectedContract.annualValue)}</p>
+                  <p className="text-lg font-bold text-teal-600">{formatCurrency(selectedContract.annualValue, symbol)}</p>
                   <p className="text-[10px] text-gray-500">Valeur annuelle</p>
                 </div>
                 <div className="p-2.5 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
@@ -1046,9 +1048,9 @@ export default function ContractsPage() {
                         <TableRow key={i}>
                           <TableCell className="text-xs">{rc.origin}</TableCell>
                           <TableCell className="text-xs">{rc.destination}</TableCell>
-                          <TableCell className="text-xs font-medium">{rc.ratePerKg > 0 ? `${rc.ratePerKg.toLocaleString('fr-FR')} DA` : '—'}</TableCell>
-                          <TableCell className="text-xs font-medium">{rc.ratePerContainer > 0 ? `${rc.ratePerContainer.toLocaleString('fr-FR')} DA` : '—'}</TableCell>
-                          <TableCell className="text-xs font-medium">{rc.ratePerKm > 0 ? `${rc.ratePerKm.toLocaleString('fr-FR')} DA` : '—'}</TableCell>
+                          <TableCell className="text-xs font-medium">{rc.ratePerKg > 0 ? `${rc.ratePerKg.toLocaleString('fr-FR')} ${symbol}` : '—'}</TableCell>
+                          <TableCell className="text-xs font-medium">{rc.ratePerContainer > 0 ? `${rc.ratePerContainer.toLocaleString('fr-FR')} ${symbol}` : '—'}</TableCell>
+                          <TableCell className="text-xs font-medium">{rc.ratePerKm > 0 ? `${rc.ratePerKm.toLocaleString('fr-FR')} ${symbol}` : '—'}</TableCell>
                           <TableCell className="text-xs">{rc.transitTime}</TableCell>
                         </TableRow>
                       ))}
@@ -1200,7 +1202,7 @@ export default function ContractsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs">Valeur annuelle (DA)</Label>
+                <Label className="text-xs">{`Valeur annuelle (${symbol})`}</Label>
                 <Input type="number" value={newContract.annualValue || ''} onChange={e => setNewContract({ ...newContract, annualValue: Number(e.target.value) })} placeholder="0" />
               </div>
               <div className="space-y-2">
@@ -1332,7 +1334,7 @@ export default function ContractsPage() {
                             const rc = c.rateCards.find(r => `${r.origin}→${r.destination}` === route);
                             return (
                               <TableCell key={c.id} className="text-xs text-center">
-                                {rc ? (rc.ratePerKg > 0 ? `${rc.ratePerKg} DA/kg` : rc.ratePerContainer > 0 ? `${rc.ratePerContainer} DA/EVP` : rc.ratePerKm > 0 ? `${rc.ratePerKm} DA/km` : '—') : '—'}
+                                {rc ? (rc.ratePerKg > 0 ? `${rc.ratePerKg} ${symbol}/kg` : rc.ratePerContainer > 0 ? `${rc.ratePerContainer} ${symbol}/EVP` : rc.ratePerKm > 0 ? `${rc.ratePerKm} ${symbol}/km` : '—') : '—'}
                               </TableCell>
                             );
                           })}

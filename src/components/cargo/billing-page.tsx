@@ -109,7 +109,7 @@ const ITEMS_PER_PAGE = 8;
 // ── Component ───────────────────────────────────────────────────────────
 export default function BillingPage() {
   const canEditPage = useCargoStore((s) => s.canEdit('billing'));
-  const { format: formatPrice } = useCurrency();
+  const { format: formatPrice, symbol } = useCurrency();
 
   // Data state
   const [data, setData] = useState<Invoice[]>(initialInvoices);
@@ -327,7 +327,7 @@ export default function BillingPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['N Facture', 'Client', 'Montant (DA)', 'Statut', 'Date Emission', 'Date Echeance', 'Expeditions'];
+    const headers = ['N Facture', 'Client', `Montant (${symbol})`, 'Statut', 'Date Emission', 'Date Echeance', 'Expeditions'];
     const rows = filtered.map(inv => [
       inv.invoiceNumber,
       inv.clientName,
@@ -714,7 +714,7 @@ export default function BillingPage() {
               <Input value={newInvoice.clientName} onChange={(e) => setNewInvoice({ ...newInvoice, clientName: e.target.value })} placeholder="Nom du client" />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Montant (DA)</Label>
+              <Label className="text-xs">{`Montant (${symbol})`}</Label>
               <Input type="number" value={newInvoice.amount} onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })} placeholder="0" />
             </div>
             <div className="space-y-2">
@@ -750,7 +750,7 @@ export default function BillingPage() {
               <Input value={editForm.clientName} onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Montant (DA)</Label>
+              <Label className="text-xs">{`Montant (${symbol})`}</Label>
               <Input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
             </div>
             <div className="space-y-2">

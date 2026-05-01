@@ -69,6 +69,7 @@ import {
   Radar,
   Legend,
 } from 'recharts';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -408,6 +409,7 @@ const radarData = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function MultimodalPage() {
+  const { format: formatPrice, symbol } = useCurrency();
   const [chains, setChains] = useState<MultimodalChain[]>(multimodalChains);
   const [expandedChain, setExpandedChain] = useState<string | null>(null);
   const [showPlanningDialog, setShowPlanningDialog] = useState(false);
@@ -680,7 +682,7 @@ export default function MultimodalPage() {
                                 <div className="flex items-center gap-3 text-[10px] text-gray-500">
                                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{leg.estimatedTime}</span>
                                   <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{leg.distance.toLocaleString('fr-FR')} km</span>
-                                  <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{(leg.cost / 1000).toFixed(0)}K DA</span>
+                                  <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{(leg.cost / 1000).toFixed(0)}K {symbol}</span>
                                 </div>
                               </div>
                             );
@@ -690,11 +692,11 @@ export default function MultimodalPage() {
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
                             <div className="p-2 rounded-lg bg-teal-50 dark:bg-teal-900/20">
                               <p className="text-[10px] text-gray-500">Coût multimodal</p>
-                              <p className="text-sm font-bold text-teal-700 dark:text-teal-400">{(chain.totalCost / 1000).toFixed(0)}K DA</p>
+                              <p className="text-sm font-bold text-teal-700 dark:text-teal-400">{(chain.totalCost / 1000).toFixed(0)}K {symbol}</p>
                             </div>
                             <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                               <p className="text-[10px] text-gray-500">Coût unimodal</p>
-                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{(chain.unimodalCost / 1000).toFixed(0)}K DA</p>
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{(chain.unimodalCost / 1000).toFixed(0)}K {symbol}</p>
                             </div>
                             <div className="p-2 rounded-lg bg-green-50 dark:bg-green-900/20">
                               <p className="text-[10px] text-gray-500">Économie</p>
@@ -819,11 +821,11 @@ export default function MultimodalPage() {
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">Coût estimé multimodal</span>
-                    <span className="font-semibold text-teal-700 dark:text-teal-400">{planLegs.length > 0 ? `${(totalPlanCost / 1000).toFixed(0)}K DA` : '-'}</span>
+                    <span className="font-semibold text-teal-700 dark:text-teal-400">{planLegs.length > 0 ? `${(totalPlanCost / 1000).toFixed(0)}K ${symbol}` : '-'}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">Coût estimé unimodal</span>
-                    <span className="font-semibold text-gray-700 dark:text-gray-300">{planLegs.length > 0 ? `${(unimodalPlanCost / 1000).toFixed(0)}K DA` : '-'}</span>
+                    <span className="font-semibold text-gray-700 dark:text-gray-300">{planLegs.length > 0 ? `${(unimodalPlanCost / 1000).toFixed(0)}K ${symbol}` : '-'}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-600 dark:text-gray-400">Empreinte CO2 estimée</span>
@@ -1030,7 +1032,7 @@ export default function MultimodalPage() {
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid var(--border)' }} />
                     <Legend wrapperStyle={{ fontSize: 10 }} />
-                    <Bar dataKey="cout" name="Coût (K DA)" fill="#0d9488" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="cout" name={`Coût (K ${symbol})`} fill="#0d9488" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="co2" name="CO2 (tonnes)" fill="#059669" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -1064,7 +1066,7 @@ export default function MultimodalPage() {
                 <span className="text-xs font-semibold text-teal-700 dark:text-teal-400">Meilleur coût</span>
               </div>
               <p className="text-sm font-bold text-gray-900 dark:text-white">Mar.+Rail+Ter.</p>
-              <p className="text-[10px] text-gray-500">4 010K DA — 23% d'économie</p>
+              <p className="text-[10px] text-gray-500">4 010K {symbol} — 23% d'économie</p>
             </div>
             <div className="p-3 rounded-lg border-2 border-cyan-300 dark:border-cyan-700 bg-cyan-50 dark:bg-cyan-900/20">
               <div className="flex items-center gap-2 mb-1">
