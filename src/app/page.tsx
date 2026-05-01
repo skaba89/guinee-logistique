@@ -219,15 +219,15 @@ export default function Home() {
     seedPrintHistory();
   }, []);
 
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
   return (
     <ToastProvider>
-      <DashboardLayout>
-        <PageRenderer />
-      </DashboardLayout>
+      {!isAuthenticated ? (
+        <LoginPage />
+      ) : (
+        <DashboardLayout>
+          <PageRenderer />
+        </DashboardLayout>
+      )}
     </ToastProvider>
   );
 }
