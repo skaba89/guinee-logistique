@@ -52,8 +52,9 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import { shipments, containers, dashboardStats, statusLabels, typeLabels, formatDZD, formatDate, clients } from '@/lib/test-data';
+import { shipments, containers, dashboardStats, statusLabels, typeLabels, formatDate, clients } from '@/lib/test-data';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 
 const statusColors: Record<string, string> = {
   en_attente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -71,56 +72,7 @@ const typeColors: Record<string, string> = {
   parcels: '#8b5cf6',
 };
 
-const kpiCards = [
-  {
-    title: 'Total Expéditions',
-    value: dashboardStats.totalShipments,
-    icon: Package,
-    trend: '+12%',
-    trendUp: true,
-    color: 'from-teal-500 to-teal-600',
-  },
-  {
-    title: 'En Transit',
-    value: dashboardStats.shipmentsByStatus.find(s => s.status === 'en_transit')?.count || 0,
-    icon: Truck,
-    trend: '+3',
-    trendUp: true,
-    color: 'from-orange-500 to-amber-600',
-  },
-  {
-    title: 'Livraison À Temps',
-    value: '94.2%',
-    icon: CheckCircle2,
-    trend: '+2.1%',
-    trendUp: true,
-    color: 'from-emerald-500 to-green-600',
-  },
-  {
-    title: "Chiffre d'Affaires",
-    value: formatDZD(dashboardStats.revenue.reduce((a, b) => a + b.amount, 0)),
-    icon: DollarSign,
-    trend: '+15%',
-    trendUp: true,
-    color: 'from-teal-600 to-emerald-700',
-  },
-  {
-    title: 'Conteneurs Actifs',
-    value: containers.filter(c => c.status === 'in_transit' || c.status === 'loaded').length,
-    icon: Container,
-    trend: '',
-    trendUp: true,
-    color: 'from-cyan-500 to-teal-600',
-  },
-  {
-    title: 'Empreinte Carbone',
-    value: '12.4t CO2',
-    icon: Leaf,
-    trend: '-8%',
-    trendUp: false,
-    color: 'from-green-500 to-emerald-600',
-  },
-];
+// kpiCards moved inside DashboardPage to access useCurrency hook
 
 const recentActivity = [
   { time: '09:45', event: 'Conteneur MSKU-7234561 chargé sur CMA CGM Marco Polo', type: 'maritime' as const },
@@ -176,6 +128,58 @@ const mapPoints = [
 
 export default function DashboardPage() {
   const setPage = useCargoStore((s) => s.setPage);
+  const { format: formatPrice } = useCurrency();
+
+  const kpiCards = [
+    {
+      title: 'Total Expéditions',
+      value: dashboardStats.totalShipments,
+      icon: Package,
+      trend: '+12%',
+      trendUp: true,
+      color: 'from-teal-500 to-teal-600',
+    },
+    {
+      title: 'En Transit',
+      value: dashboardStats.shipmentsByStatus.find(s => s.status === 'en_transit')?.count || 0,
+      icon: Truck,
+      trend: '+3',
+      trendUp: true,
+      color: 'from-orange-500 to-amber-600',
+    },
+    {
+      title: 'Livraison À Temps',
+      value: '94.2%',
+      icon: CheckCircle2,
+      trend: '+2.1%',
+      trendUp: true,
+      color: 'from-emerald-500 to-green-600',
+    },
+    {
+      title: "Chiffre d'Affaires",
+      value: formatPrice(dashboardStats.revenue.reduce((a, b) => a + b.amount, 0)),
+      icon: DollarSign,
+      trend: '+15%',
+      trendUp: true,
+      color: 'from-teal-600 to-emerald-700',
+    },
+    {
+      title: 'Conteneurs Actifs',
+      value: containers.filter(c => c.status === 'in_transit' || c.status === 'loaded').length,
+      icon: Container,
+      trend: '',
+      trendUp: true,
+      color: 'from-cyan-500 to-teal-600',
+    },
+    {
+      title: 'Empreinte Carbone',
+      value: '12.4t CO2',
+      icon: Leaf,
+      trend: '-8%',
+      trendUp: false,
+      color: 'from-green-500 to-emerald-600',
+    },
+  ];
 
   const recentShipments = [...shipments].sort((a, b) =>
     new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime()
@@ -297,7 +301,7 @@ export default function DashboardPage() {
                     tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [formatDZD(value), 'Revenu']}
+                    formatter={(value: number) => [formatPrice(value), 'Revenu']}
                     contentStyle={{
                       backgroundColor: 'var(--popover)',
                       border: '1px solid var(--border)',
@@ -492,7 +496,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{client.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{client.totalShipments} expéditions</p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDZD(client.totalRevenue)}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatPrice(client.totalRevenue)}</p>
                 </div>
               ))}
             </div>

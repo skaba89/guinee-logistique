@@ -54,6 +54,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -116,7 +117,6 @@ const statusColors: Record<QuotationStatus, string> = {
   expire: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
-const formatDZD = (amount: number) => `${amount.toLocaleString('fr-FR')} DA`;
 const formatDate = (date: string) => new Date(date).toLocaleDateString('fr-FR');
 
 const ITEMS_PER_PAGE = 8;
@@ -124,6 +124,7 @@ const ITEMS_PER_PAGE = 8;
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function QuotationsPage() {
+  const { format: formatPrice } = useCurrency();
   const [data, setData] = useState<Quotation[]>(initialQuotations);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -310,7 +311,7 @@ export default function QuotationsPage() {
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>
-          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowAddDialog(true)}>
+          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
             <Plus className="w-4 h-4 mr-1" />
             Nouveau devis
           </Button>
@@ -443,7 +444,7 @@ export default function QuotationsPage() {
                       <TableCell className="text-xs hidden sm:table-cell">{freightTypeLabels[quotation.freightType]}</TableCell>
                       <TableCell className="text-xs hidden md:table-cell">{quotation.origin}</TableCell>
                       <TableCell className="text-xs hidden md:table-cell">{quotation.destination}</TableCell>
-                      <TableCell className="text-xs font-semibold">{formatDZD(quotation.estimatedAmount)}</TableCell>
+                      <TableCell className="text-xs font-semibold">{formatPrice(quotation.estimatedAmount)}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusColors[quotation.status]}`}>
                           {statusLabels[quotation.status]}
@@ -604,7 +605,7 @@ export default function QuotationsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-            <Button onClick={handleAddQuotation} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleAddQuotation} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Créer le devis
             </Button>
           </DialogFooter>

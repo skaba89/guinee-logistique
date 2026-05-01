@@ -44,6 +44,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useCurrency } from '@/lib/use-currency';
 
 /* ─── Types ─── */
 type ExpenseStatus = 'en_attente' | 'approuvee' | 'rejetee';
@@ -174,9 +175,6 @@ const budgets = [
   { departement: 'Direction', alloue: 400000, depense: 287000, couleur: '#6ee7b7' },
 ];
 
-const formatDZD = (v: number) =>
-  new Intl.NumberFormat('fr-DZ', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v) + ' DA';
-
 const formatPct = (v: number) => `${v.toFixed(1)}%`;
 
 /* ─── Tab Definition ─── */
@@ -192,6 +190,7 @@ type TabKey = (typeof TABS)[number]['key'];
 
 /* ─── Component ─── */
 export default function ExpensesPage() {
+  const { format: formatPrice } = useCurrency();
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -281,8 +280,8 @@ export default function ExpensesPage() {
 
   /* ─── KPI Cards ─── */
   const kpiCards = [
-    { title: 'Dépenses Totales', value: formatDZD(totalDepenses), icon: TrendingUp, color: 'from-teal-500 to-teal-600', trend: '+8.2%', up: true },
-    { title: 'Budget Restant', value: formatDZD(budgetRestant), icon: Wallet, color: 'from-emerald-500 to-emerald-600', trend: '-3.1%', up: false },
+    { title: 'Dépenses Totales', value: formatPrice(totalDepenses), icon: TrendingUp, color: 'from-teal-500 to-teal-600', trend: '+8.2%', up: true },
+    { title: 'Budget Restant', value: formatPrice(budgetRestant), icon: Wallet, color: 'from-emerald-500 to-emerald-600', trend: '-3.1%', up: false },
     { title: 'Notes en Attente', value: String(enAttente), icon: Clock, color: 'from-amber-500 to-amber-600', trend: '', up: false },
     { title: 'Taux d\'Approbation', value: formatPct(tauxApprobation), icon: CheckCircle2, color: 'from-green-500 to-green-600', trend: '+2.4%', up: true },
   ];
@@ -377,7 +376,7 @@ export default function ExpensesPage() {
                       <BarChart data={monthlyExpensesData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
                         <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={{ stroke: 'var(--border)' }} />
                         <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={{ stroke: 'var(--border)' }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-                        <Tooltip formatter={(value: number) => [formatDZD(value), 'Dépenses']} contentStyle={tooltipStyle} />
+                        <Tooltip formatter={(value: number) => [formatPrice(value), 'Dépenses']} contentStyle={tooltipStyle} />
                         <Bar dataKey="montant" fill={TEAL} radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -396,7 +395,7 @@ export default function ExpensesPage() {
                             <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value: number) => [formatDZD(value), 'Montant']} contentStyle={tooltipStyle} />
+                        <Tooltip formatter={(value: number) => [formatPrice(value), 'Montant']} contentStyle={tooltipStyle} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -420,7 +419,7 @@ export default function ExpensesPage() {
                     <LineChart data={trendData} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
                       <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={{ stroke: 'var(--border)' }} />
                       <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={{ stroke: 'var(--border)' }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip formatter={(value: number, name: string) => [formatDZD(value), name === 'depenses' ? 'Dépenses' : 'Budget']} contentStyle={tooltipStyle} />
+                      <Tooltip formatter={(value: number, name: string) => [formatPrice(value), name === 'depenses' ? 'Dépenses' : 'Budget']} contentStyle={tooltipStyle} />
                       <Line type="monotone" dataKey="depenses" stroke={TEAL} strokeWidth={2.5} dot={{ r: 4, fill: TEAL }} activeDot={{ r: 6 }} />
                       <Line type="monotone" dataKey="budget" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
                     </LineChart>
@@ -521,7 +520,7 @@ export default function ExpensesPage() {
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-xs font-semibold text-gray-900 dark:text-white">{formatDZD(exp.montant)}</span>
+                                <span className="text-xs font-semibold text-gray-900 dark:text-white">{formatPrice(exp.montant)}</span>
                               </td>
                               <td className="px-4 py-3 hidden sm:table-cell">
                                 <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(exp.date).toLocaleDateString('fr-FR')}</span>
@@ -546,7 +545,7 @@ export default function ExpensesPage() {
                 </div>
                 <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
                   <p className="text-xs text-gray-500 dark:text-gray-400">{filteredExpenses.length} note{filteredExpenses.length > 1 ? 's' : ''} de frais</p>
-                  <p className="text-xs font-semibold text-gray-900 dark:text-white">Total: {formatDZD(filteredExpenses.reduce((a, b) => a + b.montant, 0))}</p>
+                  <p className="text-xs font-semibold text-gray-900 dark:text-white">Total: {formatPrice(filteredExpenses.reduce((a, b) => a + b.montant, 0))}</p>
                 </div>
               </div>
             </div>
@@ -559,11 +558,11 @@ export default function ExpensesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Budget Total Alloué</p>
-                  <p className="text-xl font-bold text-gray-900 dark:text-white">{formatDZD(totalBudget)}</p>
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">{formatPrice(totalBudget)}</p>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Dépensé</p>
-                  <p className="text-xl font-bold text-teal-600 dark:text-teal-400">{formatDZD(totalDepense)}</p>
+                  <p className="text-xl font-bold text-teal-600 dark:text-teal-400">{formatPrice(totalDepense)}</p>
                 </motion.div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Taux d&apos;Utilisation</p>
@@ -586,8 +585,8 @@ export default function ExpensesPage() {
                             <span className="text-sm font-medium text-gray-900 dark:text-white">{b.departement}</span>
                           </div>
                           <div className="flex items-center gap-4 text-xs">
-                            <span className="text-gray-500 dark:text-gray-400">Dépensé: <span className="font-semibold text-gray-900 dark:text-white">{formatDZD(b.depense)}</span></span>
-                            <span className="text-gray-500 dark:text-gray-400">Reste: <span className={`font-semibold ${pct > 85 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>{formatDZD(remaining)}</span></span>
+                            <span className="text-gray-500 dark:text-gray-400">Dépensé: <span className="font-semibold text-gray-900 dark:text-white">{formatPrice(b.depense)}</span></span>
+                            <span className="text-gray-500 dark:text-gray-400">Reste: <span className={`font-semibold ${pct > 85 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>{formatPrice(remaining)}</span></span>
                             <span className={`font-bold ${pct > 85 ? 'text-red-500' : pct > 65 ? 'text-amber-500' : 'text-emerald-500'}`}>{formatPct(pct)}</span>
                           </div>
                         </div>
@@ -649,7 +648,7 @@ export default function ExpensesPage() {
                               <p className="text-[10px] text-gray-400">{exp.id} · {exp.departement}</p>
                             </div>
                           </div>
-                          <span className="text-base font-bold text-gray-900 dark:text-white">{formatDZD(exp.montant)}</span>
+                          <span className="text-base font-bold text-gray-900 dark:text-white">{formatPrice(exp.montant)}</span>
                         </div>
                         <div className="mb-3">
                           <p className="text-xs text-gray-600 dark:text-gray-300">{exp.description}</p>
@@ -705,7 +704,7 @@ export default function ExpensesPage() {
                         return (
                           <tr key={cat} className="hover:bg-gray-50 dark:hover:bg-gray-800/30">
                             <td className="px-3 py-2 text-xs font-medium text-gray-900 dark:text-white">{CATEGORY_LABELS[cat]}</td>
-                            <td className="px-3 py-2 text-xs font-semibold text-right text-gray-900 dark:text-white">{formatDZD(total)}</td>
+                            <td className="px-3 py-2 text-xs font-semibold text-right text-gray-900 dark:text-white">{formatPrice(total)}</td>
                             <td className="px-3 py-2 text-xs text-right text-gray-600 dark:text-gray-400">{items.length}</td>
                             <td className="px-3 py-2 text-xs text-right"><Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">{approved}</Badge></td>
                             <td className="px-3 py-2 text-xs text-right"><Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">{pending}</Badge></td>
@@ -717,7 +716,7 @@ export default function ExpensesPage() {
                     <tfoot>
                       <tr className="border-t-2 border-gray-200 dark:border-gray-700">
                         <td className="px-3 py-2 text-xs font-bold text-gray-900 dark:text-white">TOTAL</td>
-                        <td className="px-3 py-2 text-xs font-bold text-right text-teal-600 dark:text-teal-400">{formatDZD(totalDepenses)}</td>
+                        <td className="px-3 py-2 text-xs font-bold text-right text-teal-600 dark:text-teal-400">{formatPrice(totalDepenses)}</td>
                         <td className="px-3 py-2 text-xs font-bold text-right text-gray-900 dark:text-white">{expenseData.length}</td>
                         <td className="px-3 py-2 text-xs font-bold text-right text-emerald-600">{approuvees}</td>
                         <td className="px-3 py-2 text-xs font-bold text-right text-amber-500">{enAttente}</td>
@@ -738,7 +737,7 @@ export default function ExpensesPage() {
                       <BarChart data={categoryPieData} layout="vertical" margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                         <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
                         <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} width={85} />
-                        <Tooltip formatter={(value: number) => [formatDZD(value), 'Montant']} contentStyle={tooltipStyle} />
+                        <Tooltip formatter={(value: number) => [formatPrice(value), 'Montant']} contentStyle={tooltipStyle} />
                         <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                           {categoryPieData.map((_, index) => (
                             <Cell key={`bar-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
@@ -787,10 +786,10 @@ export default function ExpensesPage() {
               {/* Key Metrics Row */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { label: 'Dépense Moyenne', value: formatDZD(totalDepenses / Math.max(expenseData.length, 1)), icon: DollarSign, color: 'from-teal-500 to-teal-600' },
-                  { label: 'Plus Haute Dépense', value: formatDZD(Math.max(...expenseData.map(e => e.montant))), icon: ArrowUpRight, color: 'from-amber-500 to-amber-600' },
-                  { label: 'Plus Basse Dépense', value: formatDZD(Math.min(...expenseData.map(e => e.montant))), icon: ArrowDownRight, color: 'from-emerald-500 to-emerald-600' },
-                  { label: 'Total Approuvé', value: formatDZD(expenseData.filter(e => e.statut === 'approuvee').reduce((a, b) => a + b.montant, 0)), icon: CheckCircle2, color: 'from-green-500 to-green-600' },
+                  { label: 'Dépense Moyenne', value: formatPrice(totalDepenses / Math.max(expenseData.length, 1)), icon: DollarSign, color: 'from-teal-500 to-teal-600' },
+                  { label: 'Plus Haute Dépense', value: formatPrice(Math.max(...expenseData.map(e => e.montant))), icon: ArrowUpRight, color: 'from-amber-500 to-amber-600' },
+                  { label: 'Plus Basse Dépense', value: formatPrice(Math.min(...expenseData.map(e => e.montant))), icon: ArrowDownRight, color: 'from-emerald-500 to-emerald-600' },
+                  { label: 'Total Approuvé', value: formatPrice(expenseData.filter(e => e.statut === 'approuvee').reduce((a, b) => a + b.montant, 0)), icon: CheckCircle2, color: 'from-green-500 to-green-600' },
                 ].map((m, i) => (
                   <motion.div key={m.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.1 }}>
                     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm">

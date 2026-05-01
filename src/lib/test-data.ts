@@ -231,6 +231,14 @@ export const users: User[] = [
     role: 'Agent',
     email: 'fatima.khelifi@logisway.pro',
   },
+  {
+    id: '3',
+    phone: '0600000003',
+    password: 'client123',
+    name: 'Karim Bouzidi',
+    role: 'Client',
+    email: 'karim.bouzidi@spa-hydro.dz',
+  },
 ];
 
 // Test Shipments

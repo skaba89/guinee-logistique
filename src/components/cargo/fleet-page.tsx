@@ -285,7 +285,7 @@ export default function FleetPage() {
               <List className="w-4 h-4" />
             </button>
           </div>
-          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowAddDialog(true)}>
+          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
             <Plus className="w-4 h-4 mr-1" />
             Nouveau véhicule
           </Button>
@@ -584,7 +584,7 @@ export default function FleetPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-            <Button onClick={handleAddVehicle} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleAddVehicle} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Ajouter le véhicule
             </Button>
           </DialogFooter>
@@ -690,7 +690,7 @@ export default function FleetPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
-            <Button onClick={handleEditVehicle} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleEditVehicle} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Enregistrer
             </Button>
           </DialogFooter>

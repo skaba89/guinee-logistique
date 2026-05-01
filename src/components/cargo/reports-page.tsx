@@ -84,7 +84,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useCargoStore } from '@/lib/cargo-store';
-import { clients, shipments, invoices, formatDZD } from '@/lib/test-data';
+import { useCurrency } from '@/lib/use-currency';
+import { clients, shipments, invoices } from '@/lib/test-data';
 
 // ─── Static Data ───────────────────────────────────────────────────────────
 
@@ -289,6 +290,7 @@ const frequencyColors: Record<string, string> = {
 
 export default function ReportsPage() {
   const { currentPage } = useCargoStore();
+  const { format: formatPrice } = useCurrency();
 
   // Report generator state
   const [selectedType, setSelectedType] = useState<string>('');
@@ -817,7 +819,7 @@ export default function ReportsPage() {
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                         <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} />
                         <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
-                        <Tooltip formatter={(value: number, name: string) => [formatDZD(value), name === 'revenu' ? 'Cette année' : 'Année précédente']} contentStyle={tooltipStyle} />
+                        <Tooltip formatter={(value: number, name: string) => [formatPrice(value), name === 'revenu' ? 'Cette année' : 'Année précédente']} contentStyle={tooltipStyle} />
                         <Legend />
                         <Area type="monotone" dataKey="precedent" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.1} strokeDasharray="5 5" name="Année précédente" />
                         <Area type="monotone" dataKey="revenu" stroke="#0d9488" fill="#0d9488" fillOpacity={0.2} name="Cette année" />
@@ -897,7 +899,7 @@ export default function ReportsPage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{client.name}</p>
-                              <span className="text-[10px] font-semibold text-teal-600 ml-2">{formatDZD(client.totalRevenue)}</span>
+                              <span className="text-[10px] font-semibold text-teal-600 ml-2">{formatPrice(client.totalRevenue)}</span>
                             </div>
                             <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5">
                               <div

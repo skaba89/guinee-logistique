@@ -415,7 +415,7 @@ export default function DocumentsPage() {
             Exporter
           </Button>
           {canEditPage && (
-            <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowUploadDialog(true)}>
+            <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowUploadDialog(true)}>
               <Plus className="w-4 h-4 mr-1" />
               Nouveau document
             </Button>
@@ -722,7 +722,7 @@ export default function DocumentsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowUploadDialog(false)}>Annuler</Button>
-            <Button onClick={handleUpload} disabled={!newDoc.type || !newDoc.reference || !newDoc.clientName} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleUpload} disabled={!newDoc.type || !newDoc.reference || !newDoc.clientName} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               <FileText className="w-4 h-4 mr-1" />
               Ajouter le document
             </Button>
@@ -759,7 +759,7 @@ export default function DocumentsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
-            <Button onClick={handleEdit} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>Enregistrer</Button>
+            <Button onClick={handleEdit} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>Enregistrer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

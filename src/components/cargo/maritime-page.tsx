@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { containers, containerTypeLabels, containerStatusLabels, formatDate } from '@/lib/test-data';
+import { useCargoStore } from '@/lib/cargo-store';
 
 const containerStatusColors: Record<string, string> = {
   empty: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
@@ -88,6 +89,7 @@ const kpis = [
 ];
 
 export default function MaritimePage() {
+  const canEditPage = useCargoStore((s) => s.canEdit('maritime'));
   const [data, setData] = useState(containers);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -179,10 +181,12 @@ export default function MaritimePage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Gestion des conteneurs et transports maritimes</p>
         </div>
-        <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouveau conteneur
-        </Button>
+        {canEditPage && (
+          <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau conteneur
+          </Button>
+        )}
       </div>
 
       {/* Vessel Schedule */}

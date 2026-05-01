@@ -57,6 +57,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { routes, routeStatusLabels, formatDate } from '@/lib/test-data';
+import { useCargoStore } from '@/lib/cargo-store';
 
 const routeStatusColors: Record<string, string> = {
   planned: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -100,6 +101,7 @@ const kpis = [
 ];
 
 export default function GroundTransportPage() {
+  const canEditPage = useCargoStore((s) => s.canEdit('ground-transport'));
   const [data, setData] = useState(routes);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -248,10 +250,12 @@ export default function GroundTransportPage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Gestion des routes et transports par route</p>
         </div>
-        <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouvelle route
-        </Button>
+        {canEditPage && (
+          <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouvelle route
+          </Button>
+        )}
       </div>
 
       {/* KPIs */}

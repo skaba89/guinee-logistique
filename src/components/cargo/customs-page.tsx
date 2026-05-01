@@ -55,6 +55,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { customsDeclarations, customsTypeLabels, customsStatusLabels, formatDate, formatCurrency } from '@/lib/test-data';
+import { useCargoStore } from '@/lib/cargo-store';
 
 const customsStatusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
@@ -150,6 +151,7 @@ const kpis = [
 ];
 
 export default function CustomsPage() {
+  const canEditPage = useCargoStore((s) => s.canEdit('customs'));
   const [data, setData] = useState(customsDeclarations);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -263,10 +265,12 @@ export default function CustomsPage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Gestion des déclarations douanières</p>
         </div>
-        <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouvelle déclaration
-        </Button>
+        {canEditPage && (
+          <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouvelle déclaration
+          </Button>
+        )}
       </div>
 
       {/* KPIs */}

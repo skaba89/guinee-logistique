@@ -230,7 +230,7 @@ export default function WarehousePage() {
     weight: 0,
   });
 
-  const canEditPage = useCargoStore((s) => s.canEdit);
+  const canEditPage = useCargoStore((s) => s.canEdit('warehouse'));
   const pageSize = 8;
 
   const handleAddItem = () => {
@@ -430,7 +430,7 @@ export default function WarehousePage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Inventaire et gestion du stockage</p>
         </div>
-        {canEditPage('warehouse') && (
+        {canEditPage && (
           <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Nouvel article
@@ -755,7 +755,7 @@ export default function WarehousePage() {
                   <TableHead className="text-xs hidden md:table-cell">Emplacement</TableHead>
                   <TableHead className="text-xs">Statut</TableHead>
                   <TableHead className="text-xs hidden lg:table-cell">Client</TableHead>
-                  {canEditPage('warehouse') && <TableHead className="text-xs w-20">Actions</TableHead>}
+                  {canEditPage && <TableHead className="text-xs w-20">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -785,7 +785,7 @@ export default function WarehousePage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs hidden lg:table-cell">{item.clientName}</TableCell>
-                    {canEditPage('warehouse') && (
+                    {canEditPage && (
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <button

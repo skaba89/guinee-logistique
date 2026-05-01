@@ -68,12 +68,9 @@ import {
   Bar,
 } from 'recharts';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Format helpers ─────────────────────────────────────────────
-
-function formatDZD(amount: number): string {
-  return new Intl.NumberFormat('fr-DZ', { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount) + ' DA';
-}
 
 function formatPercent(value: number): string {
   return value.toFixed(1) + '%';
@@ -366,6 +363,7 @@ function getRiskScoreBg(score: number): string {
 // ─── Main Component ─────────────────────────────────────────────
 
 export default function CreditManagementPage() {
+  const { format: formatPrice } = useCurrency();
   const canEdit = useCargoStore((s) => s.canEdit('credit-management'));
 
   // ── Overview Tab state
@@ -503,21 +501,21 @@ export default function CreditManagementPage() {
   const kpiCards = [
     {
       title: 'Total encours client',
-      value: formatDZD(totalOutstanding),
+      value: formatPrice(totalOutstanding),
       icon: CreditCard,
       gradient: 'from-teal-500 to-emerald-600',
       subtitle: `${clientCredits.length} clients actifs`,
     },
     {
       title: 'Montant en retard',
-      value: formatDZD(totalOverdue),
+      value: formatPrice(totalOverdue),
       icon: AlertTriangle,
       gradient: 'from-red-500 to-rose-600',
       subtitle: `${((totalOverdue / totalOutstanding) * 100).toFixed(1)}% de l'encours`,
     },
     {
       title: 'Limite de crédit totale',
-      value: formatDZD(totalCreditLimit),
+      value: formatPrice(totalCreditLimit),
       icon: Shield,
       gradient: 'from-sky-500 to-cyan-600',
       subtitle: `Taux utilisation: ${formatPercent(avgUtilization)}`,
@@ -642,7 +640,7 @@ export default function CreditManagementPage() {
                         formatter={(value: number, name: string) => {
                           if (name === 'risqueMoyen') return [`${value}`, 'Score risque moyen'];
                           if (name === 'clientsRisque') return [`${value}`, 'Clients à risque'];
-                          return [formatDZD(value), 'Encours retard'];
+                          return [formatPrice(value), 'Encours retard'];
                         }}
                       />
                       <Line type="monotone" dataKey="risqueMoyen" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 3 }} />
@@ -670,7 +668,7 @@ export default function CreditManagementPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{client.name}</p>
-                          <p className="text-xs text-gray-500">{formatDZD(client.overdueAmount)} en retard</p>
+                          <p className="text-xs text-gray-500">{formatPrice(client.overdueAmount)} en retard</p>
                         </div>
                         <Badge variant="secondary" className={`text-[10px] ${riskCategoryColors[client.riskCategory]}`}>
                           {riskCategoryLabels[client.riskCategory]}
@@ -797,11 +795,11 @@ export default function CreditManagementPage() {
                               {categoryLabels[client.category]}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs text-right font-mono">{formatDZD(client.creditLimit)}</TableCell>
-                          <TableCell className="text-xs text-right font-mono font-medium">{formatDZD(client.currentOutstanding)}</TableCell>
+                          <TableCell className="text-xs text-right font-mono">{formatPrice(client.creditLimit)}</TableCell>
+                          <TableCell className="text-xs text-right font-mono font-medium">{formatPrice(client.currentOutstanding)}</TableCell>
                           <TableCell className="text-xs text-right font-mono hidden md:table-cell">
                             <span className={client.overdueAmount > 0 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-400'}>
-                              {client.overdueAmount > 0 ? formatDZD(client.overdueAmount) : '—'}
+                              {client.overdueAmount > 0 ? formatPrice(client.overdueAmount) : '—'}
                             </span>
                           </TableCell>
                           <TableCell className="text-center">
@@ -885,7 +883,7 @@ export default function CreditManagementPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Card>
               <CardContent className="p-3 text-center">
-                <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatDZD(totalOverdue)}</p>
+                <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatPrice(totalOverdue)}</p>
                 <p className="text-[10px] text-gray-500">Total en retard</p>
               </CardContent>
             </Card>
@@ -979,7 +977,7 @@ export default function CreditManagementPage() {
                         <TableRow key={invoice.id}>
                           <TableCell className="font-mono text-xs font-semibold">{invoice.invoiceRef}</TableCell>
                           <TableCell className="text-xs font-medium">{invoice.clientName}</TableCell>
-                          <TableCell className="text-xs text-right font-mono font-semibold text-red-600 dark:text-red-400">{formatDZD(invoice.amount)}</TableCell>
+                          <TableCell className="text-xs text-right font-mono font-semibold text-red-600 dark:text-red-400">{formatPrice(invoice.amount)}</TableCell>
                           <TableCell className="text-xs hidden sm:table-cell">{new Date(invoice.dueDate).toLocaleDateString('fr-FR')}</TableCell>
                           <TableCell className="text-center">
                             <Badge
@@ -1215,7 +1213,7 @@ export default function CreditManagementPage() {
                         formatter={(value: number, name: string) => {
                           if (name === 'risqueMoyen') return [`${value}`, 'Score risque moyen'];
                           if (name === 'clientsRisque') return [`${value}`, 'Clients à risque'];
-                          return [formatDZD(value), 'Encours retard'];
+                          return [formatPrice(value), 'Encours retard'];
                         }}
                       />
                       <Line type="monotone" dataKey="risqueMoyen" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} name="risqueMoyen" />
@@ -1261,11 +1259,11 @@ export default function CreditManagementPage() {
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
                         <span className="text-gray-500 dark:text-gray-400">Limite par défaut</span>
-                        <p className="font-semibold text-gray-900 dark:text-white">{formatDZD(config.defaultLimit)}</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formatPrice(config.defaultLimit)}</p>
                       </div>
                       <div>
                         <span className="text-gray-500 dark:text-gray-400">Limite maximale</span>
-                        <p className="font-semibold text-gray-900 dark:text-white">{formatDZD(config.maxLimit)}</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{formatPrice(config.maxLimit)}</p>
                       </div>
                     </div>
                   </div>
@@ -1492,11 +1490,11 @@ export default function CreditManagementPage() {
               <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm space-y-1">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Limite actuelle</span>
-                  <span className="font-semibold">{formatDZD(editingClient.creditLimit)}</span>
+                  <span className="font-semibold">{formatPrice(editingClient.creditLimit)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Encours actuel</span>
-                  <span className="font-semibold">{formatDZD(editingClient.currentOutstanding)}</span>
+                  <span className="font-semibold">{formatPrice(editingClient.currentOutstanding)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Taux d&apos;utilisation</span>
@@ -1565,19 +1563,19 @@ export default function CreditManagementPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
                   <p className="text-xs text-gray-500 mb-1">Limite de crédit</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{formatDZD(detailClient.creditLimit)}</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{formatPrice(detailClient.creditLimit)}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
                   <p className="text-xs text-gray-500 mb-1">Encours actuel</p>
-                  <p className="text-sm font-bold text-teal-600 dark:text-teal-400">{formatDZD(detailClient.currentOutstanding)}</p>
+                  <p className="text-sm font-bold text-teal-600 dark:text-teal-400">{formatPrice(detailClient.currentOutstanding)}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
                   <p className="text-xs text-gray-500 mb-1">Montant en retard</p>
-                  <p className="text-sm font-bold text-red-600 dark:text-red-400">{formatDZD(detailClient.overdueAmount)}</p>
+                  <p className="text-sm font-bold text-red-600 dark:text-red-400">{formatPrice(detailClient.overdueAmount)}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
                   <p className="text-xs text-gray-500 mb-1">Disponible</p>
-                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatDZD(detailClient.creditLimit - detailClient.currentOutstanding)}</p>
+                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatPrice(detailClient.creditLimit - detailClient.currentOutstanding)}</p>
                 </div>
               </div>
 
@@ -1664,7 +1662,7 @@ export default function CreditManagementPage() {
                             <Badge variant="secondary" className={`text-[9px] px-1.5 py-0 ${dunningLevelColors[inv.dunningLevel]}`}>
                               {dunningLevelLabels[inv.dunningLevel]}
                             </Badge>
-                            <span className="font-semibold text-red-600 dark:text-red-400">{formatDZD(inv.amount)}</span>
+                            <span className="font-semibold text-red-600 dark:text-red-400">{formatPrice(inv.amount)}</span>
                           </div>
                         </div>
                       ))}

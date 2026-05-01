@@ -295,7 +295,7 @@ export default function LoginPage() {
               variant="outline"
               className="w-full h-10 text-sm border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20"
               onClick={() => {
-                login('0600000001', 'admin123');
+                login('0600000003', 'client123');
               }}
             >
               <Globe className="w-4 h-4 mr-2" />
@@ -332,6 +332,7 @@ export default function LoginPage() {
                 <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
                   <p><span className="font-medium">Admin:</span> 0600000001 / admin123</p>
                   <p><span className="font-medium">Agent:</span> 0600000002 / user123</p>
+                  <p><span className="font-medium">Client:</span> 0600000003 / client123</p>
                 </div>
               </motion.div>
             )}

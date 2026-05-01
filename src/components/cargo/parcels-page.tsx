@@ -93,8 +93,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { parcels, parcelStatusLabels, formatDate, formatDZD, type Parcel } from '@/lib/test-data';
+import { parcels, parcelStatusLabels, formatDate, type Parcel } from '@/lib/test-data';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 import {
   evaluateRules,
   getAvailableTransitions,
@@ -225,6 +226,7 @@ const returnStatusLabels: Record<string, string> = {
 };
 
 export default function ParcelsPage() {
+  const { format: formatPrice } = useCurrency();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [formatFilter, setFormatFilter] = useState<string>('all');
@@ -642,7 +644,7 @@ export default function ParcelsPage() {
                       {(['express', 'standard', 'economy'] as const).map(level => (
                         <div key={level} className="p-1.5 rounded bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
                           <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300">{level === 'express' ? 'Express' : level === 'standard' ? 'Standard' : 'Éco'}</span>
-                          <span className="text-[10px] font-bold text-gray-900 dark:text-white">{formatDZD(carrier[level].price)}</span>
+                          <span className="text-[10px] font-bold text-gray-900 dark:text-white">{formatPrice(carrier[level].price)}</span>
                         </div>
                       ))}
                     </div>
@@ -754,7 +756,7 @@ export default function ParcelsPage() {
                           <TableCell className="text-[10px] text-gray-500 hidden lg:table-cell">
                             {parcel.weight}kg / {parcel.dimensions}
                           </TableCell>
-                          <TableCell className="text-xs text-right font-medium">{formatDZD(parcel.price)}</TableCell>
+                          <TableCell className="text-xs text-right font-medium">{formatPrice(parcel.price)}</TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
                               <Button
@@ -1454,7 +1456,7 @@ export default function ParcelsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs hidden md:table-cell">{record.returnCarrier}</TableCell>
-                        <TableCell className="text-xs text-right font-medium">{formatDZD(record.refundAmount)}</TableCell>
+                        <TableCell className="text-xs text-right font-medium">{formatPrice(record.refundAmount)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1747,7 +1749,7 @@ export default function ParcelsPage() {
                     </div>
                     <div className="p-2 rounded bg-teal-50 dark:bg-teal-900/10">
                       <p className="text-[10px] text-gray-400">Prix</p>
-                      <p className="text-sm font-bold text-teal-700 dark:text-teal-400">{formatDZD(selectedParcel.price)}</p>
+                      <p className="text-sm font-bold text-teal-700 dark:text-teal-400">{formatPrice(selectedParcel.price)}</p>
                     </div>
                   </div>
                 </div>
@@ -1797,11 +1799,11 @@ export default function ParcelsPage() {
                   <div className="grid grid-cols-3 gap-3 mt-2">
                     <div className="p-2 rounded bg-gray-50 dark:bg-gray-800/50">
                       <p className="text-[10px] text-gray-400">Valeur déclarée</p>
-                      <p className="text-xs font-semibold">{formatDZD(selectedParcel.declaredValue)}</p>
+                      <p className="text-xs font-semibold">{formatPrice(selectedParcel.declaredValue)}</p>
                     </div>
                     <div className="p-2 rounded bg-gray-50 dark:bg-gray-800/50">
                       <p className="text-[10px] text-gray-400">Assurance</p>
-                      <p className="text-xs font-semibold">{selectedParcel.insuranceAmount > 0 ? formatDZD(selectedParcel.insuranceAmount) : 'Non assurée'}</p>
+                      <p className="text-xs font-semibold">{selectedParcel.insuranceAmount > 0 ? formatPrice(selectedParcel.insuranceAmount) : 'Non assurée'}</p>
                     </div>
                     <div className="p-2 rounded bg-gray-50 dark:bg-gray-800/50">
                       <p className="text-[10px] text-gray-400">Destination</p>

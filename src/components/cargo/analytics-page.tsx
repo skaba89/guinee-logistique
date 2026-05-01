@@ -24,6 +24,7 @@ import {
   ArrowUpFromLine,
   Check,
 } from 'lucide-react';
+import { useCurrency } from '@/lib/use-currency';
 import {
   Card,
   CardContent,
@@ -51,7 +52,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { dashboardStats, formatDZD, clients, shipments } from '@/lib/test-data';
+import { dashboardStats, clients, shipments } from '@/lib/test-data';
 
 const revenueData = dashboardStats.revenue.map((item, index) => ({
   ...item,
@@ -210,6 +211,7 @@ const tooltipStyle = {
 };
 
 export default function AnalyticsPage() {
+  const { format: formatPrice } = useCurrency();
   const [appliedInsights, setAppliedInsights] = useState<Set<number>>(new Set());
 
   const handleApplyInsight = (insightId: number) => {
@@ -411,9 +413,9 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.category}</p>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">{formatDZD(item.current)}</span>
+                    <span className="text-xs text-gray-400">{formatPrice(item.current)}</span>
                     <ArrowRight className="w-3 h-3 text-teal-500" />
-                    <span className="text-xs font-medium text-teal-600">{formatDZD(item.optimized)}</span>
+                    <span className="text-xs font-medium text-teal-600">{formatPrice(item.optimized)}</span>
                     <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">
                       -{item.savingsPercent}%
                     </Badge>
@@ -445,7 +447,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} />
                 <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} />
-                <Tooltip formatter={(value: number, name: string) => [formatDZD(value), name === 'amount' ? 'Cette année' : 'Année précédente']} contentStyle={tooltipStyle} />
+                <Tooltip formatter={(value: number, name: string) => [formatPrice(value), name === 'amount' ? 'Cette année' : 'Année précédente']} contentStyle={tooltipStyle} />
                 <Legend />
                 <Line type="monotone" dataKey="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" name="Année précédente" />
                 <Line type="monotone" dataKey="amount" stroke="#0d9488" strokeWidth={2} name="Cette année" />
@@ -553,7 +555,7 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} width={110} />
-                  <Tooltip formatter={(value: number) => [formatDZD(value), 'Revenu']} contentStyle={tooltipStyle} />
+                  <Tooltip formatter={(value: number) => [formatPrice(value), 'Revenu']} contentStyle={tooltipStyle} />
                   <Bar dataKey="revenue" fill="#0d9488" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>

@@ -200,3 +200,29 @@ Stage Summary:
 - Batch scan API no longer crashes on array input
 - Chat actions (pin/mute/leave) have proper state management with visual feedback
 - Build passes successfully
+
+---
+Task ID: comprehensive-audit-fixes
+Agent: Super Z (main)
+Task: Comprehensive audit and point-by-point correction of all LogisWay pages
+
+Work Log:
+- Audited all 41 cargo component files systematically
+- Identified 7 priority issues (3 high, 4 medium)
+- Fix #1 (HIGH): Replaced all hardcoded `formatDZD` with `useCurrency().format` across 15 pages for multi-currency support
+- Fix #2 (HIGH): Fixed Login "Portail Client" button using admin credentials → now uses dedicated client account (0600000003/client123)
+- Fix #3 (HIGH): Synced Settings currency dropdown with store's `setCurrency` function
+- Fix #4 (MEDIUM): Replaced all blue gradient buttons (`#1a56db`) with brand teal gradient (`#0d9488`) across 5 pages (14 instances)
+- Fix #4 (MEDIUM): Added currency quick-switch dropdown in dashboard header
+- Fix #5 (MEDIUM): Added RBAC `canEdit` checks to 7 pages that were missing them (shipments, maritime, air-freight, ground-transport, customs, warehouse, parcels)
+- Fix #6 (MEDIUM): Added password change form in Settings page with current/new/confirm fields + validation
+- Added client user to test-data.ts (id:3, phone:0600000003, role:Client)
+- Build verified passing after every fix batch
+
+Stage Summary:
+- Currency system: All 15 pages now respect user's selected currency from the store
+- Login: Client portal demo now logs in as actual client role, not admin
+- Settings: Currency dropdown is bidirectionally synced with the store
+- Branding: All primary action buttons use consistent teal gradient
+- RBAC: 7 additional pages now enforce read-only for non-editor roles
+- Security: Password change form with validation added to Settings

@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { flights, flightStatusLabels, formatDate } from '@/lib/test-data';
+import { useCargoStore } from '@/lib/cargo-store';
 
 const flightStatusColors: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -115,6 +116,7 @@ const kpis = [
 ];
 
 export default function AirFreightPage() {
+  const canEditPage = useCargoStore((s) => s.canEdit('air-freight'));
   const [data, setData] = useState(flights);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -178,10 +180,12 @@ export default function AirFreightPage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Gestion des vols cargo et transports aériens</p>
         </div>
-        <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouveau vol
-        </Button>
+        {canEditPage && (
+          <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau vol
+          </Button>
+        )}
       </div>
 
       {/* KPIs */}

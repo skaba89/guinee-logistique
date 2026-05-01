@@ -50,6 +50,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -144,8 +145,6 @@ const claimNatureColors: Record<ClaimNature, string> = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const formatDZD = (amount: number) => `${amount.toLocaleString('fr-FR')} DA`;
-
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr);
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -186,6 +185,7 @@ const chartData = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function InsurancePage() {
+  const { format: formatPrice } = useCurrency();
   const [policies, setPolicies] = useState<Policy[]>(initialPolicies);
   const [claims] = useState<Claim[]>(initialClaims);
   const [searchQuery, setSearchQuery] = useState('');
@@ -304,7 +304,7 @@ export default function InsurancePage() {
     },
     {
       title: 'Couverture totale',
-      value: formatDZD(totalInsuredValue),
+      value: formatPrice(totalInsuredValue),
       icon: DollarSign,
       color: 'from-blue-500 to-blue-600',
     },
@@ -411,7 +411,7 @@ export default function InsurancePage() {
                 />
                 <Tooltip
                   formatter={(value: number, name: string) => [
-                    formatDZD(value),
+                    formatPrice(value),
                     name === 'primes' ? 'Primes' : 'Sinistres',
                   ]}
                   contentStyle={{
@@ -515,10 +515,10 @@ export default function InsurancePage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs hidden md:table-cell font-semibold">
-                            {formatDZD(policy.insuredValue)}
+                            {formatPrice(policy.insuredValue)}
                           </TableCell>
                           <TableCell className="text-xs hidden lg:table-cell font-medium">
-                            {formatDZD(policy.premium)}
+                            {formatPrice(policy.premium)}
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -597,7 +597,7 @@ export default function InsurancePage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs font-semibold">
-                            {formatDZD(claim.claimedAmount)}
+                            {formatPrice(claim.claimedAmount)}
                           </TableCell>
                           <TableCell>
                             <Badge

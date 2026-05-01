@@ -126,6 +126,8 @@ export default function SettingsPage() {
   const roleKey = useCargoStore((s) => s.roleKey);
   const permissionsConfig = useCargoStore((s) => s.permissionsConfig);
   const setPermissionsConfig = useCargoStore((s) => s.setPermissionsConfig);
+  const storeCurrency = useCargoStore((s) => s.currency);
+  const setStoreCurrency = useCargoStore((s) => s.setCurrency);
   const { theme, setTheme } = useTheme();
 
   // ─── Module & Permissions Configuration ─────────────
@@ -228,7 +230,13 @@ export default function SettingsPage() {
     { code: 'USD', name: 'Dollar US', symbol: '$', rate: 0.0074, isDefault: false, active: true },
     { code: 'GBP', name: 'Livre Sterling', symbol: '\u00A3', rate: 0.0054, isDefault: false, active: false },
   ]);
-  const [defaultCurrency, setDefaultCurrency] = useState('DZD');
+  const [defaultCurrency, setDefaultCurrency] = useState(storeCurrency);
+
+  // Sync local state with store
+  const handleCurrencyChange = (code: string) => {
+    setDefaultCurrency(code);
+    setStoreCurrency(code);
+  };
 
   // Branding
   const [branding, setBranding] = useState({
@@ -241,6 +249,41 @@ export default function SettingsPage() {
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  const handleChangePassword = () => {
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    if (newPassword.length < 6) {
+      setPasswordError('Le nouveau mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Les mots de passe ne correspondent pas');
+      return;
+    }
+    if (currentPassword !== (user?.password || '')) {
+      setPasswordError('Mot de passe actuel incorrect');
+      return;
+    }
+
+    // Simulate password change success
+    setPasswordSuccess(true);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setTimeout(() => setPasswordSuccess(false), 3000);
   };
 
   const generateApiKey = () => {
@@ -630,6 +673,101 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Change Password */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Lock className="w-5 h-5 text-teal-500" />
+            Changer le mot de passe
+          </CardTitle>
+          <CardDescription>Modifiez votre mot de passe pour sécuriser votre compte</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs">Mot de passe actuel</Label>
+              <div className="relative">
+                <Input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  placeholder="Entrez votre mot de passe actuel"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Nouveau mot de passe</Label>
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Minimum 6 caractères"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Confirmer le mot de passe</Label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Retapez le nouveau mot de passe"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            {passwordError && (
+              <p className="text-xs text-red-600 dark:text-red-400">{passwordError}</p>
+            )}
+            {passwordSuccess && (
+              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Mot de passe modifié avec succès
+              </p>
+            )}
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                className="text-xs text-white"
+                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                onClick={handleChangePassword}
+                disabled={!currentPassword || !newPassword || !confirmPassword}
+              >
+                <Key className="w-4 h-4 mr-1" />
+                Changer le mot de passe
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Company Info */}
       <Card>
         <CardHeader className="pb-2">
@@ -842,7 +980,7 @@ export default function SettingsPage() {
         <CardContent className="pt-2 space-y-4">
           <div className="space-y-2">
             <Label className="text-xs">Devise par défaut</Label>
-            <Select value={defaultCurrency} onValueChange={setDefaultCurrency}>
+            <Select value={defaultCurrency} onValueChange={handleCurrencyChange}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>

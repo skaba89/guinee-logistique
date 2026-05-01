@@ -77,6 +77,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -189,8 +190,6 @@ const priorityColors: Record<Priority, string> = {
 const PIE_COLORS = ['#ef4444', '#f97316', '#eab308', '#0ea5e9', '#0d9488'];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const formatDZD = (amount: number) => `${amount.toLocaleString('fr-FR')} DA`;
 
 const formatDate = (dateStr: string) => {
   const d = new Date(dateStr);
@@ -496,6 +495,7 @@ const resolutionByTransportData = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ClaimsPage() {
+  const { format: formatPrice } = useCurrency();
   const [claims, setClaims] = useState<Claim[]>(initialClaims);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
@@ -696,7 +696,7 @@ export default function ClaimsPage() {
     },
     {
       title: 'Montant total réclamé',
-      value: formatDZD(totalClaimed),
+      value: formatPrice(totalClaimed),
       icon: Shield,
       color: 'from-red-500 to-rose-600',
     },
@@ -912,7 +912,7 @@ export default function ClaimsPage() {
                               {claim.description}
                             </TableCell>
                             <TableCell className="text-xs font-semibold">
-                              {formatDZD(claim.claimedAmount)}
+                              {formatPrice(claim.claimedAmount)}
                             </TableCell>
                             <TableCell>
                               <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${claimStatusColors[claim.status]}`}>
@@ -1316,7 +1316,7 @@ export default function ClaimsPage() {
                   </div>
                   <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">Montant réclamé</p>
-                    <p className="text-xs font-bold text-red-600 dark:text-red-400">{formatDZD(selectedClaim.claimedAmount)}</p>
+                    <p className="text-xs font-bold text-red-600 dark:text-red-400">{formatPrice(selectedClaim.claimedAmount)}</p>
                   </div>
                   <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-0.5">Expédition</p>
@@ -1432,7 +1432,7 @@ export default function ClaimsPage() {
                     </h4>
                     {selectedClaim.resolutionAmount && (
                       <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">
-                        <span className="font-semibold">Montant indemnisation :</span> {formatDZD(selectedClaim.resolutionAmount)}
+                        <span className="font-semibold">Montant indemnisation :</span> {formatPrice(selectedClaim.resolutionAmount)}
                       </p>
                     )}
                     {selectedClaim.resolutionDate && (

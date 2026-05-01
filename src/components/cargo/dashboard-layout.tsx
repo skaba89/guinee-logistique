@@ -79,7 +79,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import { useCargoStore, type PageType } from '@/lib/cargo-store';
+import { useCargoStore, type PageType, CURRENCIES } from '@/lib/cargo-store';
 import { shipments, containers, flights, parcels, customsDeclarations, clients } from '@/lib/test-data';
 import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
 import ChatbotWidget from '@/components/cargo/chatbot-widget';
@@ -301,6 +301,8 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { currentPage, setPage, user, logout, sidebarOpen, toggleSidebar, setSidebarOpen, roleKey, permissionsConfig } = useCargoStore();
+  const currency = useCargoStore((s) => s.currency);
+  const setCurrency = useCargoStore((s) => s.setCurrency);
   const [notifications, setNotifications] = useState<LibNotification[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState(0);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -478,6 +480,30 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Currency Selector */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
+                  <DollarSign className="w-3.5 h-3.5 text-teal-500" />
+                  {currency}
+                  <ChevronDown className="w-3 h-3 text-gray-400" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {Object.values(CURRENCIES).map((c) => (
+                  <DropdownMenuItem
+                    key={c.code}
+                    onClick={() => setCurrency(c.code)}
+                    className={`text-xs ${currency === c.code ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 font-semibold' : ''}`}
+                  >
+                    <span className="font-medium w-10">{c.code}</span>
+                    <span className="text-gray-400 mx-1">·</span>
+                    <span className="text-gray-500 dark:text-gray-400 truncate">{c.symbol} {c.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {/* Notification Center */}
             <Popover>
               <PopoverTrigger asChild>

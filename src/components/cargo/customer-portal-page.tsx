@@ -76,6 +76,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useCurrency } from '@/lib/use-currency';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -525,7 +526,6 @@ const documentTypeIcons: Record<DocumentType, string> = {
   certificat: '📜',
 };
 
-const formatDZD = (amount: number) => `${amount.toLocaleString('fr-FR')} DA`;
 const formatDate = (date: string) => {
   if (!date) return '-';
   return new Date(date).toLocaleDateString('fr-FR');
@@ -563,6 +563,7 @@ function PaginationControls({ current, total, onChange }: { current: number; tot
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function CustomerPortalPage() {
+  const { format: formatPrice } = useCurrency();
   const [activeTab, setActiveTab] = useState('suivi');
   const [shipments] = useState<PortalShipment[]>(mockShipments);
   const [invoices] = useState<PortalInvoice[]>(mockInvoices);
@@ -621,7 +622,7 @@ export default function CustomerPortalPage() {
       value: String(pendingInvoices),
       icon: FileText,
       color: 'from-amber-500 to-amber-600',
-      subtitle: formatDZD(invoices.filter(i => i.status === 'en_attente').reduce((a, b) => a + b.amount, 0)),
+      subtitle: formatPrice(invoices.filter(i => i.status === 'en_attente').reduce((a, b) => a + b.amount, 0)),
     },
     {
       title: 'Devis en Cours',
@@ -1105,19 +1106,19 @@ export default function CustomerPortalPage() {
             <Card>
               <CardContent className="p-3 text-center">
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Total Facturé</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white">{formatDZD(invoices.reduce((a, b) => a + b.amount, 0))}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">{formatPrice(invoices.reduce((a, b) => a + b.amount, 0))}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-3 text-center">
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Payé</p>
-                <p className="text-sm font-bold text-green-600 dark:text-green-400">{formatDZD(invoices.filter(i => i.status === 'payee').reduce((a, b) => a + b.amount, 0))}</p>
+                <p className="text-sm font-bold text-green-600 dark:text-green-400">{formatPrice(invoices.filter(i => i.status === 'payee').reduce((a, b) => a + b.amount, 0))}</p>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="p-3 text-center">
                 <p className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">En Retard</p>
-                <p className="text-sm font-bold text-red-600 dark:text-red-400">{formatDZD(invoices.filter(i => i.status === 'en_retard').reduce((a, b) => a + b.amount, 0))}</p>
+                <p className="text-sm font-bold text-red-600 dark:text-red-400">{formatPrice(invoices.filter(i => i.status === 'en_retard').reduce((a, b) => a + b.amount, 0))}</p>
               </CardContent>
             </Card>
           </div>
@@ -1150,7 +1151,7 @@ export default function CustomerPortalPage() {
                         <TableRow key={invoice.id}>
                           <TableCell className="font-mono text-xs font-semibold">{invoice.invoiceNumber}</TableCell>
                           <TableCell className="text-xs max-w-[200px] truncate">{invoice.description}</TableCell>
-                          <TableCell className="text-xs font-semibold">{formatDZD(invoice.amount)}</TableCell>
+                          <TableCell className="text-xs font-semibold">{formatPrice(invoice.amount)}</TableCell>
                           <TableCell>
                             <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${invoiceStatusColors[invoice.status]}`}>
                               {invoiceStatusLabels[invoice.status]}
@@ -1255,7 +1256,7 @@ export default function CustomerPortalPage() {
                         <div className="grid grid-cols-2 gap-2 mb-3">
                           <div>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400">Montant estimé</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{formatDZD(quotation.estimatedAmount)}</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{formatPrice(quotation.estimatedAmount)}</p>
                           </div>
                           <div>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400">Poids</p>
@@ -1460,7 +1461,7 @@ export default function CustomerPortalPage() {
                   </div>
                   <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                     <p className="text-[10px] text-gray-500 dark:text-gray-400">Montant</p>
-                    <p className="text-xs font-semibold">{formatDZD(showShipmentDetail.price)}</p>
+                    <p className="text-xs font-semibold">{formatPrice(showShipmentDetail.price)}</p>
                   </div>
                 </div>
 
@@ -1540,7 +1541,7 @@ export default function CustomerPortalPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                     <p className="text-[10px] text-gray-500 dark:text-gray-400">Montant</p>
-                    <p className="text-base font-bold text-gray-900 dark:text-white">{formatDZD(showInvoiceDetail.amount)}</p>
+                    <p className="text-base font-bold text-gray-900 dark:text-white">{formatPrice(showInvoiceDetail.amount)}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50">
                     <p className="text-[10px] text-gray-500 dark:text-gray-400">Statut</p>

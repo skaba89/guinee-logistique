@@ -60,11 +60,11 @@ import {
   clients as initialClients,
   shipments,
   clientTypeLabels,
-  formatDZD,
   statusLabels,
   type Client,
   type ClientType,
 } from '@/lib/test-data';
+import { useCurrency } from '@/lib/use-currency';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -75,6 +75,7 @@ const algerianCities = [
 
 export default function ClientsPage() {
   const canEditClients = useCargoStore((s) => s.canEdit('clients'));
+  const { format: formatPrice } = useCurrency();
 
   const [data, setData] = useState<Client[]>(initialClients);
   const [searchQuery, setSearchQuery] = useState('');
@@ -207,7 +208,7 @@ export default function ClientsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Gérez votre base de clients</p>
         </div>
         {canEditClients && (
-          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowAddDialog(true)}>
+          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
             <Plus className="w-4 h-4 mr-1" />
             Nouveau client
           </Button>
@@ -288,7 +289,7 @@ export default function ClientsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs hidden lg:table-cell font-medium">{client.totalShipments}</TableCell>
-                      <TableCell className="text-xs text-right font-medium">{formatDZD(client.totalRevenue)}</TableCell>
+                      <TableCell className="text-xs text-right font-medium">{formatPrice(client.totalRevenue)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                           <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleViewDetail(client)} title="Voir les détails">
@@ -385,7 +386,7 @@ export default function ClientsPage() {
                   <p className="text-xs text-gray-500">Expéditions</p>
                 </div>
                 <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-center">
-                  <p className="text-2xl font-bold text-green-600">{formatDZD(selectedClient.totalRevenue)}</p>
+                  <p className="text-2xl font-bold text-green-600">{formatPrice(selectedClient.totalRevenue)}</p>
                   <p className="text-xs text-gray-500">CA Total</p>
                 </div>
               </div>
@@ -520,7 +521,7 @@ export default function ClientsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
-            <Button onClick={handleSaveEdit} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleSaveEdit} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Enregistrer
             </Button>
           </DialogFooter>
@@ -618,7 +619,7 @@ export default function ClientsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-            <Button onClick={handleAddClient} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleAddClient} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Ajouter le client
             </Button>
           </DialogFooter>

@@ -67,12 +67,13 @@ import {
   shipments as initialShipments,
   statusLabels,
   typeLabels,
-  formatDZD,
   formatDate,
   type Shipment,
   type ShipmentType,
   type ShipmentStatus,
 } from '@/lib/test-data';
+import { useCurrency } from '@/lib/use-currency';
+import { useCargoStore } from '@/lib/cargo-store';
 
 const statusColors: Record<string, string> = {
   en_attente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -105,6 +106,7 @@ const algerianCities = [
 ];
 
 export default function ShipmentsPage() {
+  const { format: formatPrice } = useCurrency();
   const [data, setData] = useState<Shipment[]>(initialShipments);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -115,6 +117,7 @@ export default function ShipmentsPage() {
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const canEditPage = useCargoStore((s) => s.canEdit('shipments'));
 
   // Add form state
   const [newShipment, setNewShipment] = useState({
@@ -298,10 +301,12 @@ export default function ShipmentsPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-            <Plus className="w-4 h-4 mr-1" />
-            Nouvelle expédition
-          </Button>
+          {canEditPage && (
+            <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Nouvelle expédition
+            </Button>
+          )}
         </div>
       </div>
 
@@ -316,20 +321,24 @@ export default function ShipmentsPage() {
             {selectedIds.size} sélectionnée{selectedIds.size > 1 ? 's' : ''}
           </span>
           <div className="flex items-center gap-2 ml-auto">
-            <Select onValueChange={(v) => handleBulkStatusChange(v as ShipmentStatus)}>
-              <SelectTrigger className="h-8 w-44 text-xs">
-                <SelectValue placeholder="Changer le statut" />
-              </SelectTrigger>
-              <SelectContent>
-                {allStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>{statusLabels[status]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={handleBulkDelete}>
-              <Trash2 className="w-3.5 h-3.5 mr-1" />
-              Supprimer
-            </Button>
+            {canEditPage && (
+              <>
+                <Select onValueChange={(v) => handleBulkStatusChange(v as ShipmentStatus)}>
+                  <SelectTrigger className="h-8 w-44 text-xs">
+                    <SelectValue placeholder="Changer le statut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allStatuses.map((status) => (
+                      <SelectItem key={status} value={status}>{statusLabels[status]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={handleBulkDelete}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Supprimer
+                </Button>
+              </>
+            )}
             <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setSelectedIds(new Set())}>
               Annuler
             </Button>
@@ -484,42 +493,48 @@ export default function ShipmentsPage() {
                         <TableCell className="text-xs hidden md:table-cell">{shipment.origin}</TableCell>
                         <TableCell className="text-xs hidden md:table-cell">{shipment.destination}</TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button className="focus:outline-none">
-                                <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 cursor-pointer hover:opacity-80 transition-opacity ${statusColors[shipment.status]}`}>
-                                  {statusLabels[shipment.status]}
-                                </Badge>
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-48 p-1" align="start">
-                              <p className="text-xs font-medium text-gray-500 px-2 py-1.5">Changer le statut</p>
-                              <div className="space-y-0.5">
-                                {allStatuses.map((status) => (
-                                  <button
-                                    key={status}
-                                    onClick={() => handleStatusChange(shipment.id, status)}
-                                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                                      shipment.status === status ? 'font-semibold text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'
-                                    }`}
-                                  >
-                                    <div className={`w-2 h-2 rounded-full ${
-                                      status === 'en_attente' ? 'bg-yellow-500' :
-                                      status === 'confirmee' ? 'bg-blue-500' :
-                                      status === 'en_transit' ? 'bg-orange-500' :
-                                      status === 'livree' ? 'bg-green-500' :
-                                      status === 'retardee' ? 'bg-red-500' : 'bg-gray-500'
-                                    }`} />
-                                    {statusLabels[status]}
-                                  </button>
-                                ))}
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          {canEditPage ? (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className="focus:outline-none">
+                                  <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 cursor-pointer hover:opacity-80 transition-opacity ${statusColors[shipment.status]}`}>
+                                    {statusLabels[shipment.status]}
+                                  </Badge>
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-48 p-1" align="start">
+                                <p className="text-xs font-medium text-gray-500 px-2 py-1.5">Changer le statut</p>
+                                <div className="space-y-0.5">
+                                  {allStatuses.map((status) => (
+                                    <button
+                                      key={status}
+                                      onClick={() => handleStatusChange(shipment.id, status)}
+                                      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                                        shipment.status === status ? 'font-semibold text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'
+                                      }`}
+                                    >
+                                      <div className={`w-2 h-2 rounded-full ${
+                                        status === 'en_attente' ? 'bg-yellow-500' :
+                                        status === 'confirmee' ? 'bg-blue-500' :
+                                        status === 'en_transit' ? 'bg-orange-500' :
+                                        status === 'livree' ? 'bg-green-500' :
+                                        status === 'retardee' ? 'bg-red-500' : 'bg-gray-500'
+                                      }`} />
+                                      {statusLabels[status]}
+                                    </button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          ) : (
+                            <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusColors[shipment.status]}`}>
+                              {statusLabels[shipment.status]}
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-xs hidden sm:table-cell">{formatDate(shipment.dateCreation)}</TableCell>
                         <TableCell className="text-xs hidden lg:table-cell">{shipment.weight} kg</TableCell>
-                        <TableCell className="text-xs text-right font-medium">{formatDZD(shipment.price)}</TableCell>
+                        <TableCell className="text-xs text-right font-medium">{formatPrice(shipment.price)}</TableCell>
                         <TableCell>
                           <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={(e) => { e.stopPropagation(); handleViewDetail(shipment); }}>
                             <Eye className="w-4 h-4 text-gray-400" />
@@ -587,41 +602,47 @@ export default function ShipmentsPage() {
           {selectedShipment && (
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="focus:outline-none">
-                      <Badge className={`${statusColors[selectedShipment.status]} text-sm px-3 py-1 cursor-pointer hover:opacity-80`}>
-                        {statusLabels[selectedShipment.status]}
-                      </Badge>
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-1" align="start">
-                    <p className="text-xs font-medium text-gray-500 px-2 py-1.5">Changer le statut</p>
-                    <div className="space-y-0.5">
-                      {allStatuses.map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => {
-                            handleStatusChange(selectedShipment.id, status);
-                            setSelectedShipment({ ...selectedShipment, status });
-                          }}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                            selectedShipment.status === status ? 'font-semibold text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'
-                          }`}
-                        >
-                          <div className={`w-2 h-2 rounded-full ${
-                            status === 'en_attente' ? 'bg-yellow-500' :
-                            status === 'confirmee' ? 'bg-blue-500' :
-                            status === 'en_transit' ? 'bg-orange-500' :
-                            status === 'livree' ? 'bg-green-500' :
-                            status === 'retardee' ? 'bg-red-500' : 'bg-gray-500'
-                          }`} />
-                          {statusLabels[status]}
-                        </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                {canEditPage ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="focus:outline-none">
+                        <Badge className={`${statusColors[selectedShipment.status]} text-sm px-3 py-1 cursor-pointer hover:opacity-80`}>
+                          {statusLabels[selectedShipment.status]}
+                        </Badge>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-1" align="start">
+                      <p className="text-xs font-medium text-gray-500 px-2 py-1.5">Changer le statut</p>
+                      <div className="space-y-0.5">
+                        {allStatuses.map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => {
+                              handleStatusChange(selectedShipment.id, status);
+                              setSelectedShipment({ ...selectedShipment, status });
+                            }}
+                            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
+                              selectedShipment.status === status ? 'font-semibold text-teal-600 dark:text-teal-400' : 'text-gray-600 dark:text-gray-300'
+                            }`}
+                          >
+                            <div className={`w-2 h-2 rounded-full ${
+                              status === 'en_attente' ? 'bg-yellow-500' :
+                              status === 'confirmee' ? 'bg-blue-500' :
+                              status === 'en_transit' ? 'bg-orange-500' :
+                              status === 'livree' ? 'bg-green-500' :
+                              status === 'retardee' ? 'bg-red-500' : 'bg-gray-500'
+                            }`} />
+                            {statusLabels[status]}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <Badge className={`${statusColors[selectedShipment.status]} text-sm px-3 py-1`}>
+                    {statusLabels[selectedShipment.status]}
+                  </Badge>
+                )}
                 <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${typeColors[selectedShipment.type]}`}>
                   {React.createElement(typeIcons[selectedShipment.type], { className: 'w-4 h-4' })}
                   <span className="text-sm font-medium">{typeLabels[selectedShipment.type]}</span>
@@ -667,7 +688,7 @@ export default function ShipmentsPage() {
                 </div>
                 <div>
                   <p className="text-gray-500 text-xs">Prix</p>
-                  <p className="font-semibold text-lg" style={{ color: '#0d9488' }}>{formatDZD(selectedShipment.price)}</p>
+                  <p className="font-semibold text-lg" style={{ color: '#0d9488' }}>{formatPrice(selectedShipment.price)}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-xs">Chauffeur</p>

@@ -34,7 +34,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { shipments, statusLabels, typeLabels, formatDZD, formatDate, type Shipment, type ShipmentStatus } from '@/lib/test-data';
+import { shipments, statusLabels, typeLabels, formatDate, type Shipment, type ShipmentStatus } from '@/lib/test-data';
+import { useCurrency } from '@/lib/use-currency';
 
 interface TimelineStep {
   label: string;
@@ -153,6 +154,7 @@ function calculateETA(shipment: Shipment): string {
 }
 
 export default function TrackingPage() {
+  const { format: formatPrice } = useCurrency();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -635,7 +637,7 @@ export default function TrackingPage() {
                 </div>
                 <div className="border-t pt-3 flex justify-between">
                   <span className="text-gray-500">Prix</span>
-                  <span className="font-bold text-lg text-teal-600 dark:text-teal-400">{formatDZD(selectedShipment.price)}</span>
+                  <span className="font-bold text-lg text-teal-600 dark:text-teal-400">{formatPrice(selectedShipment.price)}</span>
                 </div>
               </CardContent>
             </Card>

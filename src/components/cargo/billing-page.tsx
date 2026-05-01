@@ -73,12 +73,12 @@ import {
 import {
   invoices as initialInvoices,
   invoiceStatusLabels,
-  formatDZD,
   formatDate,
   type Invoice,
   type InvoiceStatus,
 } from '@/lib/test-data';
 import { useCargoStore } from '@/lib/cargo-store';
+import { useCurrency } from '@/lib/use-currency';
 
 // ── Status styling ──────────────────────────────────────────────────────
 const statusColors: Record<string, string> = {
@@ -109,6 +109,7 @@ const ITEMS_PER_PAGE = 8;
 // ── Component ───────────────────────────────────────────────────────────
 export default function BillingPage() {
   const canEditPage = useCargoStore((s) => s.canEdit('billing'));
+  const { format: formatPrice } = useCurrency();
 
   // Data state
   const [data, setData] = useState<Invoice[]>(initialInvoices);
@@ -231,7 +232,7 @@ export default function BillingPage() {
       timeline.push({
         date: inv.dateEcheance,
         label: 'Paiement reçu',
-        description: `Montant de ${formatDZD(inv.amount)} encaissé`,
+        description: `Montant de ${formatPrice(inv.amount)} encaissé`,
         type: 'paid',
       });
     } else if (inv.status === 'annulee') {
@@ -348,10 +349,10 @@ export default function BillingPage() {
 
   // ── KPI cards config ───────────────────────────────────────────────
   const kpiCards = [
-    { title: 'Total facture', value: formatDZD(totalInvoiced), icon: DollarSign, color: 'from-blue-500 to-blue-600' },
-    { title: 'Paye', value: formatDZD(totalPaid), icon: CheckCircle2, color: 'from-green-500 to-green-600' },
-    { title: 'En attente', value: formatDZD(totalPending), icon: Clock, color: 'from-yellow-500 to-yellow-600' },
-    { title: 'En retard', value: formatDZD(totalOverdue), icon: AlertTriangle, color: 'from-red-500 to-red-600' },
+    { title: 'Total facture', value: formatPrice(totalInvoiced), icon: DollarSign, color: 'from-blue-500 to-blue-600' },
+    { title: 'Paye', value: formatPrice(totalPaid), icon: CheckCircle2, color: 'from-green-500 to-green-600' },
+    { title: 'En attente', value: formatPrice(totalPending), icon: Clock, color: 'from-yellow-500 to-yellow-600' },
+    { title: 'En retard', value: formatPrice(totalOverdue), icon: AlertTriangle, color: 'from-red-500 to-red-600' },
   ];
 
   // ── Timeline dot colors ────────────────────────────────────────────
@@ -406,7 +407,7 @@ export default function BillingPage() {
             Exporter
           </Button>
           {canEditPage && (
-            <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowAddDialog(true)}>
+            <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
               <Plus className="w-4 h-4 mr-1" />
               Nouvelle facture
             </Button>
@@ -449,7 +450,7 @@ export default function BillingPage() {
                 <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={{ stroke: 'var(--border)' }} />
                 <YAxis tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={{ stroke: 'var(--border)' }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                 <Tooltip
-                  formatter={(value: number) => [formatDZD(value), 'Montant']}
+                  formatter={(value: number) => [formatPrice(value), 'Montant']}
                   contentStyle={{ backgroundColor: 'var(--popover)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }}
                 />
                 <Bar dataKey="amount" fill="#00c9a7" radius={[4, 4, 0, 0]} />
@@ -519,7 +520,7 @@ export default function BillingPage() {
                       <TableRow key={invoice.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50" onClick={() => openDetailDialog(invoice)}>
                         <TableCell className="font-mono text-xs font-semibold">{invoice.invoiceNumber}</TableCell>
                         <TableCell className="text-xs font-medium">{invoice.clientName}</TableCell>
-                        <TableCell className="text-xs font-semibold">{formatDZD(invoice.amount)}</TableCell>
+                        <TableCell className="text-xs font-semibold">{formatPrice(invoice.amount)}</TableCell>
                         <TableCell>
                           <Badge variant="secondary" className={`text-[10px] px-2 py-0.5 ${statusColors[invoice.status]}`}>
                             <StatusIcon className="w-3 h-3 mr-1" />
@@ -606,7 +607,7 @@ export default function BillingPage() {
                     {invoiceStatusLabels[selectedInvoice.status]}
                   </Badge>
                   <p className="text-xl font-bold text-gray-900 dark:text-white">
-                    {formatDZD(selectedInvoice.amount)}
+                    {formatPrice(selectedInvoice.amount)}
                   </p>
                 </div>
 
@@ -620,7 +621,7 @@ export default function BillingPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Montant</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{formatDZD(selectedInvoice.amount)}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{formatPrice(selectedInvoice.amount)}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Date emission</p>
@@ -727,7 +728,7 @@ export default function BillingPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>Annuler</Button>
-            <Button onClick={handleAddInvoice} disabled={!newInvoice.clientName || !newInvoice.amount} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleAddInvoice} disabled={!newInvoice.clientName || !newInvoice.amount} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Creer la facture
             </Button>
           </DialogFooter>
@@ -763,7 +764,7 @@ export default function BillingPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
-            <Button onClick={handleEditInvoice} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+            <Button onClick={handleEditInvoice} className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
               Enregistrer
             </Button>
           </DialogFooter>
@@ -799,7 +800,7 @@ export default function BillingPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Changer le statut</AlertDialogTitle>
             <AlertDialogDescription>
-              {pendingStatus === 'payee' && `Confirmer le paiement de la facture ${selectedInvoice?.invoiceNumber} (${selectedInvoice ? formatDZD(selectedInvoice.amount) : ''}) ?`}
+              {pendingStatus === 'payee' && `Confirmer le paiement de la facture ${selectedInvoice?.invoiceNumber} (${selectedInvoice ? formatPrice(selectedInvoice.amount) : ''}) ?`}
               {pendingStatus === 'en_retard' && `Marquer la facture ${selectedInvoice?.invoiceNumber} comme en retard ?`}
               {pendingStatus === 'annulee' && `Annuler la facture ${selectedInvoice?.invoiceNumber} ? Cette action peut etre reversee.`}
               {pendingStatus === 'en_attente' && `Reouvrir la facture ${selectedInvoice?.invoiceNumber} et la remettre en attente ?`}
