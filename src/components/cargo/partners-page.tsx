@@ -20,6 +20,8 @@ import {
   Package,
   DollarSign,
   Clock,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import {
   Card,
@@ -58,6 +60,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   BarChart,
   Bar,
   XAxis,
@@ -66,6 +78,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useCargoStore } from '@/lib/cargo-store';
 
 // ─── Types ───────────────────────────────────────────────────────────
 type PartnerType = 'maritime' | 'aerien' | 'terrestre' | 'multi';
@@ -239,7 +252,11 @@ export default function PartnersPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+
+  const canEditPage = useCargoStore((s) => s.canEdit);
 
   const [newPartner, setNewPartner] = useState({
     name: '',
@@ -249,6 +266,24 @@ export default function PartnersPage() {
     email: '',
     phone: '',
     rating: 3,
+  });
+
+  const [editPartner, setEditPartner] = useState<{
+    id: string;
+    name: string;
+    type: PartnerType;
+    contact: string;
+    email: string;
+    phone: string;
+    revenue: number;
+  }>({
+    id: '',
+    name: '',
+    type: 'maritime',
+    contact: '',
+    email: '',
+    phone: '',
+    revenue: 0,
   });
 
   // ─── Filtered data ───────────────────────────────────────────────
@@ -305,6 +340,68 @@ export default function PartnersPage() {
     setShowDetailDialog(true);
   };
 
+  const handleOpenEdit = (partner: Partner) => {
+    setEditPartner({
+      id: partner.id,
+      name: partner.name,
+      type: partner.type,
+      contact: partner.contact,
+      email: partner.email,
+      phone: partner.phone,
+      revenue: partner.revenue,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleEditPartner = () => {
+    setData((prev) =>
+      prev.map((p) =>
+        p.id === editPartner.id
+          ? {
+              ...p,
+              name: editPartner.name,
+              type: editPartner.type,
+              contact: editPartner.contact,
+              email: editPartner.email,
+              phone: editPartner.phone,
+              revenue: editPartner.revenue,
+            }
+          : p
+      )
+    );
+    setShowEditDialog(false);
+    // Also update selectedPartner if detail dialog is open
+    if (selectedPartner?.id === editPartner.id) {
+      setSelectedPartner((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: editPartner.name,
+              type: editPartner.type,
+              contact: editPartner.contact,
+              email: editPartner.email,
+              phone: editPartner.phone,
+              revenue: editPartner.revenue,
+            }
+          : prev
+      );
+    }
+  };
+
+  const handleOpenDelete = (partner: Partner) => {
+    setSelectedPartner(partner);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeletePartner = () => {
+    if (selectedPartner) {
+      setData((prev) => prev.filter((p) => p.id !== selectedPartner.id));
+    }
+    setShowDeleteDialog(false);
+    setShowDetailDialog(false);
+    setSelectedPartner(null);
+  };
+
   // ─── Render ───────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
@@ -334,15 +431,17 @@ export default function PartnersPage() {
               <List className="w-4 h-4" />
             </button>
           </div>
-          <Button
-            size="sm"
-            className="text-xs text-white"
-            style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
-            onClick={() => setShowAddDialog(true)}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Nouveau partenaire
-          </Button>
+          {canEditPage('partners') && (
+            <Button
+              size="sm"
+              className="text-xs text-white"
+              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+              onClick={() => setShowAddDialog(true)}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Nouveau partenaire
+            </Button>
+          )}
         </div>
       </div>
 
@@ -532,14 +631,40 @@ export default function PartnersPage() {
                       </div>
 
                       {/* Contact */}
-                      <div className="pt-3 border-t">
-                        <p className="text-xs font-medium text-gray-900 dark:text-white">
-                          {partner.contact}
-                        </p>
-                        <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3" />
-                          {partner.phone}
-                        </p>
+                      <div className="pt-3 border-t flex items-center justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
+                            {partner.contact}
+                          </p>
+                          <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                            <Phone className="w-3 h-3 flex-shrink-0" />
+                            {partner.phone}
+                          </p>
+                        </div>
+                        {canEditPage('partners') && (
+                          <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                            <button
+                              className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEdit(partner);
+                              }}
+                              title="Modifier"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-gray-400" />
+                            </button>
+                            <button
+                              className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenDelete(partner);
+                              }}
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -564,7 +689,7 @@ export default function PartnersPage() {
                     <TableHead className="text-xs hidden lg:table-cell">Note</TableHead>
                     <TableHead className="text-xs">Statut</TableHead>
                     <TableHead className="text-xs hidden xl:table-cell">Contact</TableHead>
-                    <TableHead className="text-xs w-10"></TableHead>
+                    <TableHead className="text-xs w-24">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -640,15 +765,42 @@ export default function PartnersPage() {
                           {partner.contact}
                         </TableCell>
                         <TableCell>
-                          <button
-                            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewDetail(partner);
-                            }}
-                          >
-                            <Eye className="w-4 h-4 text-gray-400" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDetail(partner);
+                              }}
+                              title="Voir"
+                            >
+                              <Eye className="w-4 h-4 text-gray-400" />
+                            </button>
+                            {canEditPage('partners') && (
+                              <>
+                                <button
+                                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenEdit(partner);
+                                  }}
+                                  title="Modifier"
+                                >
+                                  <Pencil className="w-4 h-4 text-gray-400" />
+                                </button>
+                                <button
+                                  className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenDelete(partner);
+                                  }}
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-400" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -801,10 +953,161 @@ export default function PartnersPage() {
                   />
                 </div>
               </div>
+
+              {/* Action Buttons */}
+              {canEditPage('partners') && (
+                <div className="flex items-center gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowDetailDialog(false);
+                      handleOpenEdit(selectedPartner);
+                    }}
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Modifier
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
+                    onClick={() => {
+                      setShowDetailDialog(false);
+                      handleOpenDelete(selectedPartner);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Partner Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier le partenaire</DialogTitle>
+            <DialogDescription>
+              Modifier les informations du partenaire
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs">Nom</Label>
+                <Input
+                  value={editPartner.name}
+                  onChange={(e) =>
+                    setEditPartner({ ...editPartner, name: e.target.value })
+                  }
+                  placeholder="Nom du partenaire"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Type</Label>
+                <Select
+                  value={editPartner.type}
+                  onValueChange={(v) =>
+                    setEditPartner({ ...editPartner, type: v as PartnerType })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="maritime">Maritime</SelectItem>
+                    <SelectItem value="aerien">Aérien</SelectItem>
+                    <SelectItem value="terrestre">Terrestre</SelectItem>
+                    <SelectItem value="multi">Multi-modal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Contact</Label>
+              <Input
+                value={editPartner.contact}
+                onChange={(e) =>
+                  setEditPartner({ ...editPartner, contact: e.target.value })
+                }
+                placeholder="Nom du contact"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs">Email</Label>
+                <Input
+                  type="email"
+                  value={editPartner.email}
+                  onChange={(e) =>
+                    setEditPartner({ ...editPartner, email: e.target.value })
+                  }
+                  placeholder="email@exemple.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Téléphone</Label>
+                <Input
+                  value={editPartner.phone}
+                  onChange={(e) =>
+                    setEditPartner({ ...editPartner, phone: e.target.value })
+                  }
+                  placeholder="+XXX XX XX XX XX"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Revenu (DA)</Label>
+              <Input
+                type="number"
+                value={editPartner.revenue}
+                onChange={(e) =>
+                  setEditPartner({ ...editPartner, revenue: Number(e.target.value) })
+                }
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleEditPartner}
+              className="text-white"
+              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+            >
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Partner AlertDialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le partenaire</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer le partenaire{' '}
+              <span className="font-semibold">{selectedPartner?.name}</span> ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePartner}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add Partner Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>

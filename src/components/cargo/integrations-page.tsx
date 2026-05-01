@@ -33,6 +33,7 @@ import {
   Shield,
   Building2,
   BarChart3,
+  Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useCargoStore } from '@/lib/cargo-store';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ─── Static Data ────────────────────────────────────────────────────────────
@@ -74,7 +74,7 @@ interface IntegrationItem {
   lastSync?: string;
 }
 
-const integrations: IntegrationItem[] = [
+const initialIntegrations: IntegrationItem[] = [
   // Transporteurs
   { id: 'cma-cgm', name: 'CMA CGM', description: 'Transport maritime mondial — réservation, BL, suivi conteneurs', status: 'connected', color: '#0d9488', icon: 'ship', category: 'carriers', lastSync: 'Il y a 3 min' },
   { id: 'msc', name: 'MSC', description: 'Mediterranean Shipping Company — fret maritime international', status: 'connected', color: '#0d9488', icon: 'ship', category: 'carriers', lastSync: 'Il y a 12 min' },
@@ -107,7 +107,7 @@ interface ApiHealthItem {
   sparkline: number[];
 }
 
-const apiHealthData: ApiHealthItem[] = [
+const initialApiHealthData: ApiHealthItem[] = [
   { id: 'cma-cgm', name: 'CMA CGM API', health: 'green', responseTime: 245, uptime: 99.8, dailyRequests: 4520, sparkline: [120, 180, 210, 245, 320, 280, 245, 310, 250, 220, 190, 245] },
   { id: 'msc', name: 'MSC API', health: 'green', responseTime: 312, uptime: 99.5, dailyRequests: 3890, sparkline: [300, 280, 312, 350, 410, 380, 312, 290, 340, 310, 295, 312] },
   { id: 'air-algerie', name: 'Air Algérie API', health: 'yellow', responseTime: 890, uptime: 97.2, dailyRequests: 2100, sparkline: [450, 620, 890, 1100, 950, 890, 780, 1200, 890, 650, 890, 920] },
@@ -167,7 +167,7 @@ interface SyncJob {
   status: 'success' | 'partial' | 'failed';
 }
 
-const syncJobs: SyncJob[] = [
+const initialSyncJobs: SyncJob[] = [
   { id: 'sj1', source: 'CMA CGM', destination: 'LogisWay', direction: 'inbound', lastSync: '14:32', nextSync: '14:47', records: 1245, status: 'success' },
   { id: 'sj2', source: 'MSC', destination: 'LogisWay', direction: 'inbound', lastSync: '14:20', nextSync: '14:50', records: 892, status: 'success' },
   { id: 'sj3', source: 'SIDA', destination: 'LogisWay', direction: 'bidirectional', lastSync: '14:15', nextSync: '14:45', records: 3421, status: 'success' },
@@ -188,6 +188,21 @@ const webhookEventOptions = [
   'flight.delayed',
   'customs.cleared',
   'customs.rejected',
+];
+
+const syncIntervalOptions = [
+  { value: '5', label: '5 min' },
+  { value: '15', label: '15 min' },
+  { value: '30', label: '30 min' },
+  { value: '60', label: '1 heure' },
+  { value: '360', label: '6 heures' },
+];
+
+const categoryOptions: { value: IntegrationItem['category']; label: string }[] = [
+  { value: 'carriers', label: 'Transporteurs' },
+  { value: 'customs', label: 'Douanes & Gouv.' },
+  { value: 'erp', label: 'ERP & Compta.' },
+  { value: 'tracking', label: 'Suivi Temps Réel' },
 ];
 
 // ─── Helper Components ──────────────────────────────────────────────────────
@@ -278,7 +293,10 @@ function getSyncStatusBadge(status: SyncJob['status']) {
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function IntegrationsPage() {
-  const user = useCargoStore((s) => s.user);
+  // Mutable data state
+  const [integrations, setIntegrations] = useState<IntegrationItem[]>(initialIntegrations);
+  const [apiHealthData, setApiHealthData] = useState<ApiHealthItem[]>(initialApiHealthData);
+  const [syncJobs, setSyncJobs] = useState<SyncJob[]>(initialSyncJobs);
 
   // Webhook state
   const [webhooks, setWebhooks] = useState<WebhookItem[]>(initialWebhooks);
@@ -287,13 +305,32 @@ export default function IntegrationsPage() {
   const [showAddWebhook, setShowAddWebhook] = useState(false);
   const [testingWebhook, setTestingWebhook] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ id: string; ok: boolean } | null>(null);
-  const [deliveryLogWebhook, setDeliveryLogWebhook] = useState<string | null>(null);
+  const [, setDeliveryLogWebhook] = useState<string | null>(null);
 
   // Integration category tab
-  const [categoryTab, setCategortyTab] = useState('carriers');
+  const [categoryTab, setCategoryTab] = useState('carriers');
 
   // Retry state
   const [retryingId, setRetryingId] = useState<string | null>(null);
+
+  // New integration dialog state
+  const [showNewIntegration, setShowNewIntegration] = useState(false);
+  const [newIntegName, setNewIntegName] = useState('');
+  const [newIntegUrl, setNewIntegUrl] = useState('');
+  const [newIntegCategory, setNewIntegCategory] = useState<IntegrationItem['category']>('carriers');
+
+  // Configure integration dialog state
+  const [configuringIntegration, setConfiguringIntegration] = useState<IntegrationItem | null>(null);
+  const [configSyncInterval, setConfigSyncInterval] = useState('15');
+
+  // Connecting state
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+
+  // Refreshing health state
+  const [refreshingHealth, setRefreshingHealth] = useState(false);
+
+  // Syncing all state
+  const [syncingAll, setSyncingAll] = useState(false);
 
   const addWebhook = () => {
     if (!newWebhookUrl.trim() || newWebhookEvents.length === 0) return;
@@ -333,14 +370,84 @@ export default function IntegrationsPage() {
 
   const handleRetry = (id: string) => {
     setRetryingId(id);
-    setTimeout(() => setRetryingId(null), 2000);
+    setTimeout(() => {
+      setSyncJobs((prev) =>
+        prev.map((job) => (job.id === id ? { ...job, status: 'success' as const, lastSync: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) } : job))
+      );
+      setRetryingId(null);
+    }, 2000);
   };
 
-  const categoryIntegrations = integrations.filter((i) => i.category === categoryTab);
+  const handleConnect = (id: string) => {
+    setConnectingId(id);
+    setTimeout(() => {
+      setIntegrations((prev) =>
+        prev.map((integ) =>
+          integ.id === id ? { ...integ, status: 'connected' as const, lastSync: 'À l\'instant', color: '#0d9488' } : integ
+        )
+      );
+      setConnectingId(null);
+    }, 1500);
+  };
+
+  const handleRefreshHealth = () => {
+    setRefreshingHealth(true);
+    setTimeout(() => {
+      setApiHealthData((prev) =>
+        prev.map((api) => {
+          const variance = api.responseTime * 0.1;
+          const newResponseTime = Math.round(api.responseTime + (Math.random() * variance * 2 - variance));
+          const newSparkline = [...api.sparkline.slice(1), newResponseTime];
+          return { ...api, responseTime: newResponseTime, sparkline: newSparkline };
+        })
+      );
+      setRefreshingHealth(false);
+    }, 1000);
+  };
+
+  const handleSyncAll = () => {
+    setSyncingAll(true);
+    setTimeout(() => {
+      const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      setSyncJobs((prev) =>
+        prev.map((job) => ({ ...job, status: 'success' as const, lastSync: now }))
+      );
+      setSyncingAll(false);
+    }, 2000);
+  };
+
+  const handleAddIntegration = () => {
+    if (!newIntegName.trim() || !newIntegUrl.trim()) return;
+    const newInteg: IntegrationItem = {
+      id: `custom-${Date.now()}`,
+      name: newIntegName,
+      description: `Intégration personnalisée — ${newIntegUrl}`,
+      status: 'connected',
+      color: '#0d9488',
+      icon: 'globe',
+      category: newIntegCategory,
+      lastSync: 'À l\'instant',
+    };
+    setIntegrations((prev) => [...prev, newInteg]);
+    setNewIntegName('');
+    setNewIntegUrl('');
+    setNewIntegCategory('carriers');
+    setShowNewIntegration(false);
+  };
+
+  const handleOpenConfig = (integ: IntegrationItem) => {
+    setConfiguringIntegration(integ);
+    setConfigSyncInterval('15');
+  };
+
+  const handleSaveConfig = () => {
+    setConfiguringIntegration(null);
+  };
+
   const connectedCount = integrations.filter((i) => i.status === 'connected').length;
   const totalApiCalls = 22450;
-  const syncErrors = 2;
-  const syncRate = 99.2;
+  const syncErrors = syncJobs.filter((j) => j.status === 'failed').length;
+  const syncRate = syncJobs.length > 0 ? ((syncJobs.filter((j) => j.status === 'success').length / syncJobs.length) * 100).toFixed(1) : '0';
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -355,14 +462,73 @@ export default function IntegrationsPage() {
             Connectez vos services, surveillez les API et gérez les webhooks
           </p>
         </div>
-        <Button
-          size="sm"
-          className="text-xs text-white"
-          style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Nouvelle intégration
-        </Button>
+        <Dialog open={showNewIntegration} onOpenChange={setShowNewIntegration}>
+          <DialogTrigger asChild>
+            <Button
+              size="sm"
+              className="text-xs text-white"
+              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Nouvelle intégration
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nouvelle intégration</DialogTitle>
+              <DialogDescription>Ajoutez une intégration personnalisée par URL et nom</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Nom de l&apos;intégration</label>
+                <Input
+                  placeholder="Ex: Mon API personnalisée"
+                  value={newIntegName}
+                  onChange={(e) => setNewIntegName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">URL de l&apos;API</label>
+                <Input
+                  placeholder="https://api.example.com/v1"
+                  value={newIntegUrl}
+                  onChange={(e) => setNewIntegUrl(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Catégorie</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {categoryOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setNewIntegCategory(opt.value)}
+                      className={`text-[10px] px-2 py-1 rounded-full border transition-all ${
+                        newIntegCategory === opt.value
+                          ? 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700'
+                          : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => setShowNewIntegration(false)}>Annuler</Button>
+              <Button
+                size="sm"
+                className="text-white"
+                style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                onClick={handleAddIntegration}
+                disabled={!newIntegName.trim() || !newIntegUrl.trim()}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Ajouter
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* KPI Cards */}
@@ -409,7 +575,7 @@ export default function IntegrationsPage() {
           <CardDescription>Parcourez et connectez vos services partenaires</CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          <Tabs value={categoryTab} onValueChange={setCategortyTab}>
+          <Tabs value={categoryTab} onValueChange={setCategoryTab}>
             <TabsList className="grid w-full grid-cols-4 mb-4">
               <TabsTrigger value="carriers" className="text-xs">
                 <Ship className="w-3.5 h-3.5 mr-1 hidden sm:inline" />
@@ -471,7 +637,7 @@ export default function IntegrationsPage() {
 
                             <div className="mt-auto pt-2">
                               {integ.status === 'connected' && (
-                                <Button size="sm" variant="outline" className="w-full text-xs h-8">
+                                <Button size="sm" variant="outline" className="w-full text-xs h-8" onClick={() => handleOpenConfig(integ)}>
                                   <Settings className="w-3.5 h-3.5 mr-1" />
                                   Configurer
                                 </Button>
@@ -481,9 +647,15 @@ export default function IntegrationsPage() {
                                   size="sm"
                                   className="w-full text-xs h-8 text-white"
                                   style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+                                  onClick={() => handleConnect(integ.id)}
+                                  disabled={connectingId === integ.id}
                                 >
-                                  <Link2 className="w-3.5 h-3.5 mr-1" />
-                                  Connecter
+                                  {connectingId === integ.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                                  ) : (
+                                    <Link2 className="w-3.5 h-3.5 mr-1" />
+                                  )}
+                                  {connectingId === integ.id ? 'Connexion...' : 'Connecter'}
                                 </Button>
                               )}
                               {integ.status === 'coming_soon' && (
@@ -505,6 +677,60 @@ export default function IntegrationsPage() {
         </CardContent>
       </Card>
 
+      {/* Configure Integration Dialog */}
+      <Dialog open={configuringIntegration !== null} onOpenChange={(open) => { if (!open) setConfiguringIntegration(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Configurer — {configuringIntegration?.name}</DialogTitle>
+            <DialogDescription>Modifiez les paramètres de synchronisation de cette intégration</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+              <div
+                className="p-2 rounded-lg text-white flex-shrink-0"
+                style={{ background: configuringIntegration?.color || '#0d9488' }}
+              >
+                {configuringIntegration && getIcon(configuringIntegration.icon)}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{configuringIntegration?.name}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">{configuringIntegration?.description}</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Intervalle de synchronisation</label>
+              <div className="flex flex-wrap gap-1.5">
+                {syncIntervalOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setConfigSyncInterval(opt.value)}
+                    className={`text-[10px] px-2.5 py-1.5 rounded-full border transition-all ${
+                      configSyncInterval === opt.value
+                        ? 'bg-teal-100 text-teal-700 border-teal-300 dark:bg-teal-900/30 dark:text-teal-400 dark:border-teal-700'
+                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setConfiguringIntegration(null)}>Fermer</Button>
+            <Button
+              size="sm"
+              className="text-white"
+              style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
+              onClick={handleSaveConfig}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1" />
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* API Health Dashboard */}
       <Card>
         <CardHeader className="pb-3">
@@ -516,8 +742,8 @@ export default function IntegrationsPage() {
               </CardTitle>
               <CardDescription>Surveillance en temps réel des API connectées</CardDescription>
             </div>
-            <Button variant="outline" size="sm" className="text-xs h-8">
-              <RefreshCw className="w-3.5 h-3.5 mr-1" />
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={handleRefreshHealth} disabled={refreshingHealth}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshingHealth ? 'animate-spin' : ''}`} />
               Actualiser
             </Button>
           </div>
@@ -788,8 +1014,8 @@ export default function IntegrationsPage() {
               </CardTitle>
               <CardDescription>Suivi des jobs de synchronisation en temps réel</CardDescription>
             </div>
-            <Button variant="outline" size="sm" className="text-xs h-8">
-              <RefreshCw className="w-3.5 h-3.5 mr-1" />
+            <Button variant="outline" size="sm" className="text-xs h-8" onClick={handleSyncAll} disabled={syncingAll}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncingAll ? 'animate-spin' : ''}`} />
               Tout synchroniser
             </Button>
           </div>
@@ -921,26 +1147,5 @@ export default function IntegrationsPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-// Inline Settings icon to avoid import conflict
-function Settings({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className || 'w-4 h-4'}
-    >
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
   );
 }

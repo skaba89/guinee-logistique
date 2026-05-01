@@ -36,6 +36,7 @@ import {
   BellOff,
   Thermometer,
   Sun,
+  Plus,
 } from 'lucide-react';
 import {
   Card,
@@ -74,6 +75,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -147,7 +149,7 @@ interface ContainerRF {
 }
 
 // --- Cold Chain Shipments ---
-const coldShipments: ColdShipment[] = [
+const initialColdShipments: ColdShipment[] = [
   { id: 'RF-001', trackingNumber: 'FFP-CD-2026-001', commodityType: 'Produits pharmaceutiques', tempMin: 2, tempMax: 8, currentTemp: 4.2, status: 'en_transit', dataLoggerId: 'DL-1001', departure: 'Alger', arrival: 'Marseille', departureDate: '2026-03-03', arrivalDate: '2026-03-06' },
   { id: 'RF-002', trackingNumber: 'FFP-CD-2026-002', commodityType: 'Vaccins', tempMin: -25, tempMax: -15, currentTemp: -18.5, status: 'en_transit', dataLoggerId: 'DL-1002', departure: 'Dubaï', arrival: 'Alger', departureDate: '2026-03-02', arrivalDate: '2026-03-05' },
   { id: 'RF-003', trackingNumber: 'FFP-CD-2026-003', commodityType: 'Produits laitiers', tempMin: 0, tempMax: 4, currentTemp: 5.8, status: 'en_transit', dataLoggerId: 'DL-1003', departure: 'Oran', arrival: 'Casablanca', departureDate: '2026-03-04', arrivalDate: '2026-03-07' },
@@ -444,11 +446,26 @@ export default function TemperatureControlledPage() {
   const [containerDetailOpen, setContainerDetailOpen] = useState(false);
   const [selectedContainer, setSelectedContainer] = useState<ContainerRF | null>(null);
 
+  // New shipment dialog
+  const [createShipmentOpen, setCreateShipmentOpen] = useState(false);
+  const [newShipment, setNewShipment] = useState({
+    client: '',
+    origin: '',
+    destination: '',
+    commodityType: '',
+    tempMin: '',
+    tempMax: '',
+    weight: '',
+  });
+
+  // Cold shipments state
+  const [coldShipments, setColdShipments] = useState<ColdShipment[]>(initialColdShipments);
+
   // Alert action state (local mock)
   const [localAlerts, setLocalAlerts] = useState<TempAlert[]>(tempAlerts);
 
   // --- Filtered shipments ---
-  const commodityTypes = useMemo(() => [...new Set(coldShipments.map(s => s.commodityType))], []);
+  const commodityTypes = useMemo(() => [...new Set(coldShipments.map(s => s.commodityType))], [coldShipments]);
   const filteredShipments = useMemo(() => {
     return coldShipments.filter(s => {
       const matchSearch = shipmentSearch === '' ||
@@ -467,7 +484,7 @@ export default function TemperatureControlledPage() {
 
       return matchSearch && matchStatus && matchCommodity && matchTemp;
     });
-  }, [shipmentSearch, shipmentStatusFilter, commodityFilter, tempRangeFilter]);
+  }, [shipmentSearch, shipmentStatusFilter, commodityFilter, tempRangeFilter, coldShipments]);
 
   // --- Filtered alerts ---
   const filteredAlerts = useMemo(() => {
@@ -517,6 +534,32 @@ export default function TemperatureControlledPage() {
     a.download = `logisway-temperature-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleCreateShipment = () => {
+    if (!newShipment.origin || !newShipment.destination || !newShipment.commodityType || !newShipment.tempMin || !newShipment.tempMax || !newShipment.weight) return;
+    const newId = `RF-${String(coldShipments.length + 1).padStart(3, '0')}`;
+    const newTrackingNumber = `FFP-CD-2026-${String(coldShipments.length + 1).padStart(3, '0')}`;
+    const tempMin = parseFloat(newShipment.tempMin);
+    const tempMax = parseFloat(newShipment.tempMax);
+    const midTemp = +((tempMin + tempMax) / 2).toFixed(1);
+    const newEntry: ColdShipment = {
+      id: newId,
+      trackingNumber: newTrackingNumber,
+      commodityType: newShipment.commodityType,
+      tempMin,
+      tempMax,
+      currentTemp: midTemp,
+      status: 'en_attente',
+      dataLoggerId: '—',
+      departure: newShipment.origin,
+      arrival: newShipment.destination,
+      departureDate: new Date().toISOString().slice(0, 10),
+      arrivalDate: '—',
+    };
+    setColdShipments((prev) => [...prev, newEntry]);
+    setCreateShipmentOpen(false);
+    setNewShipment({ client: '', origin: '', destination: '', commodityType: '', tempMin: '', tempMax: '', weight: '' });
   };
 
   // Container chart data
@@ -586,12 +629,125 @@ export default function TemperatureControlledPage() {
             <Download className="w-4 h-4 mr-1" />
             Exporter
           </Button>
-          <Button size="sm" className="text-white" style={{ background: 'linear-gradient(135deg, #06b6d4, #0d9488)' }}>
+          <Button size="sm" className="text-white" style={{ background: 'linear-gradient(135deg, #06b6d4, #0d9488)' }} onClick={() => setCreateShipmentOpen(true)}>
             <ThermometerSnowflake className="w-4 h-4 mr-1" />
             Nouvelle expédition RF
           </Button>
         </div>
       </div>
+
+      {/* New Shipment Dialog */}
+      <Dialog open={createShipmentOpen} onOpenChange={setCreateShipmentOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-cyan-500" />
+              Nouvelle expédition RF
+            </DialogTitle>
+            <DialogDescription>
+              Créez une nouvelle expédition sous température contrôlée
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="rf-client">Client</Label>
+              <Input
+                id="rf-client"
+                placeholder="Nom du client"
+                value={newShipment.client}
+                onChange={(e) => setNewShipment({ ...newShipment, client: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="rf-origin">Origine</Label>
+                <Input
+                  id="rf-origin"
+                  placeholder="Ville de départ"
+                  value={newShipment.origin}
+                  onChange={(e) => setNewShipment({ ...newShipment, origin: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="rf-destination">Destination</Label>
+                <Input
+                  id="rf-destination"
+                  placeholder="Ville d'arrivée"
+                  value={newShipment.destination}
+                  onChange={(e) => setNewShipment({ ...newShipment, destination: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="rf-commodity">Type de marchandise</Label>
+              <Select
+                value={newShipment.commodityType}
+                onValueChange={(v) => setNewShipment({ ...newShipment, commodityType: v })}
+              >
+                <SelectTrigger id="rf-commodity">
+                  <SelectValue placeholder="Sélectionner..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Produits pharmaceutiques">Produits pharmaceutiques</SelectItem>
+                  <SelectItem value="Vaccins">Vaccins</SelectItem>
+                  <SelectItem value="Produits laitiers">Produits laitiers</SelectItem>
+                  <SelectItem value="Fruits & Légumes">Fruits & Légumes</SelectItem>
+                  <SelectItem value="Viande congelée">Viande congelée</SelectItem>
+                  <SelectItem value="Poisson frais">Poisson frais</SelectItem>
+                  <SelectItem value="Cosmétiques">Cosmétiques</SelectItem>
+                  <SelectItem value="Biotechnologie">Biotechnologie</SelectItem>
+                  <SelectItem value="Chocolat & Confiserie">Chocolat & Confiserie</SelectItem>
+                  <SelectItem value="Autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="rf-tempmin">Température min (°C)</Label>
+                <Input
+                  id="rf-tempmin"
+                  type="number"
+                  placeholder="ex: 2"
+                  value={newShipment.tempMin}
+                  onChange={(e) => setNewShipment({ ...newShipment, tempMin: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="rf-tempmax">Température max (°C)</Label>
+                <Input
+                  id="rf-tempmax"
+                  type="number"
+                  placeholder="ex: 8"
+                  value={newShipment.tempMax}
+                  onChange={(e) => setNewShipment({ ...newShipment, tempMax: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="rf-weight">Poids (kg)</Label>
+              <Input
+                id="rf-weight"
+                type="number"
+                placeholder="ex: 500"
+                value={newShipment.weight}
+                onChange={(e) => setNewShipment({ ...newShipment, weight: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateShipmentOpen(false)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={handleCreateShipment}
+              style={{ background: 'linear-gradient(135deg, #06b6d4, #0d9488)' }}
+              className="text-white"
+            >
+              Créer l&apos;expédition
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

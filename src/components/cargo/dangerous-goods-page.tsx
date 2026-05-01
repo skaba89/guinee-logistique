@@ -183,7 +183,7 @@ interface DGDDeclaration {
   notes?: string;
 }
 
-const dgdDeclarations: DGDDeclaration[] = [
+const initialDgdDeclarations: DGDDeclaration[] = [
   { id: 'DGD-2026-001', shipmentRef: 'FFP-0001-2026', unCodes: ['UN3480'], dgClass: 9, packingGroup: '-', quantity: '150 kg', transporter: 'DHL Express', status: 'approuvée', createdAt: '2026-01-15', submittedAt: '2026-01-16', approvedBy: 'M. Benali', notes: 'Batteries lithium-ion, emballage certifié UN3480' },
   { id: 'DGD-2026-002', shipmentRef: 'FFP-0003-2026', unCodes: ['UN1263', 'UN1866'], dgClass: 3, packingGroup: 'III', quantity: '500 kg', transporter: 'FedEx', status: 'soumise', createdAt: '2026-02-08', submittedAt: '2026-02-09' },
   { id: 'DGD-2026-003', shipmentRef: 'FFP-0005-2026', unCodes: ['UN2911'], dgClass: 7, packingGroup: '-', quantity: '5 kg', transporter: 'Transport Spécialisé DZ', status: 'approuvée', createdAt: '2026-02-20', submittedAt: '2026-02-21', approvedBy: 'Mme Khelifi' },
@@ -330,6 +330,9 @@ export default function DangerousGoodsPage() {
     notes: '',
   });
 
+  // DGD declarations state
+  const [dgdDeclarations, setDgdDeclarations] = useState<DGDDeclaration[]>(initialDgdDeclarations);
+
   // ─── Filtered classifications ──────────────────────────────────
   const filteredClassifications = useMemo(() => {
     let data = unClassifications;
@@ -351,7 +354,7 @@ export default function DangerousGoodsPage() {
   const filteredDgds = useMemo(() => {
     if (dgdStatusFilter === 'all') return dgdDeclarations;
     return dgdDeclarations.filter((d) => d.status === dgdStatusFilter);
-  }, [dgdStatusFilter]);
+  }, [dgdStatusFilter, dgdDeclarations]);
 
   // ─── Helpers ───────────────────────────────────────────────────
   const getClassMeta = (cls: DGClass) => dgClassMeta.find((m) => m.id === cls);
@@ -398,6 +401,20 @@ export default function DangerousGoodsPage() {
   );
 
   const handleCreateDgd = () => {
+    if (!newDgd.shipmentRef || !newDgd.unCodes || !newDgd.quantity || !newDgd.transporter) return;
+    const newDeclaration: DGDDeclaration = {
+      id: `DGD-2026-${String(dgdDeclarations.length + 1).padStart(3, '0')}`,
+      shipmentRef: newDgd.shipmentRef,
+      unCodes: newDgd.unCodes.split(',').map((c) => c.trim()).filter(Boolean),
+      dgClass: Number(newDgd.dgClass) as DGClass,
+      packingGroup: newDgd.packingGroup as PackingGroup,
+      quantity: newDgd.quantity,
+      transporter: newDgd.transporter,
+      status: 'brouillon',
+      createdAt: new Date().toISOString().slice(0, 10),
+      notes: newDgd.notes || undefined,
+    };
+    setDgdDeclarations((prev) => [...prev, newDeclaration]);
     setCreateDgdOpen(false);
     setNewDgd({ shipmentRef: '', unCodes: '', dgClass: '9', packingGroup: '-', quantity: '', transporter: '', notes: '' });
   };

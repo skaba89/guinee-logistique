@@ -23,7 +23,6 @@ import {
   ChevronUp,
   Plus,
   Search,
-  Package,
   TrendingUp,
   Shield,
   Warehouse,
@@ -320,11 +319,11 @@ const modeColor: Record<TransportMode, string> = {
   terrestre: 'bg-emerald-500',
 };
 
-const modeBgLight: Record<TransportMode, string> = {
-  maritime: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400',
-  aerien: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  rail: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  terrestre: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+const modeCostPerLeg: Record<TransportMode, number> = {
+  maritime: 3800000,
+  aerien: 350000,
+  rail: 120000,
+  terrestre: 150000,
 };
 
 const legStatusColors: Record<LegStatus, string> = {
@@ -409,6 +408,7 @@ const radarData = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function MultimodalPage() {
+  const [chains, setChains] = useState<MultimodalChain[]>(multimodalChains);
   const [expandedChain, setExpandedChain] = useState<string | null>(null);
   const [showPlanningDialog, setShowPlanningDialog] = useState(false);
   const [search, setSearch] = useState('');
@@ -416,8 +416,14 @@ export default function MultimodalPage() {
   const [planLegs, setPlanLegs] = useState<TransportMode[]>(['maritime', 'terrestre']);
   const [planOrigin, setPlanOrigin] = useState('');
   const [planDestination, setPlanDestination] = useState('');
+  const [planLegDetails, setPlanLegDetails] = useState<Record<number, { origin: string; destination: string; carrier: string; estimatedTime: string }>>({});
+  const [dialogName, setDialogName] = useState('');
+  const [dialogClient, setDialogClient] = useState('');
+  const [dialogOrigin, setDialogOrigin] = useState('');
+  const [dialogDestination, setDialogDestination] = useState('');
+  const [dialogLegs, setDialogLegs] = useState<TransportMode[]>(['maritime', 'terrestre']);
 
-  const filtered = multimodalChains.filter(c => {
+  const filtered = chains.filter(c => {
     const matchSearch = search === '' ||
       c.chainId.toLowerCase().includes(search.toLowerCase()) ||
       c.client.toLowerCase().includes(search.toLowerCase()) ||
@@ -432,11 +438,77 @@ export default function MultimodalPage() {
 
   // Planning calculations
   const planModeSequence = planLegs.map(m => modeLabel[m]).join(' → ');
-  const totalPlanCost = planLegs.length * 350000;
+  const totalPlanCost = planLegs.reduce((sum, mode) => sum + modeCostPerLeg[mode], 0);
   const totalPlanTime = planLegs.length === 2 ? '8 jours' : planLegs.length === 3 ? '14 jours' : '5 jours';
   const unimodalPlanCost = totalPlanCost * 1.3;
   const savingsPercent = Math.round(((unimodalPlanCost - totalPlanCost) / unimodalPlanCost) * 100);
   const co2Estimate = planLegs.length * 1.5;
+
+  // Helper: create a MultimodalChain from form data
+  const createChainFromPlan = (
+    name: string,
+    client: string,
+    origin: string,
+    destination: string,
+    legs: TransportMode[],
+    legDetails: Record<number, { origin: string; destination: string; carrier: string; estimatedTime: string }>,
+  ): MultimodalChain => {
+    const newId = `mc${Date.now()}`;
+    const chainLegs: ChainLeg[] = legs.map((mode, idx) => {
+      const detail = legDetails[idx] || { origin: '', destination: '', carrier: '', estimatedTime: '' };
+      return {
+        id: `pl-${Date.now()}-${idx}`,
+        mode,
+        origin: detail.origin || (idx === 0 ? origin : ''),
+        destination: detail.destination || (idx === legs.length - 1 ? destination : ''),
+        carrier: detail.carrier || 'À déterminer',
+        estimatedTime: detail.estimatedTime || '-',
+        cost: modeCostPerLeg[mode],
+        status: 'pending' as LegStatus,
+        distance: 0,
+      };
+    });
+    const totalCost = chainLegs.reduce((sum, leg) => sum + leg.cost, 0);
+    const unimodalCost = Math.round(totalCost * 1.3);
+    return {
+      id: newId,
+      chainId: name || `MM-2026-${String(chains.length + 1).padStart(3, '0')}`,
+      client: client || 'Nouveau client',
+      legs: chainLegs,
+      totalDistance: 0,
+      totalTime: '-',
+      totalCost,
+      co2Saved: Number((legs.length * 1.2).toFixed(1)),
+      status: 'planned',
+      progress: 0,
+      unimodalCost,
+      unimodalTime: '-',
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+  };
+
+  // Handler: create chain from planning tool
+  const handlePlanChain = () => {
+    if (planLegs.length === 0) return;
+    const newChain = createChainFromPlan('', '', planOrigin, planDestination, planLegs, planLegDetails);
+    setChains(prev => [newChain, ...prev]);
+    setPlanLegs(['maritime', 'terrestre']);
+    setPlanOrigin('');
+    setPlanDestination('');
+    setPlanLegDetails({});
+  };
+
+  // Handler: create chain from dialog
+  const handleCreateChain = () => {
+    const newChain = createChainFromPlan(dialogName, dialogClient, dialogOrigin, dialogDestination, dialogLegs, {});
+    setChains(prev => [newChain, ...prev]);
+    setShowPlanningDialog(false);
+    setDialogName('');
+    setDialogClient('');
+    setDialogOrigin('');
+    setDialogDestination('');
+    setDialogLegs(['maritime', 'terrestre']);
+  };
 
   return (
     <div className="space-y-6">
@@ -704,6 +776,10 @@ export default function MultimodalPage() {
               <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Détails par segment</Label>
               {planLegs.map((mode, idx) => {
                 const Icon = modeIcon[mode];
+                const legDetail = planLegDetails[idx] || { origin: '', destination: '', carrier: '', estimatedTime: '' };
+                const updateLegDetail = (field: string, value: string) => {
+                  setPlanLegDetails(prev => ({ ...prev, [idx]: { ...(prev[idx] || { origin: '', destination: '', carrier: '', estimatedTime: '' }), [field]: value } }));
+                };
                 return (
                   <motion.div
                     key={`${mode}-${idx}`}
@@ -719,10 +795,10 @@ export default function MultimodalPage() {
                       <span className="text-xs font-semibold text-gray-900 dark:text-white">Segment {idx + 1}: {modeLabel[mode]}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <div><Label className="text-[10px]">Origine</Label><Input placeholder="Ville" className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px]">Destination</Label><Input placeholder="Ville" className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px]">Transporteur</Label><Input placeholder="Nom" className="h-8 text-xs" /></div>
-                      <div><Label className="text-[10px]">Temps estimé</Label><Input placeholder="ex: 5 jours" className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px]">Origine</Label><Input placeholder="Ville" value={legDetail.origin} onChange={(e) => updateLegDetail('origin', e.target.value)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px]">Destination</Label><Input placeholder="Ville" value={legDetail.destination} onChange={(e) => updateLegDetail('destination', e.target.value)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px]">Transporteur</Label><Input placeholder="Nom" value={legDetail.carrier} onChange={(e) => updateLegDetail('carrier', e.target.value)} className="h-8 text-xs" /></div>
+                      <div><Label className="text-[10px]">Temps estimé</Label><Input placeholder="ex: 5 jours" value={legDetail.estimatedTime} onChange={(e) => updateLegDetail('estimatedTime', e.target.value)} className="h-8 text-xs" /></div>
                     </div>
                   </motion.div>
                 );
@@ -765,7 +841,7 @@ export default function MultimodalPage() {
                 <p className="text-[10px] text-green-600 dark:text-green-500">vs transport unimodal équivalent</p>
               </div>
 
-              <Button className="w-full text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} disabled={planLegs.length === 0}>
+              <Button className="w-full text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} disabled={planLegs.length === 0} onClick={handlePlanChain}>
                 <Zap className="w-4 h-4 mr-2" />
                 Planifier la chaîne
               </Button>
@@ -885,7 +961,7 @@ export default function MultimodalPage() {
           </CardHeader>
           <CardContent className="pt-2">
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-              {multimodalChains.filter(c => c.status === 'active' || c.status === 'at_risk').map((chain) => {
+              {chains.filter(c => c.status === 'active' || c.status === 'at_risk').map((chain) => {
                 const riskLevel = chain.status === 'at_risk' ? 'high' : chain.legs.some(l => l.status === 'delayed') ? 'medium' : 'low';
                 const riskColor = riskLevel === 'high' ? 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400' : riskLevel === 'medium' ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400' : 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400';
                 const riskLabel = riskLevel === 'high' ? 'Élevé' : riskLevel === 'medium' ? 'Moyen' : 'Faible';
@@ -915,15 +991,15 @@ export default function MultimodalPage() {
             <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-lg font-bold text-red-600">{multimodalChains.filter(c => c.status === 'at_risk').length}</p>
+                  <p className="text-lg font-bold text-red-600">{chains.filter(c => c.status === 'at_risk').length}</p>
                   <p className="text-[10px] text-gray-500">Risque élevé</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-amber-600">{multimodalChains.filter(c => c.status === 'active' && c.legs.some(l => l.status === 'delayed')).length}</p>
+                  <p className="text-lg font-bold text-amber-600">{chains.filter(c => c.status === 'active' && c.legs.some(l => l.status === 'delayed')).length}</p>
                   <p className="text-[10px] text-gray-500">Risque moyen</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-green-600">{multimodalChains.filter(c => c.status === 'active' && !c.legs.some(l => l.status === 'delayed')).length}</p>
+                  <p className="text-lg font-bold text-green-600">{chains.filter(c => c.status === 'active' && !c.legs.some(l => l.status === 'delayed')).length}</p>
                   <p className="text-[10px] text-gray-500">Faible risque</p>
                 </div>
               </div>
@@ -1031,49 +1107,56 @@ export default function MultimodalPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-xs">Origine</Label>
-                <Input placeholder="Shanghai" className="h-9" />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Destination finale</Label>
-                <Input placeholder="Oran" className="h-9" />
+                <Label className="text-xs">Nom de la chaîne</Label>
+                <Input placeholder="MM-2026-010" value={dialogName} onChange={(e) => setDialogName(e.target.value)} className="h-9" />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Client</Label>
-                <Input placeholder="Nom du client" className="h-9" />
+                <Input placeholder="Nom du client" value={dialogClient} onChange={(e) => setDialogClient(e.target.value)} className="h-9" />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Nombre de segments</Label>
-                <Select>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Segments" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2">2 segments</SelectItem>
-                    <SelectItem value="3">3 segments</SelectItem>
-                    <SelectItem value="4">4 segments</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs">Origine</Label>
+                <Input placeholder="Shanghai" value={dialogOrigin} onChange={(e) => setDialogOrigin(e.target.value)} className="h-9" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Destination finale</Label>
+                <Input placeholder="Oran" value={dialogDestination} onChange={(e) => setDialogDestination(e.target.value)} className="h-9" />
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <p className="text-xs text-gray-500 mb-2">Combinaisons recommandées</p>
-              <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full justify-start h-9 text-xs gap-2">
-                  <Ship className="w-4 h-4 text-cyan-500" />Maritime → <Truck className="w-4 h-4 text-emerald-500" />Terrestre
-                  <Badge className="ml-auto text-[9px] bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400">Populaire</Badge>
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start h-9 text-xs gap-2">
-                  <Plane className="w-4 h-4 text-purple-500" />Aérien → <Truck className="w-4 h-4 text-emerald-500" />Terrestre
-                  <Badge className="ml-auto text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Rapide</Badge>
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start h-9 text-xs gap-2">
-                  <Ship className="w-4 h-4 text-cyan-500" />Maritime → <Train className="w-4 h-4 text-amber-500" />Rail → <Truck className="w-4 h-4 text-emerald-500" />Terrestre
-                  <Badge className="ml-auto text-[9px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Éco</Badge>
-                </Button>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Segments de transport</Label>
+              <div className="flex flex-wrap gap-2">
+                {(['maritime', 'aerien', 'rail', 'terrestre'] as TransportMode[]).map((mode) => {
+                  const Icon = modeIcon[mode];
+                  const isSelected = dialogLegs.includes(mode);
+                  return (
+                    <Button
+                      key={mode}
+                      variant={isSelected ? 'default' : 'outline'}
+                      size="sm"
+                      className={`h-8 text-xs gap-1.5 ${isSelected ? 'text-white' : ''}`}
+                      style={isSelected ? { background: 'linear-gradient(135deg, #0d9488, #059669)' } : {}}
+                      onClick={() => {
+                        if (isSelected) {
+                          setDialogLegs(dialogLegs.filter(l => l !== mode));
+                        } else {
+                          setDialogLegs([...dialogLegs, mode]);
+                        }
+                      }}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {modeLabel[mode]}
+                    </Button>
+                  );
+                })}
               </div>
+              {dialogLegs.length > 0 && (
+                <p className="text-xs text-gray-600 dark:text-gray-400">Chaîne: {dialogLegs.map(m => modeLabel[m]).join(' → ')}</p>
+              )}
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowPlanningDialog(false)}>Annuler</Button>
-              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowPlanningDialog(false)}>
+              <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleCreateChain} disabled={dialogLegs.length === 0}>
                 <Zap className="w-4 h-4 mr-2" />
                 Créer la chaîne
               </Button>

@@ -7,13 +7,15 @@ import {
   Building2,
   User,
   Eye,
+  Pencil,
+  Trash2,
   ChevronLeft,
   ChevronRight,
   Mail,
   Phone,
   MapPin,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -41,8 +43,19 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { useCargoStore } from '@/lib/cargo-store';
 import {
   clients as initialClients,
   shipments,
@@ -61,15 +74,29 @@ const algerianCities = [
 ];
 
 export default function ClientsPage() {
+  const canEditClients = useCargoStore((s) => s.canEdit('clients'));
+
   const [data, setData] = useState<Client[]>(initialClients);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const [newClient, setNewClient] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    type: 'particulier' as ClientType,
+  });
+
+  const [editClient, setEditClient] = useState({
+    id: '',
     name: '',
     phone: '',
     email: '',
@@ -126,6 +153,51 @@ export default function ClientsPage() {
     setShowDetailDialog(true);
   };
 
+  const handleOpenEdit = (client: Client) => {
+    setEditClient({
+      id: client.id,
+      name: client.name,
+      phone: client.phone,
+      email: client.email,
+      address: client.address,
+      city: client.city,
+      type: client.type,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEdit = () => {
+    setData((prev) =>
+      prev.map((c) =>
+        c.id === editClient.id
+          ? { ...c, name: editClient.name, phone: editClient.phone, email: editClient.email, address: editClient.address, city: editClient.city, type: editClient.type }
+          : c
+      )
+    );
+    // Also update selectedClient if the detail dialog is open
+    if (selectedClient?.id === editClient.id) {
+      setSelectedClient((prev) =>
+        prev
+          ? { ...prev, name: editClient.name, phone: editClient.phone, email: editClient.email, address: editClient.address, city: editClient.city, type: editClient.type }
+          : prev
+      );
+    }
+    setShowEditDialog(false);
+  };
+
+  const handleOpenDelete = (client: Client) => {
+    setSelectedClient(client);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!selectedClient) return;
+    setData((prev) => prev.filter((c) => c.id !== selectedClient.id));
+    setShowDeleteDialog(false);
+    setShowDetailDialog(false);
+    setSelectedClient(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -134,10 +206,12 @@ export default function ClientsPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Clients</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Gérez votre base de clients</p>
         </div>
-        <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-1" />
-          Nouveau client
-        </Button>
+        {canEditClients && (
+          <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }} onClick={() => setShowAddDialog(true)}>
+            <Plus className="w-4 h-4 mr-1" />
+            Nouveau client
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -181,7 +255,7 @@ export default function ClientsPage() {
                   <TableHead className="text-xs">Type</TableHead>
                   <TableHead className="text-xs hidden lg:table-cell">Expéditions</TableHead>
                   <TableHead className="text-xs text-right">CA Total</TableHead>
-                  <TableHead className="text-xs w-10"></TableHead>
+                  <TableHead className="text-xs w-24">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -216,9 +290,21 @@ export default function ClientsPage() {
                       <TableCell className="text-xs hidden lg:table-cell font-medium">{client.totalShipments}</TableCell>
                       <TableCell className="text-xs text-right font-medium">{formatDZD(client.totalRevenue)}</TableCell>
                       <TableCell>
-                        <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={(e) => { e.stopPropagation(); handleViewDetail(client); }}>
-                          <Eye className="w-4 h-4 text-gray-400" />
-                        </button>
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleViewDetail(client)} title="Voir les détails">
+                            <Eye className="w-4 h-4 text-gray-400" />
+                          </button>
+                          {canEditClients && (
+                            <>
+                              <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={() => handleOpenEdit(client)} title="Modifier">
+                                <Pencil className="w-4 h-4 text-gray-400" />
+                              </button>
+                              <button className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleOpenDelete(client)} title="Supprimer">
+                                <Trash2 className="w-4 h-4 text-red-400" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -323,10 +409,141 @@ export default function ClientsPage() {
                   </div>
                 </div>
               )}
+
+              {/* Detail Dialog Actions */}
+              {canEditClients && (
+                <>
+                  <Separator />
+                  <div className="flex items-center gap-2 justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setShowDetailDialog(false);
+                        handleOpenEdit(selectedClient);
+                      }}
+                    >
+                      <Pencil className="w-4 h-4 mr-1" />
+                      Modifier
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setShowDetailDialog(false);
+                        handleOpenDelete(selectedClient);
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Supprimer
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Client Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier le client</DialogTitle>
+            <DialogDescription>Modifier les informations du client</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs">Nom complet</Label>
+                <Input
+                  value={editClient.name}
+                  onChange={(e) => setEditClient({ ...editClient, name: e.target.value })}
+                  placeholder="Nom complet"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Type</Label>
+                <Select value={editClient.type} onValueChange={(v) => setEditClient({ ...editClient, type: v as ClientType })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entreprise">Entreprise</SelectItem>
+                    <SelectItem value="particulier">Particulier</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs">Téléphone</Label>
+                <Input
+                  value={editClient.phone}
+                  onChange={(e) => setEditClient({ ...editClient, phone: e.target.value })}
+                  placeholder="05XXXXXXXX"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Email</Label>
+                <Input
+                  type="email"
+                  value={editClient.email}
+                  onChange={(e) => setEditClient({ ...editClient, email: e.target.value })}
+                  placeholder="email@exemple.dz"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Adresse</Label>
+              <Input
+                value={editClient.address}
+                onChange={(e) => setEditClient({ ...editClient, address: e.target.value })}
+                placeholder="Adresse complète"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Ville</Label>
+              <Select value={editClient.city} onValueChange={(v) => setEditClient({ ...editClient, city: v })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une ville" />
+                </SelectTrigger>
+                <SelectContent>
+                  {algerianCities.map((city) => (
+                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
+            <Button onClick={handleSaveEdit} className="text-white" style={{ background: 'linear-gradient(135deg, #1a56db, #3b7cff)' }}>
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation AlertDialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le client</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer le client <strong>{selectedClient?.name}</strong> ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700 text-white">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add Client Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>

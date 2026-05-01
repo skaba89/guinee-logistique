@@ -21,6 +21,8 @@ import {
   TrendingDown,
   TrendingUp,
   Box,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import {
   Card,
@@ -53,10 +55,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { warehouseItems, warehouseStatusLabels, formatDate } from '@/lib/test-data';
+import { useCargoStore } from '@/lib/cargo-store';
 
 const warehouseStatusColors: Record<string, string> = {
   stored: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -175,6 +189,8 @@ const kpis = [
   { title: 'Sorties aujourd\'hui', value: todayStats.outbound.count, icon: ArrowUpFromLine, color: 'from-orange-500 to-amber-600' },
 ];
 
+type WarehouseStatus = 'stored' | 'reserved' | 'outbound' | 'damaged';
+
 export default function WarehousePage() {
   const [data, setData] = useState(warehouseItems);
   const [search, setSearch] = useState('');
@@ -182,6 +198,9 @@ export default function WarehousePage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
     sku: '',
     name: '',
@@ -190,6 +209,28 @@ export default function WarehousePage() {
     location: '',
     clientName: '',
   });
+
+  const [editItem, setEditItem] = useState<{
+    id: string;
+    name: string;
+    category: string;
+    quantity: number;
+    location: string;
+    status: WarehouseStatus;
+    clientName: string;
+    weight: number;
+  }>({
+    id: '',
+    name: '',
+    category: '',
+    quantity: 0,
+    location: '',
+    status: 'stored',
+    clientName: '',
+    weight: 0,
+  });
+
+  const canEditPage = useCargoStore((s) => s.canEdit);
   const pageSize = 8;
 
   const handleAddItem = () => {
@@ -209,6 +250,53 @@ export default function WarehousePage() {
     setNewItem({ sku: '', name: '', category: '', quantity: '', location: '', clientName: '' });
     setShowAddDialog(false);
     setPage(0);
+  };
+
+  const handleOpenEdit = (item: typeof warehouseItems[number]) => {
+    setEditItem({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      location: item.location,
+      status: item.status,
+      clientName: item.clientName,
+      weight: item.weight,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleEditItem = () => {
+    setData((prev) =>
+      prev.map((item) =>
+        item.id === editItem.id
+          ? {
+              ...item,
+              name: editItem.name,
+              category: editItem.category,
+              quantity: editItem.quantity,
+              location: editItem.location,
+              status: editItem.status,
+              clientName: editItem.clientName,
+              weight: editItem.weight,
+            }
+          : item
+      )
+    );
+    setShowEditDialog(false);
+  };
+
+  const handleOpenDelete = (id: string) => {
+    setDeleteTarget(id);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteItem = () => {
+    if (deleteTarget) {
+      setData((prev) => prev.filter((item) => item.id !== deleteTarget));
+    }
+    setShowDeleteDialog(false);
+    setDeleteTarget(null);
   };
 
   const categories = [...new Set(data.map(item => item.category))];
@@ -342,10 +430,12 @@ export default function WarehousePage() {
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Inventaire et gestion du stockage</p>
         </div>
-        <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nouvel article
-        </Button>
+        {canEditPage('warehouse') && (
+          <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouvel article
+          </Button>
+        )}
       </div>
 
       {/* KPIs */}
@@ -665,6 +755,7 @@ export default function WarehousePage() {
                   <TableHead className="text-xs hidden md:table-cell">Emplacement</TableHead>
                   <TableHead className="text-xs">Statut</TableHead>
                   <TableHead className="text-xs hidden lg:table-cell">Client</TableHead>
+                  {canEditPage('warehouse') && <TableHead className="text-xs w-20">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -694,6 +785,26 @@ export default function WarehousePage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs hidden lg:table-cell">{item.clientName}</TableCell>
+                    {canEditPage('warehouse') && (
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            onClick={() => handleOpenEdit(item)}
+                            title="Modifier"
+                          >
+                            <Pencil className="w-4 h-4 text-gray-400" />
+                          </button>
+                          <button
+                            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            onClick={() => handleOpenDelete(item.id)}
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -733,6 +844,112 @@ export default function WarehousePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Item Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier l&apos;article</DialogTitle>
+            <DialogDescription>Modifier les informations de l&apos;article</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-xs">Nom</Label>
+                <Input
+                  className="h-9"
+                  value={editItem.name}
+                  onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Catégorie</Label>
+                <Input
+                  className="h-9"
+                  value={editItem.category}
+                  onChange={(e) => setEditItem({ ...editItem, category: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Quantité</Label>
+                <Input
+                  type="number"
+                  className="h-9"
+                  value={editItem.quantity}
+                  onChange={(e) => setEditItem({ ...editItem, quantity: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Emplacement</Label>
+                <Input
+                  className="h-9"
+                  value={editItem.location}
+                  onChange={(e) => setEditItem({ ...editItem, location: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Statut</Label>
+                <Select
+                  value={editItem.status}
+                  onValueChange={(v) => setEditItem({ ...editItem, status: v as WarehouseStatus })}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stored">Stocké</SelectItem>
+                    <SelectItem value="reserved">Réservé</SelectItem>
+                    <SelectItem value="outbound">En sortie</SelectItem>
+                    <SelectItem value="damaged">Endommagé</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Client</Label>
+                <Input
+                  className="h-9"
+                  value={editItem.clientName}
+                  onChange={(e) => setEditItem({ ...editItem, clientName: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Poids (kg)</Label>
+              <Input
+                type="number"
+                className="h-9"
+                value={editItem.weight}
+                onChange={(e) => setEditItem({ ...editItem, weight: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
+            <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={handleEditItem}>Enregistrer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Item AlertDialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer l&apos;article</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteItem}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

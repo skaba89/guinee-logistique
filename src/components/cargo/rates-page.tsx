@@ -125,7 +125,7 @@ interface SpotContractEntry {
 
 // ─── Mock Data ───────────────────────────────────────────────────────
 
-const ratesData: RateEntry[] = [
+const initialRatesData: RateEntry[] = [
   { id: 'R-001', mode: 'maritime', origin: 'Alger', destination: 'Marseille', carrier: 'CMA CGM', rate: 1850, unit: 'par conteneur 20ft', currency: 'EUR', transitTime: '5 jours', validFrom: '2026-01-01', validTo: '2026-06-30', type: 'contract' },
   { id: 'R-002', mode: 'maritime', origin: 'Shanghai', destination: 'Alger', carrier: 'Maersk', rate: 3200, unit: 'par conteneur 20ft', currency: 'USD', transitTime: '28 jours', validFrom: '2026-01-01', validTo: '2026-06-30', type: 'contract' },
   { id: 'R-003', mode: 'maritime', origin: 'Hambourg', destination: 'Djeddah', carrier: 'Hapag-Lloyd', rate: 2750, unit: 'par conteneur 20ft', currency: 'EUR', transitTime: '18 jours', validFrom: '2026-02-01', validTo: '2026-07-31', type: 'spot' },
@@ -239,6 +239,7 @@ const tooltipStyle = {
 // ─── Component ───────────────────────────────────────────────────────
 
 export default function RatesPage() {
+  const [ratesData, setRatesData] = useState<RateEntry[]>(initialRatesData);
   const [searchQuery, setSearchQuery] = useState('');
   const [modeFilter, setModeFilter] = useState<TransportMode | 'all'>('all');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -250,12 +251,36 @@ export default function RatesPage() {
     rate: '',
     currency: 'EUR',
   });
+  const [selectedMaritimeCarrier, setSelectedMaritimeCarrier] = useState<string | null>(null);
+  const [selectedAirCarrier, setSelectedAirCarrier] = useState<string | null>(null);
 
   // KPI calculations
   const activeRates = ratesData.length;
   const activeSurcharges = surchargesData.filter((s) => s.active).length;
   const avgSavings = spotContractData.reduce((a, b) => a + b.savingsPercent, 0) / spotContractData.length;
   const exchangeRate = 1.08;
+
+  // Add rate handler
+  const handleAddRate = () => {
+    if (!newRate.origin || !newRate.destination || !newRate.carrier || !newRate.rate) return;
+    const newEntry: RateEntry = {
+      id: `R-${String(ratesData.length + 1).padStart(3, '0')}`,
+      mode: newRate.mode,
+      origin: newRate.origin,
+      destination: newRate.destination,
+      carrier: newRate.carrier,
+      rate: parseFloat(newRate.rate),
+      unit: newRate.mode === 'maritime' ? 'par conteneur 20ft' : newRate.mode === 'aerien' ? 'par kg' : 'par km',
+      currency: newRate.currency,
+      transitTime: '—',
+      validFrom: new Date().toISOString().slice(0, 10),
+      validTo: new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().slice(0, 10),
+      type: 'spot',
+    };
+    setRatesData((prev) => [...prev, newEntry]);
+    setAddDialogOpen(false);
+    setNewRate({ mode: 'maritime', origin: '', destination: '', carrier: '', rate: '', currency: 'EUR' });
+  };
 
   // Filtered rates
   const filteredRates = ratesData.filter((r) => {
@@ -433,7 +458,7 @@ export default function RatesPage() {
                 Annuler
               </Button>
               <Button
-                onClick={() => setAddDialogOpen(false)}
+                onClick={handleAddRate}
                 style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
               >
                 Ajouter
@@ -810,20 +835,27 @@ export default function RatesPage() {
                             variant={isBest ? 'default' : 'outline'}
                             size="sm"
                             className={`w-full mt-3 text-xs ${
+                              selectedMaritimeCarrier === carrier.carrier
+                                ? 'ring-2 ring-teal-500'
+                                : ''
+                            } ${
                               isBest
                                 ? ''
                                 : 'hover:border-teal-400 hover:text-teal-600'
                             }`}
                             style={
-                              isBest
-                                ? {
-                                    background:
-                                      'linear-gradient(135deg, #0d9488, #059669)',
-                                  }
-                                : undefined
+                              selectedMaritimeCarrier === carrier.carrier
+                                ? { background: 'linear-gradient(135deg, #0d9488, #059669)' }
+                                : isBest
+                                  ? {
+                                      background:
+                                        'linear-gradient(135deg, #0d9488, #059669)',
+                                    }
+                                  : undefined
                             }
+                            onClick={() => setSelectedMaritimeCarrier(carrier.carrier)}
                           >
-                            Sélectionner
+                            {selectedMaritimeCarrier === carrier.carrier ? '✓ Sélectionné' : 'Sélectionner'}
                           </Button>
                         </CardContent>
                       </Card>
@@ -964,20 +996,27 @@ export default function RatesPage() {
                             variant={isBest ? 'default' : 'outline'}
                             size="sm"
                             className={`w-full mt-3 text-xs ${
+                              selectedAirCarrier === carrier.carrier
+                                ? 'ring-2 ring-sky-500'
+                                : ''
+                            } ${
                               isBest
                                 ? ''
                                 : 'hover:border-sky-400 hover:text-sky-600'
                             }`}
                             style={
-                              isBest
-                                ? {
-                                    background:
-                                      'linear-gradient(135deg, #0284c7, #0ea5e9)',
-                                  }
-                                : undefined
+                              selectedAirCarrier === carrier.carrier
+                                ? { background: 'linear-gradient(135deg, #0284c7, #0ea5e9)' }
+                                : isBest
+                                  ? {
+                                      background:
+                                        'linear-gradient(135deg, #0284c7, #0ea5e9)',
+                                    }
+                                  : undefined
                             }
+                            onClick={() => setSelectedAirCarrier(carrier.carrier)}
                           >
-                            Sélectionner
+                            {selectedAirCarrier === carrier.carrier ? '✓ Sélectionné' : 'Sélectionner'}
                           </Button>
                         </CardContent>
                       </Card>
