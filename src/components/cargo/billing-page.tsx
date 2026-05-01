@@ -79,6 +79,9 @@ import {
 } from '@/lib/test-data';
 import { useCargoStore } from '@/lib/cargo-store';
 import { useCurrency } from '@/lib/use-currency';
+import ExportButtons from '@/components/cargo/export-buttons';
+import AdvancedFilters from '@/components/cargo/advanced-filters';
+import { applyFiltersToArray, type FilterState } from '@/hooks/use-filters';
 
 // ── Status styling ──────────────────────────────────────────────────────
 const statusColors: Record<string, string> = {
@@ -113,6 +116,7 @@ export default function BillingPage() {
 
   // Data state
   const [data, setData] = useState<Invoice[]>(initialInvoices);
+  const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -144,9 +148,18 @@ export default function BillingPage() {
     shipments: '',
   });
 
+  // ── Advanced filters ─────────────────────────────────────────────
+  const filteredInvoices = useMemo(() => {
+    if (!activeFilters) return data;
+    return applyFiltersToArray(data, activeFilters, {
+      dateField: 'dateEmission',
+      categoryField: 'status',
+    });
+  }, [data, activeFilters]);
+
   // ── Filtering & pagination ─────────────────────────────────────────
   const filtered = useMemo(() => {
-    let result = [...data];
+    let result = [...filteredInvoices];
     if (filterStatus !== 'all') {
       result = result.filter((inv) => inv.status === filterStatus);
     }
@@ -159,7 +172,7 @@ export default function BillingPage() {
       );
     }
     return result.sort((a, b) => new Date(b.dateEmission).getTime() - new Date(a.dateEmission).getTime());
-  }, [data, filterStatus, searchQuery]);
+  }, [filteredInvoices, filterStatus, searchQuery]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -402,6 +415,19 @@ export default function BillingPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Gerez vos factures et paiements</p>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            data={filteredInvoices as unknown as Record<string, unknown>[]}
+            columns={[
+              { key: 'invoiceNumber', header: 'N° Facture' },
+              { key: 'clientName', header: 'Client' },
+              { key: 'amount', header: 'Montant' },
+              { key: 'status', header: 'Statut' },
+              { key: 'dateEmission', header: 'Date émission' },
+              { key: 'dateEcheance', header: 'Date échéance' },
+            ]}
+            filename="logisway-factures"
+            title="Rapport de Facturation"
+          />
           <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-1" />
             Exporter
@@ -488,6 +514,25 @@ export default function BillingPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Filters */}
+      <AdvancedFilters
+        onFiltersChange={setActiveFilters}
+        availableClients={[...new Set(data.map(inv => inv.clientName))].sort()}
+        availableCategories={[
+          { value: 'payee', label: 'Payée' },
+          { value: 'en_attente', label: 'En attente' },
+          { value: 'en_retard', label: 'En retard' },
+          { value: 'annulee', label: 'Annulée' },
+        ]}
+        availableStatuses={[
+          { value: 'payee', label: 'Payée' },
+          { value: 'en_attente', label: 'En attente' },
+          { value: 'en_retard', label: 'En retard' },
+          { value: 'annulee', label: 'Annulée' },
+        ]}
+        showLocationFilters={false}
+      />
 
       {/* Invoice Table */}
       <Card>

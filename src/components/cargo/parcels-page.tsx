@@ -94,6 +94,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { parcels, parcelStatusLabels, formatDate, type Parcel } from '@/lib/test-data';
+import ExportButtons from '@/components/cargo/export-buttons';
+import AdvancedFilters from '@/components/cargo/advanced-filters';
+import { applyFiltersToArray, type FilterState } from '@/hooks/use-filters';
 import { useCargoStore } from '@/lib/cargo-store';
 import { useCurrency } from '@/lib/use-currency';
 import {
@@ -242,6 +245,7 @@ export default function ParcelsPage() {
 
   // Mutable parcels state
   const [parcelsList, setParcelsList] = useState<Parcel[]>(parcels);
+  const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
 
   // Handle adding a new parcel
   const handleAddParcel = () => {
@@ -436,7 +440,15 @@ export default function ParcelsPage() {
     reader.readAsDataURL(file);
   };
 
-  const filtered = parcelsList.filter(p => {
+  const filteredParcels = useMemo(() => {
+    if (!activeFilters) return parcelsList;
+    return applyFiltersToArray(parcelsList, activeFilters, {
+      dateField: 'estimatedDelivery',
+      categoryField: 'carrier',
+    }) as Parcel[];
+  }, [parcelsList, activeFilters]);
+
+  const filtered = filteredParcels.filter(p => {
     const matchSearch = search === '' ||
       p.trackingNumber.toLowerCase().includes(search.toLowerCase()) ||
       p.senderName.toLowerCase().includes(search.toLowerCase()) ||
@@ -573,6 +585,21 @@ export default function ParcelsPage() {
             <Printer className="w-4 h-4 mr-1" />
             Imprimantes ({printers.filter(p => p.status === 'online' || p.status === 'idle').length})
           </Button>
+          <ExportButtons
+            data={filteredParcels as unknown as Record<string, unknown>[]}
+            columns={[
+              { key: 'trackingNumber', header: 'N° Suivi' },
+              { key: 'senderName', header: 'Expéditeur' },
+              { key: 'receiverName', header: 'Destinataire' },
+              { key: 'carrier', header: 'Transporteur' },
+              { key: 'weight', header: 'Poids (kg)' },
+              { key: 'status', header: 'Statut' },
+              { key: 'serviceLevel', header: 'Service' },
+              { key: 'price', header: 'Prix' },
+            ]}
+            filename="logisway-colis"
+            title="Rapport des Colis"
+          />
           <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Nouveau colis
@@ -686,6 +713,26 @@ export default function ParcelsPage() {
               </div>
             </CardContent>
           </Card>
+
+          <AdvancedFilters
+            onFiltersChange={setActiveFilters}
+            availableOrigins={[...new Set(parcelsList.map(p => p.senderAddress))].sort()}
+            availableDestinations={[...new Set(parcelsList.map(p => p.receiverAddress))].sort()}
+            availableClients={[...new Set([...parcelsList.map(p => p.senderName), ...parcelsList.map(p => p.receiverName)])].sort()}
+            availableCategories={[
+              { value: 'express', label: 'Express' },
+              { value: 'standard', label: 'Standard' },
+              { value: 'economy', label: 'Économique' },
+            ]}
+            availableStatuses={[
+              { value: 'picked_up', label: 'Collecté' },
+              { value: 'in_warehouse', label: 'En entrepôt' },
+              { value: 'in_transit', label: 'En transit' },
+              { value: 'out_for_delivery', label: 'En livraison' },
+              { value: 'delivered', label: 'Livré' },
+              { value: 'returned', label: 'Retourné' },
+            ]}
+          />
 
           {/* Table */}
           <Card>

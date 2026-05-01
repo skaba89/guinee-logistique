@@ -84,6 +84,7 @@ import { shipments, containers, flights, parcels, customsDeclarations, clients }
 import { getFilteredNavigation, canViewPage } from '@/lib/permissions';
 import ChatbotWidget from '@/components/cargo/chatbot-widget';
 import CollapsibleSidebarNav from '@/components/cargo/collapsible-sidebar-nav';
+import ThemeSwitcher from '@/components/cargo/theme-switcher';
 import {
   getNotificationsForRole,
   markNotificationRead as markNotificationReadLib,
@@ -134,6 +135,9 @@ const pageNameMap: Record<PageType, string> = {
   compliance: 'Conformité Réglementaire',
   hr: 'Ressources Humaines',
   expenses: 'Gestion des Dépenses',
+  'analytics-kpi': 'Analytique KPIs',
+  validation: 'Contrôle & Validation',
+  messaging: 'Messagerie Avancée',
 };
 
 // Notification type icon mapping
@@ -411,6 +415,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Theme Switcher */}
+            <ThemeSwitcher />
+
             {/* Currency Selector */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

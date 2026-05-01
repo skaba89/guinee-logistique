@@ -74,6 +74,9 @@ import {
 } from '@/lib/test-data';
 import { useCurrency } from '@/lib/use-currency';
 import { useCargoStore } from '@/lib/cargo-store';
+import ExportButtons from '@/components/cargo/export-buttons';
+import AdvancedFilters from '@/components/cargo/advanced-filters';
+import { applyFiltersToArray, type FilterState } from '@/hooks/use-filters';
 
 const statusColors: Record<string, string> = {
   en_attente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
@@ -117,6 +120,7 @@ export default function ShipmentsPage() {
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterState | null>(null);
   const canEditPage = useCargoStore((s) => s.canEdit('shipments'));
 
   // Add form state
@@ -134,8 +138,16 @@ export default function ShipmentsPage() {
     dateLivraisonEstimee: '',
   });
 
+  const filteredData = useMemo(() => {
+    if (!activeFilters) return data;
+    return applyFiltersToArray(data, activeFilters, {
+      dateField: 'dateCreation',
+      categoryField: 'type',
+    });
+  }, [activeFilters, data]);
+
   const filtered = useMemo(() => {
-    let result = [...data];
+    let result = [...filteredData];
     if (filterType !== 'all') {
       result = result.filter((s) => s.type === filterType);
     }
@@ -153,7 +165,7 @@ export default function ShipmentsPage() {
       );
     }
     return result.sort((a, b) => new Date(b.dateCreation).getTime() - new Date(a.dateCreation).getTime());
-  }, [data, filterType, filterStatus, searchQuery]);
+  }, [filteredData, filterType, filterStatus, searchQuery]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
@@ -410,6 +422,22 @@ export default function ShipmentsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Gérez vos expéditions et colis</p>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButtons
+            data={filteredData as unknown as Record<string, unknown>[]}
+            columns={[
+              { key: 'trackingNumber', header: 'N° Suivi' },
+              { key: 'type', header: 'Type' },
+              { key: 'status', header: 'Statut' },
+              { key: 'origin', header: 'Origine' },
+              { key: 'destination', header: 'Destination' },
+              { key: 'clientName', header: 'Client' },
+              { key: 'weight', header: 'Poids (kg)' },
+              { key: 'price', header: 'Prix' },
+              { key: 'dateCreation', header: 'Date création' },
+            ]}
+            filename="logisway-expeditions"
+            title="Rapport des Expéditions"
+          />
           {/* Export dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -556,6 +584,27 @@ export default function ShipmentsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Filters */}
+      <AdvancedFilters
+        onFiltersChange={setActiveFilters}
+        availableOrigins={[...new Set(data.map(s => s.origin))].sort()}
+        availableDestinations={[...new Set(data.map(s => s.destination))].sort()}
+        availableClients={[...new Set(data.map(s => s.clientName))].sort()}
+        availableCategories={[
+          { value: 'aerien', label: 'Aérien' },
+          { value: 'maritime', label: 'Maritime' },
+          { value: 'terrestre', label: 'Terrestre' },
+        ]}
+        availableStatuses={[
+          { value: 'en_attente', label: 'En attente' },
+          { value: 'confirmee', label: 'Confirmée' },
+          { value: 'en_transit', label: 'En transit' },
+          { value: 'livree', label: 'Livrée' },
+          { value: 'retardee', label: 'Retardée' },
+          { value: 'annulee', label: 'Annulée' },
+        ]}
+      />
 
       {/* Table */}
       <Card>

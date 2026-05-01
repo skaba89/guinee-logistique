@@ -658,6 +658,41 @@ export const moduleDefinitions: ModuleDefinition[] = [
     description: 'Configuration de la plateforme — profil, entreprise, notifications',
     defaultPermissions: { admin: 'write', manager: 'read', agent: 'none', viewer: 'none', client: 'none' },
   },
+
+  // ─── Nouvelles fonctionnalités ─────────────────────────────────
+  {
+    id: 'analytics-kpi',
+    label: 'Analytique KPIs',
+    icon: 'BarChart3',
+    group: 'gestion',
+    order: 4.5,
+    enabled: true,
+    premium: false,
+    description: 'Tableau analytique avancé avec KPIs, classements, graphiques et filtres',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+  },
+  {
+    id: 'validation',
+    label: 'Contrôle & Validation',
+    icon: 'ClipboardCheck',
+    group: 'gestion',
+    order: 9.5,
+    enabled: true,
+    premium: false,
+    description: 'Module de contrôle et validation des opérations avec rapport PDF',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+  },
+  {
+    id: 'messaging',
+    label: 'Messagerie Avancée',
+    icon: 'MessageSquare',
+    group: 'communication',
+    order: 2,
+    enabled: true,
+    premium: false,
+    description: 'Messagerie interne enrichie — conversations, pièces jointes, non-lus',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+  },
 ];
 
 // ─── Helper Functions ───────────────────────────────────────────

@@ -50,6 +50,11 @@ import TemperatureControlledPage from '@/components/cargo/temperature-controlled
 import CompliancePage from '@/components/cargo/compliance-page';
 import HrPage from '@/components/cargo/hr-page';
 import ExpensesPage from '@/components/cargo/expenses-page';
+import AnalyticsDashboardPage from '@/components/cargo/analytics-dashboard-page';
+import ValidationModule from '@/components/cargo/validation-module';
+import ValidationPageWrapper from '@/components/cargo/validation-page-wrapper';
+import MessagingPage from '@/components/cargo/messaging-page';
+import PinGuard from '@/components/cargo/pin-guard';
 
 // ─── Access Denied Page ─────────────────────────────────────────
 
@@ -115,8 +120,6 @@ function PageRenderer() {
       return <BillingPage />;
     case 'fleet':
       return <FleetPage />;
-    case 'settings':
-      return <SettingsPage />;
     case 'maritime':
       return <MaritimePage />;
     case 'air-freight':
@@ -157,8 +160,6 @@ function PageRenderer() {
       return <TasksPage />;
     case 'calendar':
       return <CalendarPage />;
-    case 'users':
-      return <UsersPage />;
     case 'sustainability':
       return <SustainabilityPage />;
     case 'rates':
@@ -181,6 +182,25 @@ function PageRenderer() {
       return <HrPage />;
     case 'expenses':
       return <ExpensesPage />;
+    case 'analytics-kpi':
+      return <AnalyticsDashboardPage />;
+    case 'validation':
+      return <ValidationPageWrapper />;
+    case 'messaging':
+      return <MessagingPage />;
+    // Pages protégées par PIN
+    case 'settings':
+      return (
+        <PinGuard pin="1234" timeout={120} title="Accès Paramètres">
+          <SettingsPage />
+        </PinGuard>
+      );
+    case 'users':
+      return (
+        <PinGuard pin="1234" timeout={120} title="Accès Utilisateurs">
+          <UsersPage />
+        </PinGuard>
+      );
     default:
       return <DashboardPage />;
   }
