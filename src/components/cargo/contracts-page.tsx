@@ -81,6 +81,7 @@ import {
   Radar,
 } from 'recharts';
 import { useCurrency } from '@/lib/use-currency';
+import { useToastAction } from '@/components/cargo/toast-provider';
 
 // ─── Types ───────────────────────────────────────────────────────────
 type ContractType = 'maritime' | 'aerien' | 'terrestre' | 'multimodal';
@@ -393,6 +394,7 @@ const radarData = [
 // ─── Component ───────────────────────────────────────────────────────
 export default function ContractsPage() {
   const { format: formatPrice, symbol } = useCurrency();
+  const { toast } = useToastAction();
   const [data, setData] = useState<Contract[]>(contracts);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -439,9 +441,11 @@ export default function ContractsPage() {
   const handleViewDetail = (contract: Contract) => {
     setSelectedContract(contract);
     setShowDetailDialog(true);
+    toast.info('Détails du contrat', `Consultation du contrat ${contract.contractNumber}`);
   };
 
   const handleAddContract = () => {
+    toast.success('Contrat créé', `Nouveau contrat ajouté avec succès.`);
     const contract: Contract = {
       id: `ct${data.length + 1}`,
       contractNumber: `CTR-2025-${String(data.length + 1).padStart(3, '0')}`,
@@ -478,6 +482,7 @@ export default function ContractsPage() {
     a.download = `contrat-${contract.contractNumber}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success('Téléchargement', `Contrat ${contract.contractNumber} téléchargé.`);
   };
 
   const handleRenewContract = (contract: Contract) => {
@@ -492,11 +497,13 @@ export default function ContractsPage() {
     };
     setData([renewed, ...data]);
     setShowDetailDialog(false);
+    toast.success('Contrat renouvelé', `Le contrat ${contract.contractNumber} a été renouvelé.`);
   };
 
   const handleResiliateContract = (contract: Contract) => {
     setData(prev => prev.map(c => c.id === contract.id ? { ...c, status: 'resilie' as ContractStatus } : c));
     setShowDetailDialog(false);
+    toast.warning('Contrat résilié', `Le contrat ${contract.contractNumber} a été résilié.`);
   };
 
   const toggleCompare = (id: string) => {

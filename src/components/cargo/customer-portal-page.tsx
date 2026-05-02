@@ -77,6 +77,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useCurrency } from '@/lib/use-currency';
+import { useToastAction } from '@/components/cargo/toast-provider';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -564,6 +565,7 @@ function PaginationControls({ current, total, onChange }: { current: number; tot
 
 export default function CustomerPortalPage() {
   const { format: formatPrice, symbol } = useCurrency();
+  const { toast } = useToastAction();
   const [activeTab, setActiveTab] = useState('suivi');
   const [shipments] = useState<PortalShipment[]>(mockShipments);
   const [invoices] = useState<PortalInvoice[]>(mockInvoices);
@@ -777,6 +779,7 @@ export default function CustomerPortalPage() {
     a.download = `${doc.name.replace(/\s+/g, '-')}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success('Document téléchargé', `${doc.name} téléchargé avec succès.`);
   };
 
   // ─── Render ──────────────────────────────────────────────────────────────
@@ -1067,9 +1070,8 @@ export default function CustomerPortalPage() {
                               variant="ghost"
                               size="sm"
                               className="h-7 text-xs gap-1"
-                              disabled={!doc.downloadable}
-                              style={doc.downloadable ? { color: '#0d9488' } : {}}
-                              onClick={() => setShowDocumentPreview(doc)}
+                              style={{ color: '#0d9488' }}
+                              onClick={() => { setShowDocumentPreview(doc); toast.info('Aperçu document', `Consultation de ${doc.name}`); }}
                             >
                               <Eye className="w-3.5 h-3.5" />
                               Voir

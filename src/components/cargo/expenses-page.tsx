@@ -63,6 +63,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useCurrency } from '@/lib/use-currency';
+import { useToastAction } from '@/components/cargo/toast-provider';
 
 /* ─── Types ─── */
 type ExpenseStatus = 'en_attente' | 'approuvee' | 'rejetee';
@@ -209,6 +210,7 @@ type TabKey = (typeof TABS)[number]['key'];
 /* ─── Component ─── */
 export default function ExpensesPage() {
   const { format: formatPrice, symbol } = useCurrency();
+  const { toast } = useToastAction();
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -260,14 +262,17 @@ export default function ExpensesPage() {
     setExpenseData([entry, ...expenseData]);
     setShowAddModal(false);
     setNewExpense({ employe: '', categorie: 'deplacement', montant: '', description: '', departement: '' });
+    toast.success('Dépense ajoutée', `Note de frais ${entry.id} créée avec succès.`);
   };
 
   /* Handler: approve / reject */
   const handleApprove = (id: string) => {
     setExpenseData(prev => prev.map(e => e.id === id ? { ...e, statut: 'approuvee' as ExpenseStatus } : e));
+    toast.success('Dépense approuvée', `Note de frais ${id} approuvée.`);
   };
   const handleReject = (id: string) => {
     setExpenseData(prev => prev.map(e => e.id === id ? { ...e, statut: 'rejetee' as ExpenseStatus } : e));
+    toast.error('Dépense rejetée', `Note de frais ${id} rejetée.`);
   };
 
   const handleExportCSV = () => {
@@ -520,11 +525,8 @@ export default function ExpensesPage() {
                         filteredExpenses.map((exp, i) => {
                           const CatIcon = CATEGORY_ICONS[exp.categorie];
                           return (
-                            <motion.tr
+                            <tr
                               key={exp.id}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.2, delay: i * 0.03 }}
                               className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                             >
                               <td className="px-4 py-3">
@@ -561,7 +563,7 @@ export default function ExpensesPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem className="text-xs" onClick={() => { setSelectedExpense(exp); setShowDetailDialog(true); }}>
+                                    <DropdownMenuItem className="text-xs" onClick={() => { setSelectedExpense(exp); setShowDetailDialog(true); toast.info('Détails de la dépense', `Consultation de ${exp.id} — ${exp.employe}`); }}>
                                       <Eye className="w-3.5 h-3.5 mr-2" />
                                       Voir les détails
                                     </DropdownMenuItem>
@@ -590,6 +592,7 @@ export default function ExpensesPage() {
                                           a.download = `note-frais-${exp.id}.txt`;
                                           a.click();
                                           URL.revokeObjectURL(url);
+                                          toast.success('Téléchargement', `Note de frais ${exp.id} téléchargée.`);
                                         }}>
                                           <Download className="w-3.5 h-3.5 mr-2" />
                                           Télécharger
@@ -599,7 +602,7 @@ export default function ExpensesPage() {
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </td>
-                            </motion.tr>
+                            </tr>
                           );
                         })
                       )}

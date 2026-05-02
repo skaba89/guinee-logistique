@@ -87,6 +87,7 @@ import {
   Cell,
 } from 'recharts';
 import { useCurrency } from '@/lib/use-currency';
+import { useToastAction } from '@/components/cargo/toast-provider';
 
 // ─── Types ─────────────────────────────────────────────────────
 
@@ -363,6 +364,7 @@ const tabs = [
 
 export default function HRPage() {
   const { format: formatPrice, symbol } = useCurrency();
+  const { toast } = useToastAction();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState<string>('all');
@@ -415,6 +417,7 @@ export default function HRPage() {
     setEmployeesList(prev => [...prev, newEmp]);
     setNewEmployee({ prenom: '', nom: '', departement: '', poste: '', salaire: '', email: '', telephone: '' });
     setShowAddDialog(false);
+    toast.success('Employé ajouté', `${newEmp.prenom} ${newEmp.nom} ajouté avec succès.`);
   };
 
   // Handle approving a leave request
@@ -422,6 +425,7 @@ export default function HRPage() {
     setLeaveRequestsList(prev =>
       prev.map(l => l.id === leaveId ? { ...l, statut: 'approuve' as LeaveStatus } : l)
     );
+    toast.success('Congé approuvé', 'La demande de congé a été approuvée.');
   };
 
   // Handle rejecting a leave request
@@ -429,6 +433,7 @@ export default function HRPage() {
     setLeaveRequestsList(prev =>
       prev.map(l => l.id === leaveId ? { ...l, statut: 'rejete' as LeaveStatus } : l)
     );
+    toast.error('Congé rejeté', 'La demande de congé a été rejetée.');
   };
 
   // Computed: filtered employees
@@ -1064,7 +1069,7 @@ export default function HRPage() {
                           </div>
                           <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
                             <span className="text-[10px] text-gray-400">Publié le {formatDate(job.datePublication)}</span>
-                            <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-600 hover:text-teal-700" onClick={() => { setSelectedJob(job); setShowJobDetailDialog(true); }}>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-600 hover:text-teal-700" onClick={() => { setSelectedJob(job); setShowJobDetailDialog(true); toast.info('Détails du poste', `Consultation de l'offre : ${job.titre}`); }}>
                               Détails
                               <ChevronRight className="w-3 h-3 ml-1" />
                             </Button>
@@ -1736,6 +1741,7 @@ export default function HRPage() {
                   <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => {
                     setSelectedJob({ ...selectedJob, statut: 'en_cours' });
                     setShowJobDetailDialog(false);
+                    toast.success('Poste mis à jour', `Le poste ${selectedJob.titre} est maintenant en cours.`);
                   }}>
                     <UserPlus className="w-4 h-4 mr-1" />
                     Passer en cours
@@ -1745,6 +1751,7 @@ export default function HRPage() {
                   <Button size="sm" variant="outline" className="text-xs" onClick={() => {
                     setSelectedJob({ ...selectedJob, statut: 'ferme' });
                     setShowJobDetailDialog(false);
+                    toast.info('Poste fermé', `Le poste ${selectedJob.titre} a été fermé.`);
                   }}>
                     <XCircle className="w-4 h-4 mr-1" />
                     Fermer le poste
@@ -1754,6 +1761,7 @@ export default function HRPage() {
                   <Button size="sm" variant="outline" className="text-xs" onClick={() => {
                     setSelectedJob({ ...selectedJob, statut: 'ouvert' });
                     setShowJobDetailDialog(false);
+                    toast.success('Poste réouvert', `Le poste ${selectedJob.titre} a été réouvert.`);
                   }}>
                     <CheckCircle2 className="w-4 h-4 mr-1" />
                     Réouvrir le poste
