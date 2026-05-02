@@ -45,6 +45,7 @@ import RatesPage from '@/components/cargo/rates-page';
 import ChatPage from '@/components/cargo/chat-page';
 import ScannerPage from '@/components/cargo/scanner-page';
 import CustomerPortalPage from '@/components/cargo/customer-portal-page';
+import CollectorPortalPage from '@/components/cargo/collector-portal-page';
 import CreditManagementPage from '@/components/cargo/credit-management-page';
 import DangerousGoodsPage from '@/components/cargo/dangerous-goods-page';
 import TemperatureControlledPage from '@/components/cargo/temperature-controlled-page';
@@ -171,6 +172,8 @@ function PageRenderer() {
       return <ScannerPage />;
     case 'customer-portal':
       return <CustomerPortalPage />;
+    case 'collector-portal':
+      return <CollectorPortalPage />;
     case 'credit-management':
       return <CreditManagementPage />;
     case 'dangerous-goods':

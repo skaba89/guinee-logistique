@@ -450,7 +450,10 @@ export default function ContractsPage() {
   };
 
   const handleAddContract = () => {
-    toast.success('Contrat créé', `Nouveau contrat ajouté avec succès.`);
+    if (!newContract.carrier || !newContract.startDate || !newContract.endDate) {
+      toast.error('Champs requis', 'Veuillez remplir le transporteur, la date de début et la date de fin.');
+      return;
+    }
     const contract: Contract = {
       id: `ct${data.length + 1}`,
       contractNumber: `CTR-2025-${String(data.length + 1).padStart(3, '0')}`,
@@ -472,10 +475,11 @@ export default function ContractsPage() {
       penaltyClause: newContract.penaltyClause,
       specialConditions: newContract.specialConditions,
     };
-    setData([contract, ...data]);
+    setData(prev => [contract, ...prev]);
     setShowNewDialog(false);
     setNewContract({ carrier: '', type: 'maritime', startDate: '', endDate: '', annualValue: 0, terms: '', paymentTerms: 'Net 30 jours', slaDeliveryDays: 5, slaDamageLimit: 1.5, penaltyClause: '', specialConditions: '' });
     setNewRateCards([{ origin: '', destination: '', ratePerKg: 0, ratePerContainer: 0, ratePerKm: 0, transitTime: '' }]);
+    toast.success('Contrat créé', `Nouveau contrat ${contract.contractNumber} ajouté avec succès.`);
   };
 
   const handleDownloadContract = (contract: Contract) => {
@@ -500,7 +504,7 @@ export default function ContractsPage() {
       status: 'en_negociation',
       amendments: [...contract.amendments, { id: `a${Date.now()}`, date: new Date().toISOString().split('T')[0], description: 'Renouvellement du contrat', author: 'Ahmed Benali' }],
     };
-    setData([renewed, ...data]);
+    setData(prev => [renewed, ...prev]);
     setShowDetailDialog(false);
     toast.success('Contrat renouvelé', `Le contrat ${contract.contractNumber} a été renouvelé.`);
   };
@@ -509,6 +513,30 @@ export default function ContractsPage() {
     setData(prev => prev.map(c => c.id === contract.id ? { ...c, status: 'resilie' as ContractStatus } : c));
     setShowDetailDialog(false);
     toast.warning('Contrat résilié', `Le contrat ${contract.contractNumber} a été résilié.`);
+  };
+
+  const handleEditContract = (contract: Contract) => {
+    setSelectedContract(contract);
+    setEditForm({
+      terms: contract.terms,
+      paymentTerms: contract.paymentTerms,
+      slaDeliveryDays: contract.slaDeliveryDays,
+      slaDamageLimit: contract.slaDamageLimit,
+      penaltyClause: contract.penaltyClause,
+      specialConditions: contract.specialConditions,
+    });
+    setIsEditing(true);
+    setShowDetailDialog(true);
+  };
+
+  const handleDeleteContract = (contract: Contract) => {
+    setData(prev => prev.filter(c => c.id !== contract.id));
+    setCompareIds(prev => prev.filter(id => id !== contract.id));
+    if (selectedContract?.id === contract.id) {
+      setSelectedContract(null);
+      setShowDetailDialog(false);
+    }
+    toast.success('Contrat supprimé', `Le contrat ${contract.contractNumber} a été supprimé.`);
   };
 
   const toggleCompare = (id: string) => {
@@ -652,7 +680,7 @@ export default function ContractsPage() {
                       <TableHead className="text-xs hidden lg:table-cell">Valeur annuelle</TableHead>
                       <TableHead className="text-xs">Statut</TableHead>
                       <TableHead className="text-xs hidden xl:table-cell">Conformité</TableHead>
-                      <TableHead className="text-xs w-20">Actions</TableHead>
+                      <TableHead className="text-xs w-28">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -702,11 +730,17 @@ export default function ContractsPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
-                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={e => { e.stopPropagation(); handleViewDetail(contract); }}>
+                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" title="Voir les détails" onClick={e => { e.stopPropagation(); handleViewDetail(contract); }}>
                                   <Eye className="w-4 h-4 text-gray-400" />
                                 </button>
-                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={e => { e.stopPropagation(); handleDownloadContract(contract); }}>
+                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" title="Modifier" onClick={e => { e.stopPropagation(); handleEditContract(contract); }}>
+                                  <Edit className="w-4 h-4 text-gray-400" />
+                                </button>
+                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" title="Télécharger" onClick={e => { e.stopPropagation(); handleDownloadContract(contract); }}>
                                   <Download className="w-4 h-4 text-gray-400" />
+                                </button>
+                                <button className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Supprimer" onClick={e => { e.stopPropagation(); handleDeleteContract(contract); }}>
+                                  <Trash2 className="w-4 h-4 text-red-400" />
                                 </button>
                               </div>
                             </TableCell>
@@ -1330,6 +1364,11 @@ export default function ContractsPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs">Conditions générales</Label>
+              <textarea className="w-full text-xs border rounded-md p-2 bg-white dark:bg-gray-900 min-h-[60px]" value={newContract.terms} onChange={e => setNewContract({ ...newContract, terms: e.target.value })} placeholder="Conditions générales du contrat..." />
             </div>
 
             <Separator />

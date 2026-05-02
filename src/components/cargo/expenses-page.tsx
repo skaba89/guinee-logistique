@@ -223,6 +223,10 @@ export default function ExpensesPage() {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<ExpenseEntry | null>(null);
 
+  // Delete confirmation dialog
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<ExpenseEntry | null>(null);
+
   /* KPI calculations */
   const totalDepenses = expenseData.reduce((a, b) => a + b.montant, 0);
   const totalBudget = budgets.reduce((a, b) => a + b.alloue, 0);
@@ -273,6 +277,13 @@ export default function ExpensesPage() {
   const handleReject = (id: string) => {
     setExpenseData(prev => prev.map(e => e.id === id ? { ...e, statut: 'rejetee' as ExpenseStatus } : e));
     toast.error('Dépense rejetée', `Note de frais ${id} rejetée.`);
+  };
+
+  const handleDelete = (id: string) => {
+    setExpenseData(prev => prev.filter(e => e.id !== id));
+    toast.success('Dépense supprimée', `Note de frais ${id} supprimée avec succès.`);
+    setShowDeleteDialog(false);
+    setExpenseToDelete(null);
   };
 
   const handleExportCSV = () => {
@@ -590,8 +601,10 @@ export default function ExpensesPage() {
                                           const a = document.createElement('a');
                                           a.href = url;
                                           a.download = `note-frais-${exp.id}.txt`;
+                                          document.body.appendChild(a);
                                           a.click();
-                                          URL.revokeObjectURL(url);
+                                          document.body.removeChild(a);
+                                          setTimeout(() => URL.revokeObjectURL(url), 100);
                                           toast.success('Téléchargement', `Note de frais ${exp.id} téléchargée.`);
                                         }}>
                                           <Download className="w-3.5 h-3.5 mr-2" />
@@ -599,6 +612,11 @@ export default function ExpensesPage() {
                                         </DropdownMenuItem>
                                       </>
                                     )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-xs text-red-600" onClick={() => { setExpenseToDelete(exp); setShowDeleteDialog(true); }}>
+                                      <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                      Supprimer
+                                    </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </td>
@@ -1043,6 +1061,37 @@ export default function ExpensesPage() {
               </div>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Delete Confirmation Dialog ──────────────────────────────────── */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-red-500" />
+              Confirmer la suppression
+            </DialogTitle>
+            <DialogDescription>Cette action est irréversible.</DialogDescription>
+          </DialogHeader>
+          {expenseToDelete && (
+            <div className="space-y-3">
+              <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/40">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{expenseToDelete.employe} — {expenseToDelete.id}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{expenseToDelete.description}</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">{formatPrice(expenseToDelete.montant)}</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 h-9 text-xs" onClick={() => { setShowDeleteDialog(false); setExpenseToDelete(null); }}>
+                  Annuler
+                </Button>
+                <Button className="flex-1 h-9 text-xs bg-red-600 hover:bg-red-700 text-white" onClick={() => handleDelete(expenseToDelete.id)}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Supprimer
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

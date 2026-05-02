@@ -44,12 +44,13 @@ import {
   AlertTriangle,
   Briefcase,
   Wallet,
+  PackageSearch,
 } from 'lucide-react';
 import type { PageType } from './cargo-store';
 
 // ─── Role Types ─────────────────────────────────────────────────
 
-export type RoleKey = 'admin' | 'manager' | 'agent' | 'viewer' | 'client';
+export type RoleKey = 'admin' | 'manager' | 'agent' | 'viewer' | 'client' | 'ramasseur';
 export type PermissionLevel = 'write' | 'read' | 'none';
 
 export interface RoleDefinition {
@@ -144,6 +145,14 @@ export const roleDefinitions: RoleDefinition[] = [
     bgColor: 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400',
     borderColor: '#7c3aed',
   },
+  {
+    key: 'ramasseur',
+    label: 'Ramasseur',
+    description: 'Collecte et livraison de colis chez les clients, création BL et étiquettes',
+    color: '#ea580c',
+    bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+    borderColor: '#ea580c',
+  },
 ];
 
 export const roleLabelsMap: Record<RoleKey, string> = Object.fromEntries(
@@ -205,6 +214,7 @@ export const iconNameToComponent: Record<string, React.ElementType> = {
   AlertTriangle,
   Briefcase,
   Wallet,
+  PackageSearch,
 };
 
 // ─── Module Definitions (Single Source of Truth) ────────────────
@@ -220,7 +230,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Vue d\'ensemble des opérations logistiques avec KPIs et graphiques',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read', ramasseur: 'read' },
   },
   {
     id: 'shipments',
@@ -231,7 +241,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion complète des expéditions tous modes confondus',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read', ramasseur: 'read' },
   },
   {
     id: 'tracking',
@@ -242,7 +252,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Suivi en temps réel des expéditions avec carte interactive',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read', ramasseur: 'read' },
   },
 
   // Fret
@@ -255,7 +265,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Fret maritime — conteneurs, booking, BL, programme navires',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'air-freight',
@@ -266,7 +276,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Fret aérien — vols cargo, LTA/AWB, capacité compagnies',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'ground-transport',
@@ -277,7 +287,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Transport terrestre — routes, chauffeurs, preuves livraison',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'multimodal',
@@ -288,7 +298,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Transport multimodal — combinaison maritime/aérien/terrestre',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
 
   // Services
@@ -301,7 +311,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Colis express — comparaison transporteurs, suivi dernier km',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read', ramasseur: 'write' },
   },
   {
     id: 'customs',
@@ -312,7 +322,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Déclarations douanières — codes HS, calcul droits, conformité',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'warehouse',
@@ -323,7 +333,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion d\'entrepôt — zones, inventaire, planification quais',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'insurance',
@@ -334,7 +344,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Assurance marchandises — polices, sinistres, couverture',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
   {
     id: 'incoterms',
@@ -345,7 +355,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Incoterms 2020 — calcul des coûts et responsabilités',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
   {
     id: 'claims',
@@ -356,7 +366,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion des réclamations — suivi, résolution, historique',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
   {
     id: 'scanner',
@@ -367,7 +377,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Scanner QR/Barcode — vérification, génération, historique',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
 
   // Commercial
@@ -380,7 +390,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion des devis — création, envoi, suivi, conversion',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
   {
     id: 'clients',
@@ -391,7 +401,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion du portefeuille clients — contacts, historique, CRM',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
   {
     id: 'partners',
@@ -402,7 +412,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion des partenaires transporteurs et prestataires',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'billing',
@@ -413,7 +423,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Facturation — émission, suivi paiements, relances',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
   {
     id: 'contracts',
@@ -424,7 +434,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Contrats avec transporteurs — tarifs, conditions, renouvellement',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'rates',
@@ -435,7 +445,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Grille tarifaire — surcharges, comparatif, historique',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
 
   // Gestion
@@ -448,7 +458,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion de la flotte — véhicules, maintenance, kilométrage',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'drivers',
@@ -459,7 +469,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion des conducteurs — planning, permis, performance',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'documents',
@@ -470,7 +480,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion documentaire — BL, LTA, factures, certificats',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
   {
     id: 'analytics',
@@ -481,7 +491,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Analyses avancées — IA prédictive, optimisation coûts',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'reports',
@@ -492,7 +502,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Rapports et exportations — opérationnels, financiers, douaniers',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'tasks',
@@ -503,7 +513,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion des tâches — assignation, suivi, priorisation',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'calendar',
@@ -514,7 +524,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Calendrier des opérations — départs, arrivées, échéances',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'read', ramasseur: 'none' },
   },
 
   // Ressources Humaines
@@ -527,7 +537,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion RH — employés, congés, recrutement, paie, formations, performances',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'expenses',
@@ -551,7 +561,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Messagerie interne — canaux, DM, escalade tickets',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
 
   // Conformité
@@ -564,7 +574,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Gestion MD — classification UN, DGD, emballage certifié, restrictions par mode',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'temperature-controlled',
@@ -575,7 +585,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Chaîne du froid — conteneurs réfrigérés, data loggers, alertes température',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'credit-management',
@@ -586,7 +596,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Gestion du crédit client — limites, encours, relances, scoring risque',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'compliance',
@@ -608,7 +618,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Empreinte carbone, RSE, conformité environnementale',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
 
   // Portail
@@ -621,7 +631,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Portail self-service client — suivi, factures, support',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'write' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'write', ramasseur: 'none' },
   },
 
   // Système
@@ -634,7 +644,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Gestion des utilisateurs, rôles RBAC et sessions',
-    defaultPermissions: { admin: 'write', manager: 'read', agent: 'none', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'read', agent: 'none', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'integrations',
@@ -656,7 +666,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Configuration de la plateforme — profil, entreprise, notifications',
-    defaultPermissions: { admin: 'write', manager: 'read', agent: 'none', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'read', agent: 'none', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
 
   // ─── Nouvelles fonctionnalités ─────────────────────────────────
@@ -669,7 +679,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Tableau analytique avancé avec KPIs, classements, graphiques et filtres',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'validation',
@@ -680,7 +690,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Module de contrôle et validation des opérations avec rapport PDF',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'messaging',
@@ -691,7 +701,20 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Messagerie interne enrichie — conversations, pièces jointes, non-lus',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
+  },
+
+  // Collector Portal
+  {
+    id: 'collector-portal',
+    label: 'Portail Ramasseurs',
+    icon: 'PackageSearch',
+    group: 'portail',
+    order: 2,
+    enabled: true,
+    premium: false,
+    description: 'Portail des ramasseurs — BL ramasse/livraison, étiquettes colis, paiements et factures',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'none', client: 'none', ramasseur: 'write' },
   },
 ];
 
@@ -727,6 +750,7 @@ export function mapRoleString(role: string): RoleKey {
   if (normalized.includes('agent')) return 'agent';
   if (normalized.includes('observ') || normalized.includes('viewer') || normalized.includes('lecture')) return 'viewer';
   if (normalized.includes('client') || normalized.includes('customer')) return 'client';
+  if (normalized.includes('ramass') || normalized.includes('collector')) return 'ramasseur';
   // Default to viewer for safety
   return 'viewer';
 }

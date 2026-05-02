@@ -244,6 +244,15 @@ export const users: User[] = [
     email: 'karim.bouzidi@spa-hydro.dz',
     pin: '3674',
   },
+  {
+    id: '4',
+    phone: '0600000004',
+    password: 'ramass123',
+    name: 'Moussa Diallo',
+    role: 'Ramasseur',
+    email: 'moussa.diallo@guinee-logistique.pro',
+    pin: '4521',
+  },
 ];
 
 // Test Shipments

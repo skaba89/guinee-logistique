@@ -1038,7 +1038,7 @@ export default function HRPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.05 }}
                     >
-                      <Card className="h-full hover:shadow-lg hover:border-teal-300 dark:hover:border-teal-700 transition-all">
+                      <Card className="h-full hover:shadow-lg hover:border-teal-300 dark:hover:border-teal-700 transition-all cursor-pointer" onClick={() => { setSelectedJob(job); setShowJobDetailDialog(true); toast.info('Détails du poste', `Consultation de l'offre : ${job.titre}`); }}>
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
@@ -1070,7 +1070,7 @@ export default function HRPage() {
                           </div>
                           <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
                             <span className="text-[10px] text-gray-400">Publié le {formatDate(job.datePublication)}</span>
-                            <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-600 hover:text-teal-700" onClick={() => { setSelectedJob(job); setShowJobDetailDialog(true); toast.info('Détails du poste', `Consultation de l'offre : ${job.titre}`); }}>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-600 hover:text-teal-700" onClick={e => { e.stopPropagation(); setSelectedJob(job); setShowJobDetailDialog(true); toast.info('Détails du poste', `Consultation de l'offre : ${job.titre}`); }}>
                               Détails
                               <ChevronRight className="w-3 h-3 ml-1" />
                             </Button>

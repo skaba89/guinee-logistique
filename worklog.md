@@ -139,3 +139,34 @@
 | `hr-page.tsx` | Add `jobOpeningsList` state + update handlers | Bug 2 fix |
 | `contracts-page.tsx` | Add edit mode with `isEditing` state + editable fields | Bug 3 fix |
 | `customer-portal-page.tsx` | Add Documents tab + card layout | Bug 4 fix |
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Create Portail Ramasseurs with BL, labels, payment system, and fix 4 interactive bugs
+
+Work Log:
+- Added 'collector-portal' to PageType in cargo-store.ts
+- Added 'ramasseur' role in module-config.ts with orange theme (#ea580c)
+- Added PackageSearch icon import and mapping
+- Added collector-portal module definition in portail group
+- Updated all 40+ module defaultPermissions to include ramasseur role
+- Updated mapRoleString to recognize 'ramass'/'collector' → 'ramasseur'
+- Added Moussa Diallo as ramasseur test user (0600000004 / ramass123 / PIN 4521)
+- Created collector-portal-page.tsx (2011 lines) with:
+  - BL de ramasse/livraison creation with auto-generated BL numbers
+  - Label/étiquette generation with print capability
+  - Payment system (total or accompte) with invoice generation
+  - Remaining balance tracking (reste à payer)
+  - 4 tabs: BLs, Étiquettes, Paiements, Factures
+  - KPI cards, search, filter, pagination
+- Fixed contracts-page.tsx: Added Edit/Delete buttons, fixed stale state in handleRenewContract, added terms textarea
+- Fixed hr-page.tsx: Added onClick handler on recruitment cards for detail view
+- Fixed expenses-page.tsx: Added delete function and confirmation dialog, fixed download robustness
+- Fixed customer-portal-page.tsx: Fixed document download by appending anchor to DOM before click
+- Verified successful build compilation
+
+Stage Summary:
+- New Portail Ramasseurs feature fully implemented with BL, labels, payments, invoices
+- 4 previously reported bugs fixed (contracts, recruitment detail, expenses menu, document download)
+- All code compiles successfully

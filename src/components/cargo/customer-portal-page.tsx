@@ -766,8 +766,10 @@ export default function CustomerPortalPage() {
     const a = document.createElement('a');
     a.href = url;
     a.download = `guinee-logistique-customer-portal-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   const handleDownloadDocument = (doc: PortalDocument) => {
@@ -777,8 +779,10 @@ export default function CustomerPortalPage() {
     const a = document.createElement('a');
     a.href = url;
     a.download = `${doc.name.replace(/\s+/g, '-')}.txt`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
     toast.success('Document téléchargé', `${doc.name} téléchargé avec succès.`);
   };
 
