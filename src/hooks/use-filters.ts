@@ -1,5 +1,5 @@
 /**
- * use-filters.ts — Hook de filtres avancés pour LogisWay
+ * use-filters.ts — Hook de filtres avancés pour Guinée Logistique
  *
  * BRANCHEMENT : Importez useFilters() depuis n'importe quel composant.
  * Les filtres sont émis via le callback onFiltersChange — c'est vous

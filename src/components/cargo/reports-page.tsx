@@ -219,12 +219,12 @@ interface ScheduledReport {
 }
 
 const initialScheduledReports: ScheduledReport[] = [
-  { id: 'sch1', name: 'Rapport Revenus Mensuel', frequency: 'Mensuel (1er)', nextRun: '2026-04-01', format: 'PDF', recipients: ['ahmed.benali@logisway.pro', 'direction@logisway.pro'], enabled: true },
-  { id: 'sch2', name: 'Performance Hebdomadaire', frequency: 'Hebdomadaire (Lundi)', nextRun: '2026-03-10', format: 'Excel', recipients: ['fatima.khelifi@logisway.pro'], enabled: true },
-  { id: 'sch3', name: 'Rapport Flotte', frequency: 'Hebdomadaire (Vendredi)', nextRun: '2026-03-07', format: 'PDF', recipients: ['ahmed.benali@logisway.pro', 'ops@logisway.pro'], enabled: true },
-  { id: 'sch4', name: 'Empreinte Carbone', frequency: 'Mensuel (15)', nextRun: '2026-04-15', format: 'CSV', recipients: ['rse@logisway.pro'], enabled: false },
-  { id: 'sch5', name: 'Conformité Douanière', frequency: 'Trimestriel', nextRun: '2026-06-30', format: 'PDF', recipients: ['legal@logisway.pro', 'direction@logisway.pro'], enabled: true },
-  { id: 'sch6', name: 'Activité Clients', frequency: 'Mensuel (5)', nextRun: '2026-04-05', format: 'Excel', recipients: ['commercial@logisway.pro'], enabled: true },
+  { id: 'sch1', name: 'Rapport Revenus Mensuel', frequency: 'Mensuel (1er)', nextRun: '2026-04-01', format: 'PDF', recipients: ['ahmed.benali@guinee-logistique.pro', 'direction@guinee-logistique.pro'], enabled: true },
+  { id: 'sch2', name: 'Performance Hebdomadaire', frequency: 'Hebdomadaire (Lundi)', nextRun: '2026-03-10', format: 'Excel', recipients: ['fatima.khelifi@guinee-logistique.pro'], enabled: true },
+  { id: 'sch3', name: 'Rapport Flotte', frequency: 'Hebdomadaire (Vendredi)', nextRun: '2026-03-07', format: 'PDF', recipients: ['ahmed.benali@guinee-logistique.pro', 'ops@guinee-logistique.pro'], enabled: true },
+  { id: 'sch4', name: 'Empreinte Carbone', frequency: 'Mensuel (15)', nextRun: '2026-04-15', format: 'CSV', recipients: ['rse@guinee-logistique.pro'], enabled: false },
+  { id: 'sch5', name: 'Conformité Douanière', frequency: 'Trimestriel', nextRun: '2026-06-30', format: 'PDF', recipients: ['legal@guinee-logistique.pro', 'direction@guinee-logistique.pro'], enabled: true },
+  { id: 'sch6', name: 'Activité Clients', frequency: 'Mensuel (5)', nextRun: '2026-04-05', format: 'Excel', recipients: ['commercial@guinee-logistique.pro'], enabled: true },
 ];
 
 // Chart data for preview dialog

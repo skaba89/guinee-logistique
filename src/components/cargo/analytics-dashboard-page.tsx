@@ -1,5 +1,5 @@
 /**
- * analytics-dashboard-page.tsx — Tableau de bord analytique autonome pour LogisWay
+ * analytics-dashboard-page.tsx — Tableau de bord analytique autonome pour Guinée Logistique
  *
  * BRANCHEMENT : Ce composant est une page complète. Pour l'ajouter au routeur SPA,
  * ajoutez un nouveau PageType et un case dans le switch de page.tsx.
@@ -191,8 +191,8 @@ export default function AnalyticsDashboardPage() {
         <ExportButtons
           data={exportData}
           columns={exportColumns}
-          filename="logisway-analytique"
-          title="Rapport Analytique LogisWay"
+          filename="guinee-logistique-analytique"
+          title="Rapport Analytique Guinée Logistique"
           subtitle={`${filteredShipments.length} expéditions — Généré le ${new Date().toLocaleDateString('fr-FR')}`}
         />
       </div>

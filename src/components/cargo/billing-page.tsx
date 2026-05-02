@@ -506,7 +506,7 @@ export default function BillingPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-factures-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-factures-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -708,7 +708,7 @@ export default function BillingPage() {
               { key: 'dateEmission', header: 'Date émission' },
               { key: 'dateEcheance', header: 'Date échéance' },
             ]}
-            filename="logisway-factures"
+            filename="guinee-logistique-factures"
             title="Rapport de Facturation"
           />
           <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>

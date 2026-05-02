@@ -1,5 +1,5 @@
 /**
- * reminder-system.ts — Système de relance automatique des clients pour LogisWay
+ * reminder-system.ts — Système de relance automatique des clients pour Guinée Logistique
  *
  * Gère les relances automatiques pour les factures en attente ou en retard.
  * En mode prototype, les relances sont simulées (pas d'envoi réel d'email/SMS).
@@ -63,8 +63,8 @@ export const DEFAULT_REMINDER_CONFIG: ReminderConfig = {
   includeOverdue: true,
 };
 
-export const REMINDER_CONFIG_KEY = 'logisway-reminder-config';
-export const REMINDERS_KEY = 'logisway-reminders';
+export const REMINDER_CONFIG_KEY = 'guinee-logistique-reminder-config';
+export const REMINDERS_KEY = 'guinee-logistique-reminders';
 
 // ─── Labels ─────────────────────────────────────────────────────
 
@@ -166,15 +166,15 @@ export function generateReminderBody(
 
   switch (level) {
     case 1:
-      return `Cher ${clientName},\n\nNous vous rappelons que la facture ${invoiceNumber} d'un montant de ${formattedAmount} arrive à échéance le ${formattedDueDate}.\n\nNous vous prions de bien vouloir procéder au règlement dans les meilleurs délais.\n\nCordialement,\nLogisWay — Service Facturation`;
+      return `Cher ${clientName},\n\nNous vous rappelons que la facture ${invoiceNumber} d'un montant de ${formattedAmount} arrive à échéance le ${formattedDueDate}.\n\nNous vous prions de bien vouloir procéder au règlement dans les meilleurs délais.\n\nCordialement,\nGuinée Logistique — Service Facturation`;
     case 2:
-      return `Cher ${clientName},\n\nLa facture ${invoiceNumber} d'un montant de ${formattedAmount} arrive à échéance aujourd'hui (${formattedDueDate}).\n\nMerci de procéder au règlement dès réception de ce message.\n\nCordialement,\nLogisWay — Service Facturation`;
+      return `Cher ${clientName},\n\nLa facture ${invoiceNumber} d'un montant de ${formattedAmount} arrive à échéance aujourd'hui (${formattedDueDate}).\n\nMerci de procéder au règlement dès réception de ce message.\n\nCordialement,\nGuinée Logistique — Service Facturation`;
     case 3:
-      return `Cher ${clientName},\n\nMalgré notre rappel du ${formattedDueDate}, la facture ${invoiceNumber} d'un montant de ${formattedAmount} reste impayée.\n\nNous vous demandons de bien vouloir régler cette facture dans un délai de 7 jours.\n\nÀ défaut de paiement, des frais de retard pourront être appliqués.\n\nCordialement,\nLogisWay — Service Facturation`;
+      return `Cher ${clientName},\n\nMalgré notre rappel du ${formattedDueDate}, la facture ${invoiceNumber} d'un montant de ${formattedAmount} reste impayée.\n\nNous vous demandons de bien vouloir régler cette facture dans un délai de 7 jours.\n\nÀ défaut de paiement, des frais de retard pourront être appliqués.\n\nCordialement,\nGuinée Logistique — Service Facturation`;
     case 4:
-      return `Cher ${clientName},\n\nÀ ce jour, la facture ${invoiceNumber} d'un montant de ${formattedAmount} demeure impayée malgré nos précédentes relances.\n\nNous vous demandons de procéder au règlement immédiat de cette facture.\n\nEn l'absence de paiement sous 48h, nous serons contraints d'engager une procédure de recouvrement.\n\nCordialement,\nLogisWay — Service Facturation`;
+      return `Cher ${clientName},\n\nÀ ce jour, la facture ${invoiceNumber} d'un montant de ${formattedAmount} demeure impayée malgré nos précédentes relances.\n\nNous vous demandons de procéder au règlement immédiat de cette facture.\n\nEn l'absence de paiement sous 48h, nous serons contraints d'engager une procédure de recouvrement.\n\nCordialement,\nGuinée Logistique — Service Facturation`;
     case 5:
-      return `OBJET : MISE EN DEMEURE\n\nCher ${clientName},\n\nNonobstant nos précédentes relances, la facture ${invoiceNumber} d'un montant de ${formattedAmount} demeure impayée.\n\nPar la présente, nous vous mettons en demeure de procéder au règlement intégral de cette facture dans un délai de 8 jours à compter de la réception de la présente.\n\nÀ défaut, nous nous réservons le droit d'engager toutes voies de droit à votre encontre, incluant une procédure judiciaire de recouvrement avec demandes de dommages et intérêts.\n\nLogisWay — Direction Générale`;
+      return `OBJET : MISE EN DEMEURE\n\nCher ${clientName},\n\nNonobstant nos précédentes relances, la facture ${invoiceNumber} d'un montant de ${formattedAmount} demeure impayée.\n\nPar la présente, nous vous mettons en demeure de procéder au règlement intégral de cette facture dans un délai de 8 jours à compter de la réception de la présente.\n\nÀ défaut, nous nous réservons le droit d'engager toutes voies de droit à votre encontre, incluant une procédure judiciaire de recouvrement avec demandes de dommages et intérêts.\n\nGuinée Logistique — Direction Générale`;
   }
 }
 

@@ -1,5 +1,5 @@
 /**
- * Business Rules Engine — LogisWay
+ * Business Rules Engine — Guinée Logistique
  * Moteur de règles métier avancé pour la validation, la conformité,
  * les approbations, les transitions de statut et la tarification dynamique.
  *
@@ -2500,7 +2500,7 @@ export function getRequiredApprovalLevel(type: string, amount: number): Approval
 
 // ─── Persistance de la configuration des règles ────────────────
 
-const BUSINESS_RULES_CONFIG_KEY = 'logisway-business-rules-config';
+const BUSINESS_RULES_CONFIG_KEY = 'guinee-logistique-business-rules-config';
 
 export interface BusinessRulesConfig {
   disabledRules: string[];

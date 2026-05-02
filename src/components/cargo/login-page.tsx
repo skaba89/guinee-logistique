@@ -41,7 +41,7 @@ export default function LoginPage() {
       setError('Numéro de téléphone ou mot de passe incorrect');
       toast.error('Échec de connexion', 'Vérifiez vos identifiants');
     } else {
-      toast.success('Connexion réussie', 'Bienvenue sur LogisWay');
+      toast.success('Connexion réussie', 'Bienvenue sur Guinée Logistique');
     }
     setLoading(false);
   };
@@ -134,7 +134,7 @@ export default function LoginPage() {
                 </div>
               </motion.div>
               <div className="text-left">
-                <h1 className="text-3xl font-bold text-white tracking-tight">LogisWay</h1>
+                <h1 className="text-3xl font-bold text-white tracking-tight">Guinée Logistique</h1>
                 <p className="text-[10px] text-teal-300/70 tracking-[0.25em] uppercase">Logistique Internationale</p>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function LoginPage() {
               <Ship className="w-6 h-6 text-white" />
             </motion.div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">LogisWay</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Guinée Logistique</h1>
             </div>
           </div>
 
@@ -226,7 +226,7 @@ export default function LoginPage() {
               <Ship className="w-6 h-6 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">LOGISWAY</span>
+              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">GUINÉE LOGISTIQUE</span>
             </div>
           </div>
 
@@ -513,7 +513,7 @@ export default function LoginPage() {
               <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <Mail className="w-3.5 h-3.5" />
-                  <span>admin@logisway.pro</span>
+                  <span>admin@guinee-logistique.pro</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
                   <Phone className="w-3.5 h-3.5" />

@@ -282,7 +282,7 @@ export default function InsurancePage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-insurance-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-insurance-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

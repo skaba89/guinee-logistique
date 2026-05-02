@@ -137,7 +137,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u1',
     name: 'Ahmed Benali',
-    email: 'ahmed.benali@logisway.pro',
+    email: 'ahmed.benali@guinee-logistique.pro',
     role: 'admin',
     status: 'active',
     lastLogin: '2026-03-04 08:32',
@@ -148,7 +148,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u2',
     name: 'Fatima Khelifi',
-    email: 'fatima.khelifi@logisway.pro',
+    email: 'fatima.khelifi@guinee-logistique.pro',
     role: 'agent',
     status: 'active',
     lastLogin: '2026-03-04 09:15',
@@ -159,7 +159,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u3',
     name: 'Karim Djebbar',
-    email: 'karim.djebbar@logisway.pro',
+    email: 'karim.djebbar@guinee-logistique.pro',
     role: 'manager',
     status: 'active',
     lastLogin: '2026-03-03 17:45',
@@ -170,7 +170,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u4',
     name: 'Nadia Boudiaf',
-    email: 'nadia.boudiaf@logisway.pro',
+    email: 'nadia.boudiaf@guinee-logistique.pro',
     role: 'agent',
     status: 'active',
     lastLogin: '2026-03-04 07:50',
@@ -181,7 +181,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u5',
     name: 'Youcef Mansouri',
-    email: 'youcef.mansouri@logisway.pro',
+    email: 'youcef.mansouri@guinee-logistique.pro',
     role: 'viewer',
     status: 'active',
     lastLogin: '2026-03-02 14:20',
@@ -192,7 +192,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u6',
     name: 'Amina Rahmani',
-    email: 'amina.rahmani@logisway.pro',
+    email: 'amina.rahmani@guinee-logistique.pro',
     role: 'client',
     status: 'inactive',
     lastLogin: '2026-02-15 11:30',
@@ -203,7 +203,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u7',
     name: 'Rachid Hamidou',
-    email: 'rachid.hamidou@logisway.pro',
+    email: 'rachid.hamidou@guinee-logistique.pro',
     role: 'agent',
     status: 'active',
     lastLogin: '2026-03-04 10:05',
@@ -214,7 +214,7 @@ const mockUsers: UserRecord[] = [
   {
     id: 'u8',
     name: 'Samira Ait Kaci',
-    email: 'samira.aitkaci@logisway.pro',
+    email: 'samira.aitkaci@guinee-logistique.pro',
     role: 'manager',
     status: 'inactive',
     lastLogin: '2026-02-28 16:10',
@@ -299,7 +299,7 @@ const activityLog: ActivityEntry[] = [
   { id: 'a6', userId: 'u1', userName: 'Ahmed Benali', action: 'Modification paramètres', category: 'settings', details: 'Taux de change EUR/DZD mis à jour', timestamp: '2026-03-04 10:30', ip: '192.168.1.10' },
   { id: 'a7', userId: 'u2', userName: 'Fatima Khelifi', action: 'Ajout client', category: 'data', details: 'Nouveau client SARL MedTrans ajouté', timestamp: '2026-03-03 16:45', ip: '192.168.1.22' },
   { id: 'a8', userId: 'u5', userName: 'Youcef Mansouri', action: 'Export rapport', category: 'data', details: 'Rapport facturation Mars 2026 exporté', timestamp: '2026-03-03 14:50', ip: '192.168.1.67' },
-  { id: 'a9', userId: 'u3', userName: 'Karim Djebbar', action: 'Invitation utilisateur', category: 'admin', details: 'Invitation envoyée à youcef.m@logisway.pro', timestamp: '2026-03-02 11:20', ip: '192.168.1.35' },
+  { id: 'a9', userId: 'u3', userName: 'Karim Djebbar', action: 'Invitation utilisateur', category: 'admin', details: 'Invitation envoyée à youcef.m@guinee-logistique.pro', timestamp: '2026-03-02 11:20', ip: '192.168.1.35' },
   { id: 'a10', userId: 'u6', userName: 'Amina Rahmani', action: 'Connexion échouée', category: 'auth', details: 'Tentative de connexion échouée — mot de passe incorrect', timestamp: '2026-02-28 09:10', ip: '10.0.0.55' },
 ];
 
@@ -1287,7 +1287,7 @@ export default function UsersPage() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   type="email"
-                  placeholder="collegue@logisway.pro"
+                  placeholder="collegue@guinee-logistique.pro"
                   className="pl-9"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}

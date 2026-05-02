@@ -6,7 +6,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 /**
  * ══════════════════════════════════════════════════════════════════
- *  Toast Notification System — LogisWay
+ *  Toast Notification System — Guinée Logistique
  * ══════════════════════════════════════════════════════════════════
  *
  *  Système de notifications toast global pour le feedback utilisateur.

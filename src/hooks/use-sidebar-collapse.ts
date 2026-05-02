@@ -11,14 +11,14 @@ import type { NavGroupKey } from '@/lib/module-config';
  * de l'utilisateur entre les sessions.
  *
  * ─── Fonctionnalités ──────────────────────────────────────────
- * - Persistance localStorage (clé: logisway-sidebar-collapse)
+ * - Persistance localStorage (clé: guinee-logistique-sidebar-collapse)
  * - Auto-ouverture du groupe contenant la page active
  * - Toggle individuel par groupe
  * - Ouvrir / Fermer tous les groupes
  * - Reset à l'état par défaut (tous ouverts)
  */
 
-const STORAGE_KEY = 'logisway-sidebar-collapse';
+const STORAGE_KEY = 'guinee-logistique-sidebar-collapse';
 
 /** État d'ouverture de chaque groupe — true = ouvert, false = fermé */
 export type CollapseState = Partial<Record<NavGroupKey, boolean>>;

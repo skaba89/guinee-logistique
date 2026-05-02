@@ -1,5 +1,5 @@
 /**
- * messaging-system.ts — Système de messagerie interne pour LogisWay
+ * messaging-system.ts — Système de messagerie interne pour Guinée Logistique
  *
  * BRANCHEMENT : Ce système étend le module de notifications existant
  * sans le modifier. Il utilise le même pattern localStorage.
@@ -52,8 +52,8 @@ export interface Conversation {
 
 // ─── Persistance ────────────────────────────────────────────────
 
-const MESSAGES_KEY = 'logisway-messages';
-const CONVERSATIONS_KEY = 'logisway-conversations';
+const MESSAGES_KEY = 'guinee-logistique-messages';
+const CONVERSATIONS_KEY = 'guinee-logistique-conversations';
 
 export function loadMessages(): Message[] {
   if (typeof window === 'undefined') return [];

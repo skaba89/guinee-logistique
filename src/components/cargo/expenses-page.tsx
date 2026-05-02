@@ -292,7 +292,7 @@ export default function ExpensesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-expenses-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-expenses-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -323,7 +323,7 @@ export default function ExpensesPage() {
             <Wallet className="w-7 h-7 text-teal-600" />
             Gestion des Dépenses
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Suivez, contrôlez et optimisez les dépenses de LogisWay</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Suivez, contrôlez et optimisez les dépenses de Guinée Logistique</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>
@@ -513,7 +513,7 @@ export default function ExpensesPage() {
                         <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Montant</th>
                         <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3 hidden sm:table-cell">Date</th>
                         <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Statut</th>
-                        <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3 hidden md:table-cell">Actions</th>
+                        <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 px-4 py-3">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -555,7 +555,7 @@ export default function ExpensesPage() {
                                   {STATUS_LABELS[exp.statut]}
                                 </Badge>
                               </td>
-                              <td className="px-4 py-3 hidden md:table-cell">
+                              <td className="px-4 py-3">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0">

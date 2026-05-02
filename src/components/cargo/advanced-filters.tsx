@@ -1,5 +1,5 @@
 /**
- * advanced-filters.tsx — Composant de filtres avancés réutilisable pour LogisWay
+ * advanced-filters.tsx — Composant de filtres avancés réutilisable pour Guinée Logistique
  *
  * BRANCHEMENT : Importez AdvancedFilters depuis ce fichier.
  * Les filtres sont émis via onFiltersChange — c'est vous qui décidez

@@ -1,5 +1,5 @@
 /**
- * export-buttons.tsx — Boutons d'export Excel/PDF réutilisables pour LogisWay
+ * export-buttons.tsx — Boutons d'export Excel/PDF réutilisables pour Guinée Logistique
  *
  * BRANCHEMENT : Importez ExportButtons depuis ce fichier et placez-le
  * où vous voulez dans votre page. Passez les données et colonnes.

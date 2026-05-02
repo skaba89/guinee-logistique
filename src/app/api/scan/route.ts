@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    service: 'LogisWay Scanner API',
+    service: 'Guinée Logistique Scanner API',
     version: '1.0.0',
     endpoints: {
       'POST /api/scan': {

@@ -1,5 +1,5 @@
 /**
- * pin-auth.ts — Système d'authentification par code PIN pour LogisWay
+ * pin-auth.ts — Système d'authentification par code PIN pour Guinée Logistique
  *
  * Supporte les codes PIN par utilisateur. Chaque utilisateur a son propre
  * PIN stocké dans les données de test (user.pin). Le hash est calculé
@@ -28,7 +28,7 @@ export interface PinSession {
  */
 export async function hashPin(pin: string, userId?: string): Promise<string> {
   const encoder = new TextEncoder();
-  const salt = `logisway-salt-2026${userId ? `:${userId}` : ''}`;
+  const salt = `guinee-logistique-salt-2026${userId ? `:${userId}` : ''}`;
   const data = encoder.encode(pin + salt);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -42,8 +42,8 @@ export async function verifyPin(pin: string, storedHash: string, userId?: string
 
 // ─── Gestion de la session PIN ─────────────────────────────────
 
-const PIN_SESSION_KEY = 'logisway-pin-session';
-const PIN_HASH_KEY_PREFIX = 'logisway-pin-hash-';
+const PIN_SESSION_KEY = 'guinee-logistique-pin-session';
+const PIN_HASH_KEY_PREFIX = 'guinee-logistique-pin-hash-';
 
 /**
  * Obtenir la clé de stockage du hash pour un utilisateur donné
@@ -157,7 +157,7 @@ export async function storePinHashLegacy(pin: string): Promise<void> {
  */
 export function isPinConfiguredLegacy(): boolean {
   if (typeof window === 'undefined') return false;
-  return !!localStorage.getItem('logisway-pin-hash');
+  return !!localStorage.getItem('guinee-logistique-pin-hash');
 }
 
 /**

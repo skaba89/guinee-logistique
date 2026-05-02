@@ -531,7 +531,7 @@ export default function TemperatureControlledPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-temperature-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-temperature-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

@@ -246,7 +246,7 @@ export default function DashboardPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-dashboard-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-dashboard-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Export réussi', 'Le fichier CSV a été téléchargé');

@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LogisWay — Plateforme Logistique Intelligente",
-  description: "Plateforme complète de gestion logistique et de suivi de colis. Gérez vos expéditions aériennes, maritimes et terrestres avec LogisWay.",
-  keywords: ["LogisWay", "logistique", "gestion colis", "expédition", "fret", "suivi colis", "transport"],
-  authors: [{ name: "LogisWay" }],
+  title: "Guinée Logistique — Plateforme Logistique Intelligente",
+  description: "Plateforme complète de gestion logistique et de suivi de colis. Gérez vos expéditions aériennes, maritimes et terrestres avec Guinée Logistique.",
+  keywords: ["Guinée Logistique", "logistique", "gestion colis", "expédition", "fret", "suivi colis", "transport"],
+  authors: [{ name: "Guinée Logistique" }],
   icons: {
     icon: "/favicon.svg",
     apple: "/icon-192.png",

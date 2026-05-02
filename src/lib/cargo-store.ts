@@ -8,12 +8,12 @@ import { loadPermissionsConfig, type PermissionsConfig } from './permissions';
 import { clearPinSession } from './pin-auth';
 
 // ─── Migration: rename old localStorage key ───────────────────────
-// Migrate data from the old 'freightflow-storage' key to 'logisway-storage'
+// Migrate data from the old 'guinee-logistique-storage' key to 'guinee-logistique-storage'
 // so existing user sessions are preserved after the rebrand.
 if (typeof window !== 'undefined') {
   try {
-    const OLD_KEY = 'freightflow-storage';
-    const NEW_KEY = 'logisway-storage';
+    const OLD_KEY = 'guinee-logistique-storage';
+    const NEW_KEY = 'guinee-logistique-storage';
     const oldData = localStorage.getItem(OLD_KEY);
     if (oldData && !localStorage.getItem(NEW_KEY)) {
       localStorage.setItem(NEW_KEY, oldData);
@@ -198,7 +198,7 @@ export const useCargoStore = create<CargoState>()(
       },
     }),
     {
-      name: 'logisway-storage',
+      name: 'guinee-logistique-storage',
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
         user: state.user,

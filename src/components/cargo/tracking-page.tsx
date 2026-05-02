@@ -188,7 +188,7 @@ export default function TrackingPage() {
   };
 
   const handleCopyLink = () => {
-    const link = `https://logisway.pro/track/${selectedShipment?.trackingNumber || ''}`;
+    const link = `https://guinee-logistique.pro/track/${selectedShipment?.trackingNumber || ''}`;
     navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -226,7 +226,7 @@ export default function TrackingPage() {
       <body>
         <div class="header">
           <div>
-            <div class="logo">LogisWay</div>
+            <div class="logo">Guinée Logistique</div>
             <div class="subtitle">Logistique Internationale</div>
           </div>
           <div style="margin-left: auto; text-align: right;">
@@ -297,7 +297,7 @@ export default function TrackingPage() {
         `).join('')}
 
         <div class="footer">
-          LogisWay — Plateforme de Logistique Internationale | Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+          Guinée Logistique — Plateforme de Logistique Internationale | Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
         </div>
       </body>
       </html>
@@ -694,7 +694,7 @@ export default function TrackingPage() {
             <div className="flex items-center gap-2">
               <Input
                 readOnly
-                value={`https://logisway.pro/track/${selectedShipment?.trackingNumber || ''}`}
+                value={`https://guinee-logistique.pro/track/${selectedShipment?.trackingNumber || ''}`}
                 className="font-mono text-xs"
               />
               <Button

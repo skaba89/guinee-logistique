@@ -1,5 +1,5 @@
 /**
- * export-utils.ts — Utilitaires d'export Excel et PDF pour LogisWay
+ * export-utils.ts — Utilitaires d'export Excel et PDF pour Guinée Logistique
  *
  * DÉPENDANCES : xlsx (SheetJS), jspdf, jspdf-autotable
  *
@@ -202,7 +202,7 @@ export function exportToPDF(options: PDFExportOptions): void {
       doc.setFontSize(7);
       doc.setTextColor(150, 150, 150);
       doc.text(
-        `LogisWay — Page ${data.pageNumber} / ${pageCount}`,
+        `Guinée Logistique — Page ${data.pageNumber} / ${pageCount}`,
         doc.internal.pageSize.getWidth() / 2,
         doc.internal.pageSize.getHeight() - 8,
         { align: 'center' }

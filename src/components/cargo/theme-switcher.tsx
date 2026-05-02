@@ -1,5 +1,5 @@
 /**
- * theme-switcher.tsx — Basculeur de thème Dark/Light pour LogisWay
+ * theme-switcher.tsx — Basculeur de thème Dark/Light pour Guinée Logistique
  *
  * BRANCHEMENT : Importez ThemeSwitcher depuis ce fichier et placez-le
  * dans votre header ou navbar. next-themes est déjà installé et configuré.

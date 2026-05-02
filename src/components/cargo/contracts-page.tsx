@@ -25,6 +25,7 @@ import {
   RefreshCw,
   Trash2,
   ChevronDown,
+  Save,
 } from 'lucide-react';
 import {
   Card,
@@ -401,6 +402,10 @@ export default function ContractsPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    terms: '', paymentTerms: '', slaDeliveryDays: 5, slaDamageLimit: 1.5, penaltyClause: '', specialConditions: '',
+  });
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [showCompareDialog, setShowCompareDialog] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -989,7 +994,7 @@ export default function ContractsPage() {
       </Tabs>
 
       {/* ─── Contract Detail Dialog ──────────────────────────────── */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+      <Dialog open={showDetailDialog} onOpenChange={(open) => { setShowDetailDialog(open); if (!open) setIsEditing(false); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1041,7 +1046,11 @@ export default function ContractsPage() {
                 <h4 className="text-sm font-semibold mb-1.5 flex items-center gap-1.5">
                   <FileSignature className="w-4 h-4 text-gray-400" />Conditions générales
                 </h4>
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{selectedContract.terms}</p>
+                {isEditing ? (
+                  <textarea className="w-full text-xs text-gray-600 dark:text-gray-400 leading-relaxed border rounded-md p-2 bg-white dark:bg-gray-900 min-h-[60px]" value={editForm.terms} onChange={e => setEditForm({ ...editForm, terms: e.target.value })} />
+                ) : (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{selectedContract.terms}</p>
+                )}
               </div>
 
               {/* Dates & Route */}
@@ -1056,9 +1065,27 @@ export default function ContractsPage() {
                     )}
                   </p>
                 </div>
-                <div><span className="text-gray-500">Paiement :</span><p className="font-medium">{selectedContract.paymentTerms}</p></div>
-                <div><span className="text-gray-500">SLA livraison :</span><p className="font-medium">{selectedContract.slaDeliveryDays} jours</p></div>
-                <div><span className="text-gray-500">Limite avarie :</span><p className="font-medium">{selectedContract.slaDamageLimit}%</p></div>
+                <div><span className="text-gray-500">Paiement :</span>
+                  {isEditing ? (
+                    <input className="font-medium border rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 w-full" value={editForm.paymentTerms} onChange={e => setEditForm({ ...editForm, paymentTerms: e.target.value })} />
+                  ) : (
+                    <p className="font-medium">{selectedContract.paymentTerms}</p>
+                  )}
+                </div>
+                <div><span className="text-gray-500">SLA livraison :</span>
+                  {isEditing ? (
+                    <input type="number" className="font-medium border rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 w-full" value={editForm.slaDeliveryDays} onChange={e => setEditForm({ ...editForm, slaDeliveryDays: Number(e.target.value) })} />
+                  ) : (
+                    <p className="font-medium">{selectedContract.slaDeliveryDays} jours</p>
+                  )}
+                </div>
+                <div><span className="text-gray-500">Limite avarie :</span>
+                  {isEditing ? (
+                    <input type="number" step="0.1" className="font-medium border rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 w-full" value={editForm.slaDamageLimit} onChange={e => setEditForm({ ...editForm, slaDamageLimit: Number(e.target.value) })} />
+                  ) : (
+                    <p className="font-medium">{selectedContract.slaDamageLimit}%</p>
+                  )}
+                </div>
               </div>
 
               <Separator />
@@ -1150,41 +1177,90 @@ export default function ContractsPage() {
               </div>
 
               {/* Special conditions */}
-              {selectedContract.specialConditions && (
+              {selectedContract.specialConditions || isEditing ? (
                 <>
                   <Separator />
                   <div>
                     <h4 className="text-sm font-semibold mb-1.5">Conditions spéciales</h4>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{selectedContract.specialConditions}</p>
+                    {isEditing ? (
+                      <textarea className="w-full text-xs text-gray-600 dark:text-gray-400 leading-relaxed border rounded-md p-2 bg-white dark:bg-gray-900 min-h-[60px]" value={editForm.specialConditions} onChange={e => setEditForm({ ...editForm, specialConditions: e.target.value })} />
+                    ) : (
+                      <p className="text-xs text-gray-600 dark:text-gray-400">{selectedContract.specialConditions}</p>
+                    )}
                   </div>
                 </>
-              )}
+              ) : null}
 
               {/* Penalty clause */}
-              {selectedContract.penaltyClause && (
+              {selectedContract.penaltyClause || isEditing ? (
                 <div>
                   <h4 className="text-sm font-semibold mb-1.5">Clause de pénalité</h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">{selectedContract.penaltyClause}</p>
+                  {isEditing ? (
+                    <textarea className="w-full text-xs text-gray-600 dark:text-gray-400 leading-relaxed border rounded-md p-2 bg-white dark:bg-gray-900 min-h-[60px]" value={editForm.penaltyClause} onChange={e => setEditForm({ ...editForm, penaltyClause: e.target.value })} />
+                  ) : (
+                    <p className="text-xs text-gray-600 dark:text-gray-400">{selectedContract.penaltyClause}</p>
+                  )}
                 </div>
-              )}
+              ) : null}
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-2 pt-2">
-                {selectedContract.status === 'actif' && daysUntil(selectedContract.endDate) <= 90 && (
-                  <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => handleRenewContract(selectedContract)}>
-                    <RefreshCw className="w-4 h-4 mr-1" />Renouveler
-                  </Button>
-                )}
-                <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowDetailDialog(false)}>
-                  <Edit className="w-4 h-4 mr-1" />Modifier
-                </Button>
-                <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(selectedContract)}>
-                  <Download className="w-4 h-4 mr-1" />Télécharger PDF
-                </Button>
-                {selectedContract.status === 'actif' && (
-                  <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleResiliateContract(selectedContract)}>
-                    <Trash2 className="w-4 h-4 mr-1" />Résilier
-                  </Button>
+                {isEditing ? (
+                  <>
+                    <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => {
+                      if (selectedContract) {
+                        const updated = {
+                          ...selectedContract,
+                          terms: editForm.terms,
+                          paymentTerms: editForm.paymentTerms,
+                          slaDeliveryDays: editForm.slaDeliveryDays,
+                          slaDamageLimit: editForm.slaDamageLimit,
+                          penaltyClause: editForm.penaltyClause,
+                          specialConditions: editForm.specialConditions,
+                        };
+                        setSelectedContract(updated);
+                        setData(prev => prev.map(c => c.id === selectedContract.id ? updated : c));
+                        setIsEditing(false);
+                        toast.success('Contrat modifié', `Les modifications du contrat ${selectedContract.contractNumber} ont été sauvegardées.`);
+                      }
+                    }}>
+                      <Save className="w-4 h-4 mr-1" />Sauvegarder
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => setIsEditing(false)}>
+                      Annuler
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {selectedContract.status === 'actif' && daysUntil(selectedContract.endDate) <= 90 && (
+                      <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => handleRenewContract(selectedContract)}>
+                        <RefreshCw className="w-4 h-4 mr-1" />Renouveler
+                      </Button>
+                    )}
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => {
+                      if (selectedContract) {
+                        setEditForm({
+                          terms: selectedContract.terms,
+                          paymentTerms: selectedContract.paymentTerms,
+                          slaDeliveryDays: selectedContract.slaDeliveryDays,
+                          slaDamageLimit: selectedContract.slaDamageLimit,
+                          penaltyClause: selectedContract.penaltyClause,
+                          specialConditions: selectedContract.specialConditions,
+                        });
+                      }
+                      setIsEditing(true);
+                    }}>
+                      <Edit className="w-4 h-4 mr-1" />Modifier
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(selectedContract)}>
+                      <Download className="w-4 h-4 mr-1" />Télécharger PDF
+                    </Button>
+                    {selectedContract.status === 'actif' && (
+                      <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleResiliateContract(selectedContract)}>
+                        <Trash2 className="w-4 h-4 mr-1" />Résilier
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

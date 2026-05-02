@@ -233,8 +233,8 @@ const initialClaims: Claim[] = [
       { id: 'ev3', name: 'rapport_reception.pdf', type: 'document', uploadedAt: '2026-03-16' },
     ],
     communications: [
-      { id: 'cm1', from: 'SPA HydroServices', to: 'LogisWay', message: 'Le conteneur est arrivé avec des traces d\'eau importante. Veuillez envoyer un expert.', date: '2026-03-15' },
-      { id: 'cm2', from: 'LogisWay', to: 'SPA HydroServices', message: 'Nous avons bien reçu votre réclamation. Un expert sera désigné sous 48h.', date: '2026-03-16' },
+      { id: 'cm1', from: 'SPA HydroServices', to: 'Guinée Logistique', message: 'Le conteneur est arrivé avec des traces d\'eau importante. Veuillez envoyer un expert.', date: '2026-03-15' },
+      { id: 'cm2', from: 'Guinée Logistique', to: 'SPA HydroServices', message: 'Nous avons bien reçu votre réclamation. Un expert sera désigné sous 48h.', date: '2026-03-16' },
     ],
     slaDeadline: '2026-04-14', daysOpen: 12,
   },
@@ -253,8 +253,8 @@ const initialClaims: Claim[] = [
       { id: 'ev4', name: 'AWB_124-56789012.pdf', type: 'document', uploadedAt: '2026-02-20' },
     ],
     communications: [
-      { id: 'cm3', from: 'Sarl TechnoPlus', to: 'LogisWay', message: 'Le colis n\'est jamais arrivé à Paris. Il est introuvable dans le système de suivi.', date: '2026-02-20' },
-      { id: 'cm4', from: 'LogisWay', to: 'Sarl TechnoPlus', message: 'Après vérification, le colis est déclaré perdu. Nous procédons à l\'indemnisation.', date: '2026-03-05' },
+      { id: 'cm3', from: 'Sarl TechnoPlus', to: 'Guinée Logistique', message: 'Le colis n\'est jamais arrivé à Paris. Il est introuvable dans le système de suivi.', date: '2026-02-20' },
+      { id: 'cm4', from: 'Guinée Logistique', to: 'Sarl TechnoPlus', message: 'Après vérification, le colis est déclaré perdu. Nous procédons à l\'indemnisation.', date: '2026-03-05' },
     ],
     resolutionAmount: 315000, resolutionDate: '2026-03-10', resolutionNote: 'Indemnisation à 90% de la valeur déclarée selon les conditions du contrat.',
     slaDeadline: '2026-03-22', daysOpen: 18,
@@ -275,7 +275,7 @@ const initialClaims: Claim[] = [
       { id: 'ev6', name: 'photo_chantier_arret.jpg', type: 'photo', uploadedAt: '2026-03-01' },
     ],
     communications: [
-      { id: 'cm5', from: 'EURL BatiPlus', to: 'LogisWay', message: 'Le chantier est à l\'arrêt depuis 12 jours. Nous réclamons une compensation pour préjudice.', date: '2026-02-28' },
+      { id: 'cm5', from: 'EURL BatiPlus', to: 'Guinée Logistique', message: 'Le chantier est à l\'arrêt depuis 12 jours. Nous réclamons une compensation pour préjudice.', date: '2026-02-28' },
     ],
     resolutionAmount: 210000, resolutionDate: '2026-03-15', resolutionNote: 'Compensation partielle de 50% pour force majeure (conditions météorologiques).',
     slaDeadline: '2026-03-30', daysOpen: 15,
@@ -296,8 +296,8 @@ const initialClaims: Claim[] = [
       { id: 'ev9', name: 'photo_thermometre.jpg', type: 'photo', uploadedAt: '2026-03-21' },
     ],
     communications: [
-      { id: 'cm6', from: 'Entreprise Bouzidi & Fils', to: 'LogisWay', message: 'Le camion frigorifique n\'a pas maintenu la température. 60% des produits sont perdus.', date: '2026-03-20' },
-      { id: 'cm7', from: 'LogisWay', to: 'Entreprise Bouzidi & Fils', message: 'Nous regrettons cet incident. L\'expertise est en cours pour déterminer les responsabilités.', date: '2026-03-22' },
+      { id: 'cm6', from: 'Entreprise Bouzidi & Fils', to: 'Guinée Logistique', message: 'Le camion frigorifique n\'a pas maintenu la température. 60% des produits sont perdus.', date: '2026-03-20' },
+      { id: 'cm7', from: 'Guinée Logistique', to: 'Entreprise Bouzidi & Fils', message: 'Nous regrettons cet incident. L\'expertise est en cours pour déterminer les responsabilités.', date: '2026-03-22' },
     ],
     slaDeadline: '2026-04-19', daysOpen: 7,
   },
@@ -314,7 +314,7 @@ const initialClaims: Claim[] = [
       { id: 'ev11', name: 'facture_recue.pdf', type: 'document', uploadedAt: '2026-04-08' },
     ],
     communications: [
-      { id: 'cm8', from: 'Sarl AgriPro', to: 'LogisWay', message: 'La facture est de 155 000 DA alors que le devis était de 110 000 DA. Merci de rectifier.', date: '2026-04-08' },
+      { id: 'cm8', from: 'Sarl AgriPro', to: 'Guinée Logistique', message: 'La facture est de 155 000 DA alors que le devis était de 110 000 DA. Merci de rectifier.', date: '2026-04-08' },
     ],
     slaDeadline: '2026-05-08', daysOpen: 2,
   },
@@ -332,8 +332,8 @@ const initialClaims: Claim[] = [
       { id: 'ev13', name: 'bon_commande.pdf', type: 'document', uploadedAt: '2026-04-05' },
     ],
     communications: [
-      { id: 'cm9', from: 'Karim Djebbar', to: 'LogisWay', message: 'J\'ai reçu du mobilier au lieu de l\'électroménager commandé. Veuillez échanger rapidement.', date: '2026-04-05' },
-      { id: 'cm10', from: 'LogisWay', to: 'Karim Djebbar', message: 'Nous vérifions au dépôt. Un échange sera organisé dans les plus brefs délais.', date: '2026-04-06' },
+      { id: 'cm9', from: 'Karim Djebbar', to: 'Guinée Logistique', message: 'J\'ai reçu du mobilier au lieu de l\'électroménager commandé. Veuillez échanger rapidement.', date: '2026-04-05' },
+      { id: 'cm10', from: 'Guinée Logistique', to: 'Karim Djebbar', message: 'Nous vérifions au dépôt. Un échange sera organisé dans les plus brefs délais.', date: '2026-04-06' },
     ],
     slaDeadline: '2026-05-05', daysOpen: 5,
   },
@@ -352,7 +352,7 @@ const initialClaims: Claim[] = [
       { id: 'ev14', name: 'retour_expediteur.pdf', type: 'document', uploadedAt: '2026-03-10' },
     ],
     communications: [
-      { id: 'cm11', from: 'LogisWay', to: 'Nadia Benmoussa', message: 'Le colis a été retrouvé mais a été retourné à l\'expéditeur. La réclamation est rejetée selon les CGV.', date: '2026-03-10' },
+      { id: 'cm11', from: 'Guinée Logistique', to: 'Nadia Benmoussa', message: 'Le colis a été retrouvé mais a été retourné à l\'expéditeur. La réclamation est rejetée selon les CGV.', date: '2026-03-10' },
     ],
     resolutionNote: 'Colis retrouvé et retourné à l\'expéditeur. Pas de perte effective. Réclamation non recevable.',
     slaDeadline: '2026-03-27', daysOpen: 15,
@@ -371,7 +371,7 @@ const initialClaims: Claim[] = [
       { id: 'ev17', name: 'rapport_dechargement.pdf', type: 'document', uploadedAt: '2026-04-10' },
     ],
     communications: [
-      { id: 'cm12', from: 'SPA HydroServices', to: 'LogisWay', message: 'Le conteneur présente des impacts visibles. Les équipements à l\'intérieur sont sérieusement endommagés.', date: '2026-04-10' },
+      { id: 'cm12', from: 'SPA HydroServices', to: 'Guinée Logistique', message: 'Le conteneur présente des impacts visibles. Les équipements à l\'intérieur sont sérieusement endommagés.', date: '2026-04-10' },
     ],
     slaDeadline: '2026-05-10', daysOpen: 1,
   },
@@ -388,8 +388,8 @@ const initialClaims: Claim[] = [
       { id: 'ev18', name: 'tracking_delay_screenshot.png', type: 'photo', uploadedAt: '2026-04-14' },
     ],
     communications: [
-      { id: 'cm13', from: 'Mohamed Amrani', to: 'LogisWay', message: 'Mon colis est bloqué en douane depuis 5 jours. Quel est le problème ?', date: '2026-04-14' },
-      { id: 'cm14', from: 'LogisWay', to: 'Mohamed Amrani', message: 'Nous contactons les services douaniers. Nous vous tiendrons informé.', date: '2026-04-15' },
+      { id: 'cm13', from: 'Mohamed Amrani', to: 'Guinée Logistique', message: 'Mon colis est bloqué en douane depuis 5 jours. Quel est le problème ?', date: '2026-04-14' },
+      { id: 'cm14', from: 'Guinée Logistique', to: 'Mohamed Amrani', message: 'Nous contactons les services douaniers. Nous vous tiendrons informé.', date: '2026-04-15' },
     ],
     slaDeadline: '2026-05-14', daysOpen: 3,
   },
@@ -408,7 +408,7 @@ const initialClaims: Claim[] = [
       { id: 'ev20', name: 'facture_double_2.pdf', type: 'document', uploadedAt: '2026-03-01' },
     ],
     communications: [
-      { id: 'cm15', from: 'Sarl MédiaCom', to: 'LogisWay', message: 'J\'ai reçu deux factures pour la même expédition. Merci de corriger.', date: '2026-03-01' },
+      { id: 'cm15', from: 'Sarl MédiaCom', to: 'Guinée Logistique', message: 'J\'ai reçu deux factures pour la même expédition. Merci de corriger.', date: '2026-03-01' },
     ],
     resolutionAmount: 120000, resolutionDate: '2026-03-08', resolutionNote: 'Avoir émis pour le montant de la facture en double. Erreur comptable confirmée.',
     slaDeadline: '2026-03-31', daysOpen: 7,
@@ -426,7 +426,7 @@ const initialClaims: Claim[] = [
       { id: 'ev22', name: 'photo_ceramiques_cassees.jpg', type: 'photo', uploadedAt: '2026-04-12' },
     ],
     communications: [
-      { id: 'cm16', from: 'EPC Groupe Construction', to: 'LogisWay', message: 'Plus de 30% de la cargaison est endommagée. Nous exigeons une expertise immédiate.', date: '2026-04-12' },
+      { id: 'cm16', from: 'EPC Groupe Construction', to: 'Guinée Logistique', message: 'Plus de 30% de la cargaison est endommagée. Nous exigeons une expertise immédiate.', date: '2026-04-12' },
     ],
     slaDeadline: '2026-05-12', daysOpen: 1,
   },
@@ -443,8 +443,8 @@ const initialClaims: Claim[] = [
       { id: 'ev23', name: 'bon_livraison_signe.pdf', type: 'document', uploadedAt: '2026-04-09' },
     ],
     communications: [
-      { id: 'cm17', from: 'Amina Zeroual', to: 'LogisWay', message: 'Mon colis a été livré à quelqu\'un d\'autre. La personne qui l\'a reçu me l\'a signalé.', date: '2026-04-09' },
-      { id: 'cm18', from: 'LogisWay', to: 'Amina Zeroual', message: 'Nous enquêtons auprès du chauffeur. Nous ferons le nécessaire pour récupérer votre colis.', date: '2026-04-10' },
+      { id: 'cm17', from: 'Amina Zeroual', to: 'Guinée Logistique', message: 'Mon colis a été livré à quelqu\'un d\'autre. La personne qui l\'a reçu me l\'a signalé.', date: '2026-04-09' },
+      { id: 'cm18', from: 'Guinée Logistique', to: 'Amina Zeroual', message: 'Nous enquêtons auprès du chauffeur. Nous ferons le nécessaire pour récupérer votre colis.', date: '2026-04-10' },
     ],
     slaDeadline: '2026-05-09', daysOpen: 4,
   },
@@ -461,7 +461,7 @@ const initialClaims: Claim[] = [
       { id: 'ev25', name: 'contrat_transport.pdf', type: 'document', uploadedAt: '2026-04-13' },
     ],
     communications: [
-      { id: 'cm19', from: 'Entreprise Bouzidi & Fils', to: 'LogisWay', message: 'Les frais de surestaries ne figurent pas dans notre contrat. Merci de les annuler.', date: '2026-04-13' },
+      { id: 'cm19', from: 'Entreprise Bouzidi & Fils', to: 'Guinée Logistique', message: 'Les frais de surestaries ne figurent pas dans notre contrat. Merci de les annuler.', date: '2026-04-13' },
     ],
     slaDeadline: '2026-05-13', daysOpen: 1,
   },
@@ -662,7 +662,7 @@ export default function ClaimsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-claims-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-claims-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

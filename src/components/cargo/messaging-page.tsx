@@ -1,5 +1,5 @@
 /**
- * messaging-page.tsx — Page de messagerie interne pour LogisWay
+ * messaging-page.tsx — Page de messagerie interne pour Guinée Logistique
  *
  * BRANCHEMENT : Ajoutez un nouveau PageType 'messaging' dans le routeur
  * et importez ce composant dans le switch de page.tsx.

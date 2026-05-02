@@ -1,90 +1,141 @@
-# Bug Fix Worklog — LogisWay Interactive Elements
+# Worklog — Guinée Logistique Rename & Bug Fixes
 
-**Date:** 2026-03-05  
-**Scope:** Fix 4 reported bugs where interactive elements don't work properly across 4 pages
+**Date:** 2026-03-05
+**Task ID:** 1
+**Scope:** Rename LogisWay → Guinée Logistique + Fix 4 bugs with non-functional interactive elements
 
 ---
 
-## Bug 1: Expenses Page — DropdownMenu (⋮) doesn't open
+## Task 1: Rename "LogisWay" → "Guinée Logistique" across all files
 
-**Root Cause:** `motion.tr` (framer-motion) wrapping each table row was intercepting/blocking pointer events from the Radix UI `DropdownMenuTrigger` inside the row. Radix UI's DropdownMenu uses pointer events for open/close detection, which don't propagate correctly through framer-motion's animated `<tr>` elements.
+### Replacements Made
 
-**Fix:** Replaced `<motion.tr>` with a regular `<tr>` element in the expenses table (lines 523-602). The framer-motion animation (`initial={{ opacity: 0, x: -10 }}`, `animate={{ opacity: 1, x: 0 }}`) was removed since it's a subtle entrance animation that's not essential and was causing the click interference. The `transition-colors` class on hover still provides visual feedback.
+| Pattern | Replacement | Files Affected |
+|---------|-------------|----------------|
+| `logisway.pro` | `guinee-logistique.pro` | chatbot-widget, users-page, reports-page, tracking-page, hr-page, login-page, drivers-page, settings-page, parcels-page, test-data |
+| `freightflow-storage` | `guinee-logistique-storage` | cargo-store.ts |
+| `LOGISWAY` | `GUINÉE LOGISTIQUE` | login-page.tsx |
+| `FlowBot` | `GL Bot` | chatbot-widget.tsx, dashboard-layout.tsx |
+| `Navigation LogisWay` | `Navigation Guinée Logistique` | dashboard-layout.tsx |
+| `LogisWay` | `Guinée Logistique` | 30+ component and lib files |
+| `logisway-` prefixed localStorage keys | `guinee-logistique-` prefix | All lib files with localStorage keys |
+| `logisway-*` file download names | `guinee-logistique-*` prefix | All component files with download exports |
+
+### Specific localStorage Key Replacements
+- `logisway-salt-2026` → `guinee-logistique-salt-2026`
+- `logisway-pin-hash-` → `guinee-logistique-pin-hash-`
+- `logisway-pin-session` → `guinee-logistique-pin-session`
+- `logisway-pin-hash` → `guinee-logistique-pin-hash`
+- `logisway-chatbot-history` → `guinee-logistique-chatbot-history`
+- `logisway-chatbot-open` → `guinee-logistique-chatbot-open`
+- `logisway-sidebar-collapse` → `guinee-logistique-sidebar-collapse`
+- `logisway-printers` → `guinee-logistique-printers`
+- `logisway-default-printer` → `guinee-logistique-default-printer`
+- `logisway-label-settings` → `guinee-logistique-label-settings`
+- `logisway-audit-trail` → `guinee-logistique-audit-trail`
+- `logisway-delegations` → `guinee-logistique-delegations`
+- `logisway-batch-jobs` → `guinee-logistique-batch-jobs`
+- `logisway-print-history` → `guinee-logistique-print-history`
+- `logisway-printer-groups` → `guinee-logistique-printer-groups`
+- `logisway-label-templates` → `guinee-logistique-label-templates`
+- `logisway-proof-photos` → `guinee-logistique-proof-photos`
+- `logisway-business-rules-config` → `guinee-logistique-business-rules-config`
+- `logisway-reminder-config` → `guinee-logistique-reminder-config`
+- `logisway-reminders` → `guinee-logistique-reminders`
+- `logisway-validation-sessions` → `guinee-logistique-validation-sessions`
+- `logisway-notifications` → `guinee-logistique-notifications`
+- `logisway-notification-prefs` → `guinee-logistique-notification-prefs`
+- `logisway-approvals` → `guinee-logistique-approvals`
+- `logisway-permissions-config` → `guinee-logistique-permissions-config`
+- `logisway-messages` → `guinee-logistique-messages`
+- `logisway-conversations` → `guinee-logistique-conversations`
+- `logisway-storage` → `guinee-logistique-storage`
+
+### File Download Name Replacements
+- `logisway-shipments` → `guinee-logistique-shipments`
+- `logisway-customer-portal` → `guinee-logistique-customer-portal`
+- `logisway-hr` → `guinee-logistique-hr`
+- `logisway-expenses` → `guinee-logistique-expenses`
+- `logisway-factures` → `guinee-logistique-factures`
+- `logisway-dashboard` → `guinee-logistique-dashboard`
+- `logisway-claims` → `guinee-logistique-claims`
+- `logisway-temperature` → `guinee-logistique-temperature`
+- `logisway-documents` → `guinee-logistique-documents`
+- `logisway-insurance` → `guinee-logistique-insurance`
+- `logisway-quotations` → `guinee-logistique-quotations`
+- `logisway-analytique` → `guinee-logistique-analytique`
+- `logisway-colis` → `guinee-logistique-colis`
+- `logisway-devis` → `guinee-logistique-devis`
+- `logisway-expeditions` → `guinee-logistique-expeditions`
+
+### Verification
+- Ran `grep -i logisway` on `/home/z/my-project/src/` — **0 results**. All references removed.
+
+---
+
+## Task 2: Bug Fixes
+
+### Bug 1: Expenses Page — Three dots menu (⋮) hidden on mobile
+
+**Root Cause:** The "Actions" column header and data cells had `hidden md:table-cell` class, making the dropdown menu invisible on screens smaller than 768px.
+
+**Fix:** Removed `hidden md:table-cell` from both the `<th>` header and `<td>` data cells in the Actions column.
 
 **File:** `src/components/cargo/expenses-page.tsx`
 
 ---
 
-## Bug 2: Contracts Page — Dialog triggers (Eye/Download buttons, row clicks)
+### Bug 2: HR Page — Recruitment detail dialog doesn't update jobOpenings state
 
-**Root Cause:** The contracts page doesn't use `motion.tr` for table rows — it uses the shadcn/ui `<TableRow>` component which is a regular `<tr>`. The click handlers (`handleViewDetail`, `handleDownloadContract`) were already correctly implemented with `e.stopPropagation()` on the action buttons. The Dialog was functioning correctly.
+**Root Cause:** The `jobOpenings` array was a const (not state), so clicking "Démarrer le recrutement", "Fermer le poste", or "Réouvrir le poste" only updated `selectedJob` state — the visual cards and KPIs never reflected the change.
 
-**Fix:** No structural fix needed — the Dialog triggers were already working. Added toast notifications for user feedback on all key actions (view detail, download, renew, resiliate, add new contract) so users get confirmation that their action was processed.
-
-**File:** `src/components/cargo/contracts-page.tsx`
-
----
-
-## Bug 3: HR Page — Recrutement "Détails" button doesn't work
-
-**Root Cause:** The "Détails" button is inside a `motion.div` Card component, which should not interfere with click events (unlike `motion.tr`). The Dialog state management (`showJobDetailDialog` / `selectedJob`) was correctly implemented. The button's `onClick` handler properly called `setSelectedJob(job)` and `setShowJobDetailDialog(true)`.
-
-**Fix:** No structural fix needed — the dialog trigger code was already correct. Added toast notification for user feedback when opening the job detail dialog, and for job status change actions (passer en cours, fermer, réouvrir).
+**Fix:**
+1. Added `const [jobOpeningsList, setJobOpeningsList] = useState<JobOpening[]>(jobOpenings);`
+2. Replaced all references to `jobOpenings` (for rendering and KPIs) with `jobOpeningsList`
+3. Updated dialog button handlers to also call `setJobOpeningsList()` with the updated job
 
 **File:** `src/components/cargo/hr-page.tsx`
 
 ---
 
-## Bug 4: Customer Portal — Can't view/download documents
+### Bug 3: Contracts Page — "Modifier" button only closes dialog
 
-**Root Cause:** The "Voir" (View) and "Télécharger" (Download) buttons already had correct onClick handlers. The document preview dialog and download functionality were properly implemented. The user report mentioned the "Voir" button was previously disabled for non-downloadable documents, which was already fixed.
+**Root Cause:** The "Modifier" button's `onClick` handler was `() => setShowDetailDialog(false)`, which simply closed the dialog without enabling any edit functionality.
 
-**Fix:** No structural fix needed — the document view/download buttons were already working. Added toast notifications for document view and download actions.
+**Fix:**
+1. Added `isEditing` state and `editForm` state for editable fields
+2. When "Modifier" is clicked, populate `editForm` with current contract values and set `isEditing` to true
+3. Show editable input/textarea fields when `isEditing` is true (terms, paymentTerms, slaDeliveryDays, slaDamageLimit, penaltyClause, specialConditions)
+4. Added "Sauvegarder" button that saves changes to both `selectedContract` and `data` state arrays, with toast notification
+5. Added "Annuler" button to cancel editing
+6. Reset `isEditing` when dialog closes
+
+**File:** `src/components/cargo/contracts-page.tsx`
+
+---
+
+### Bug 4: Customer Portal — Documents section needs better visibility
+
+**Root Cause:** The documents table was buried at the bottom of the "Suivi" tab, making it hard to find.
+
+**Fix:**
+1. Changed TabsList from `grid-cols-4` to `grid-cols-5`
+2. Added a new "Documents" tab trigger with Paperclip icon
+3. Moved documents from a table at the bottom of "Suivi" to a dedicated "Documents" tab
+4. Redesigned documents as card-based layout (responsive grid of 1/2/3 columns) with better visual hierarchy
+5. Each document card shows: icon, name, type badge, shipment ref, date, size, and Voir/Télécharger buttons
 
 **File:** `src/components/cargo/customer-portal-page.tsx`
 
 ---
 
-## Additional: Toast Notifications
+## Summary of All Changes
 
-Added `useToastAction` hook integration from `@/components/cargo/toast-provider` across all 4 pages:
-
-### Expenses Page
-- ✅ Add new expense → `toast.success('Dépense ajoutée')`
-- ✅ Approve expense → `toast.success('Dépense approuvée')`
-- ✅ Reject expense → `toast.error('Dépense rejetée')`
-- ✅ View expense details → `toast.info('Détails de la dépense')`
-- ✅ Download expense → `toast.success('Téléchargement')`
-
-### Contracts Page
-- ✅ View contract detail → `toast.info('Détails du contrat')`
-- ✅ Download contract → `toast.success('Téléchargement')`
-- ✅ Renew contract → `toast.success('Contrat renouvelé')`
-- ✅ Resiliate contract → `toast.warning('Contrat résilié')`
-- ✅ Add new contract → `toast.success('Contrat créé')`
-
-### HR Page
-- ✅ Add employee → `toast.success('Employé ajouté')`
-- ✅ Approve leave → `toast.success('Congé approuvé')`
-- ✅ Reject leave → `toast.error('Congé rejeté')`
-- ✅ View job detail → `toast.info('Détails du poste')`
-- ✅ Change job status (en cours) → `toast.success('Poste mis à jour')`
-- ✅ Change job status (fermé) → `toast.info('Poste fermé')`
-- ✅ Change job status (réouvert) → `toast.success('Poste réouvert')`
-
-### Customer Portal
-- ✅ View document → `toast.info('Aperçu document')`
-- ✅ Download document → `toast.success('Document téléchargé')`
-
----
-
-## Summary of Changes
-
-| File | Change | Lines Affected |
-|------|--------|---------------|
-| `expenses-page.tsx` | Replaced `motion.tr` with `tr`; Added toast import & hook; Added toast calls | ~10 edits |
-| `contracts-page.tsx` | Added toast import & hook; Added toast calls to handlers | ~6 edits |
-| `hr-page.tsx` | Added toast import & hook; Added toast calls to handlers & buttons | ~8 edits |
-| `customer-portal-page.tsx` | Added toast import & hook; Added toast calls to view/download | ~4 edits |
-
-All lint checks pass for the modified files (0 new errors introduced).
+| File | Change | Description |
+|------|--------|-------------|
+| 30+ component files | Rename LogisWay → Guinée Logistique | Display names, URLs, emails |
+| 15+ lib files | Rename localStorage keys & storage | All logisway- prefixed keys |
+| `expenses-page.tsx` | Remove `hidden md:table-cell` from Actions column | Bug 1 fix |
+| `hr-page.tsx` | Add `jobOpeningsList` state + update handlers | Bug 2 fix |
+| `contracts-page.tsx` | Add edit mode with `isEditing` state + editable fields | Bug 3 fix |
+| `customer-portal-page.tsx` | Add Documents tab + card layout | Bug 4 fix |

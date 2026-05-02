@@ -1,5 +1,5 @@
 /**
- * Audit Trail & Enhanced Permissions System — LogisWay
+ * Audit Trail & Enhanced Permissions System — Guinée Logistique
  * Journal d'audit complet, permissions granulaires par champ,
  * délégation de permissions et traçabilité des actions.
  */
@@ -47,7 +47,7 @@ export interface AuditEntry {
 
 // ─── Persistance du journal d'audit ────────────────────────────
 
-const AUDIT_TRAIL_KEY = 'logisway-audit-trail';
+const AUDIT_TRAIL_KEY = 'guinee-logistique-audit-trail';
 
 export function loadAuditTrail(): AuditEntry[] {
   if (typeof window === 'undefined') return [];
@@ -348,7 +348,7 @@ export interface PermissionDelegation {
   approvedBy?: string;
 }
 
-const DELEGATIONS_KEY = 'logisway-delegations';
+const DELEGATIONS_KEY = 'guinee-logistique-delegations';
 
 export function loadDelegations(): PermissionDelegation[] {
   if (typeof window === 'undefined') return [];

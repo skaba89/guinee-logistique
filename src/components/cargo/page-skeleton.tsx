@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * ══════════════════════════════════════════════════════════════════
- *  Page Skeleton Loader — LogisWay
+ *  Page Skeleton Loader — Guinée Logistique
  * ══════════════════════════════════════════════════════════════════
  *
  *  Skeleton loaders displayed during page transitions to give

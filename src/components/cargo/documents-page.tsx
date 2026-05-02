@@ -330,7 +330,7 @@ export default function DocumentsPage() {
       doc.signedAt ? `Signe le: ${doc.signedAt} par ${doc.signedBy}` : '',
       doc.notes ? `Notes: ${doc.notes}` : '',
       '',
-      '--- LogisWay - Document officiel ---',
+      '--- Guinée Logistique - Document officiel ---',
     ].filter(Boolean).join('\n');
 
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
@@ -358,7 +358,7 @@ export default function DocumentsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-documents-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-documents-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

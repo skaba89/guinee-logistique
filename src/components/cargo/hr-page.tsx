@@ -180,20 +180,20 @@ const departments = [
 ];
 
 const employees: Employee[] = [
-  { id: 'e1', nom: 'Kaci', prenom: 'Rachid', departement: 'Fret Maritime', poste: 'Chef d\'équipe Maritime', statut: 'actif', dateEmbauche: '2020-03-15', salaire: 185000, email: 'r.kaci@logisway.pro', telephone: '0555111222', evaluation: 4.5 },
-  { id: 'e2', nom: 'Boudiaf', prenom: 'Nadia', departement: 'Douanes', poste: 'Agent Douanes Senior', statut: 'actif', dateEmbauche: '2021-06-01', salaire: 145000, email: 'n.boudiaf@logisway.pro', telephone: '0555333444', evaluation: 4.2 },
-  { id: 'e3', nom: 'Hamdi', prenom: 'Yacine', departement: 'Fret Aérien', poste: 'Responsable Aérien', statut: 'actif', dateEmbauche: '2019-09-20', salaire: 210000, email: 'y.hamdi@logisway.pro', telephone: '0555555666', evaluation: 4.8 },
-  { id: 'e4', nom: 'Khelifi', prenom: 'Fatima', departement: 'Transport Terrestre', poste: 'Chef Quart Transport', statut: 'en_conge', dateEmbauche: '2022-01-10', salaire: 155000, email: 'f.khelifi@logisway.pro', telephone: '0555777888', evaluation: 4.0 },
-  { id: 'e5', nom: 'Mezdad', prenom: 'Ali', departement: 'Transport Terrestre', poste: 'Conducteur Principal', statut: 'actif', dateEmbauche: '2020-09-01', salaire: 120000, email: 'a.mezdad@logisway.pro', telephone: '0555999000', evaluation: 4.7 },
-  { id: 'e6', nom: 'Benali', prenom: 'Sofiane', departement: 'Entrepôt', poste: 'Responsable Entrepôt', statut: 'actif', dateEmbauche: '2021-12-15', salaire: 160000, email: 's.benali@logisway.pro', telephone: '0555121202', evaluation: 4.3 },
-  { id: 'e7', nom: 'Djebbar', prenom: 'Karim', departement: 'Fret Aérien', poste: 'Agent Fret Aérien', statut: 'actif', dateEmbauche: '2023-04-01', salaire: 130000, email: 'k.djebbar@logisway.pro', telephone: '0555141516', evaluation: 3.9 },
-  { id: 'e8', nom: 'Mansouri', prenom: 'Youcef', departement: 'Comptabilité', poste: 'Comptable Senior', statut: 'actif', dateEmbauche: '2022-08-20', salaire: 140000, email: 'y.mansouri@logisway.pro', telephone: '0555171819', evaluation: 4.1 },
-  { id: 'e9', nom: 'Rahmani', prenom: 'Amina', departement: 'RH', poste: 'Responsable RH', statut: 'actif', dateEmbauche: '2019-02-01', salaire: 195000, email: 'a.rahmani@logisway.pro', telephone: '0555202122', evaluation: 4.6 },
-  { id: 'e10', nom: 'Talbi', prenom: 'Mourad', departement: 'Entrepôt', poste: 'Manutentionnaire', statut: 'essai', dateEmbauche: '2026-01-15', salaire: 85000, email: 'm.talbi@logisway.pro', telephone: '0555232425', evaluation: 3.5 },
-  { id: 'e11', nom: 'Ferhat', prenom: 'Nabil', departement: 'IT', poste: 'Ingénieur Systèmes', statut: 'actif', dateEmbauche: '2021-10-01', salaire: 220000, email: 'n.ferhat@logisway.pro', telephone: '0555262728', evaluation: 4.4 },
-  { id: 'e12', nom: 'Ait Kaci', prenom: 'Samira', departement: 'Douanes', poste: 'Spécialiste Réglementation', statut: 'actif', dateEmbauche: '2023-01-20', salaire: 150000, email: 's.aitkaci@logisway.pro', telephone: '0555293031', evaluation: 4.3 },
-  { id: 'e13', nom: 'Bouzid', prenom: 'Karim', departement: 'Transport Terrestre', poste: 'Conducteur', statut: 'inactif', dateEmbauche: '2023-06-10', salaire: 95000, email: 'k.bouzid@logisway.pro', telephone: '0555323334', evaluation: 3.2 },
-  { id: 'e14', nom: 'Kherrazi', prenom: 'Bilal', departement: 'Fret Maritime', poste: 'Opérateur Portuaire', statut: 'actif', dateEmbauche: '2022-11-01', salaire: 115000, email: 'b.kherrazi@logisway.pro', telephone: '0555353637', evaluation: 4.0 },
+  { id: 'e1', nom: 'Kaci', prenom: 'Rachid', departement: 'Fret Maritime', poste: 'Chef d\'équipe Maritime', statut: 'actif', dateEmbauche: '2020-03-15', salaire: 185000, email: 'r.kaci@guinee-logistique.pro', telephone: '0555111222', evaluation: 4.5 },
+  { id: 'e2', nom: 'Boudiaf', prenom: 'Nadia', departement: 'Douanes', poste: 'Agent Douanes Senior', statut: 'actif', dateEmbauche: '2021-06-01', salaire: 145000, email: 'n.boudiaf@guinee-logistique.pro', telephone: '0555333444', evaluation: 4.2 },
+  { id: 'e3', nom: 'Hamdi', prenom: 'Yacine', departement: 'Fret Aérien', poste: 'Responsable Aérien', statut: 'actif', dateEmbauche: '2019-09-20', salaire: 210000, email: 'y.hamdi@guinee-logistique.pro', telephone: '0555555666', evaluation: 4.8 },
+  { id: 'e4', nom: 'Khelifi', prenom: 'Fatima', departement: 'Transport Terrestre', poste: 'Chef Quart Transport', statut: 'en_conge', dateEmbauche: '2022-01-10', salaire: 155000, email: 'f.khelifi@guinee-logistique.pro', telephone: '0555777888', evaluation: 4.0 },
+  { id: 'e5', nom: 'Mezdad', prenom: 'Ali', departement: 'Transport Terrestre', poste: 'Conducteur Principal', statut: 'actif', dateEmbauche: '2020-09-01', salaire: 120000, email: 'a.mezdad@guinee-logistique.pro', telephone: '0555999000', evaluation: 4.7 },
+  { id: 'e6', nom: 'Benali', prenom: 'Sofiane', departement: 'Entrepôt', poste: 'Responsable Entrepôt', statut: 'actif', dateEmbauche: '2021-12-15', salaire: 160000, email: 's.benali@guinee-logistique.pro', telephone: '0555121202', evaluation: 4.3 },
+  { id: 'e7', nom: 'Djebbar', prenom: 'Karim', departement: 'Fret Aérien', poste: 'Agent Fret Aérien', statut: 'actif', dateEmbauche: '2023-04-01', salaire: 130000, email: 'k.djebbar@guinee-logistique.pro', telephone: '0555141516', evaluation: 3.9 },
+  { id: 'e8', nom: 'Mansouri', prenom: 'Youcef', departement: 'Comptabilité', poste: 'Comptable Senior', statut: 'actif', dateEmbauche: '2022-08-20', salaire: 140000, email: 'y.mansouri@guinee-logistique.pro', telephone: '0555171819', evaluation: 4.1 },
+  { id: 'e9', nom: 'Rahmani', prenom: 'Amina', departement: 'RH', poste: 'Responsable RH', statut: 'actif', dateEmbauche: '2019-02-01', salaire: 195000, email: 'a.rahmani@guinee-logistique.pro', telephone: '0555202122', evaluation: 4.6 },
+  { id: 'e10', nom: 'Talbi', prenom: 'Mourad', departement: 'Entrepôt', poste: 'Manutentionnaire', statut: 'essai', dateEmbauche: '2026-01-15', salaire: 85000, email: 'm.talbi@guinee-logistique.pro', telephone: '0555232425', evaluation: 3.5 },
+  { id: 'e11', nom: 'Ferhat', prenom: 'Nabil', departement: 'IT', poste: 'Ingénieur Systèmes', statut: 'actif', dateEmbauche: '2021-10-01', salaire: 220000, email: 'n.ferhat@guinee-logistique.pro', telephone: '0555262728', evaluation: 4.4 },
+  { id: 'e12', nom: 'Ait Kaci', prenom: 'Samira', departement: 'Douanes', poste: 'Spécialiste Réglementation', statut: 'actif', dateEmbauche: '2023-01-20', salaire: 150000, email: 's.aitkaci@guinee-logistique.pro', telephone: '0555293031', evaluation: 4.3 },
+  { id: 'e13', nom: 'Bouzid', prenom: 'Karim', departement: 'Transport Terrestre', poste: 'Conducteur', statut: 'inactif', dateEmbauche: '2023-06-10', salaire: 95000, email: 'k.bouzid@guinee-logistique.pro', telephone: '0555323334', evaluation: 3.2 },
+  { id: 'e14', nom: 'Kherrazi', prenom: 'Bilal', departement: 'Fret Maritime', poste: 'Opérateur Portuaire', statut: 'actif', dateEmbauche: '2022-11-01', salaire: 115000, email: 'b.kherrazi@guinee-logistique.pro', telephone: '0555353637', evaluation: 4.0 },
 ];
 
 const leaveRequests: LeaveRequest[] = [
@@ -385,6 +385,7 @@ export default function HRPage() {
   // Recruitment detail dialog state
   const [showJobDetailDialog, setShowJobDetailDialog] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobOpening | null>(null);
+  const [jobOpeningsList, setJobOpeningsList] = useState<JobOpening[]>(jobOpenings);
   const [jobSearchQuery, setJobSearchQuery] = useState('');
 
   // Add employee form state
@@ -477,7 +478,7 @@ export default function HRPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-hr-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-hr-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -486,7 +487,7 @@ export default function HRPage() {
   const totalEmployes = employeesList.length;
   const presentsAujourdhui = employeesList.filter(e => e.statut === 'actif' || e.statut === 'essai').length;
   const enConge = employeesList.filter(e => e.statut === 'en_conge').length;
-  const postesVacants = jobOpenings.filter(j => j.statut === 'ouvert' || j.statut === 'en_cours').length;
+  const postesVacants = jobOpeningsList.filter(j => j.statut === 'ouvert' || j.statut === 'en_cours').length;
   const tauxRotation = '4.2%';
   const masseSalariale = employeesList.reduce((sum, e) => sum + e.salaire, 0);
 
@@ -494,7 +495,7 @@ export default function HRPage() {
     { title: 'Total Employés', value: totalEmployes, icon: Users, gradient: 'from-teal-500 to-teal-600', change: '+2 ce mois', changeUp: true },
     { title: 'Présents Aujourd\'hui', value: presentsAujourdhui, icon: UserCheck, gradient: 'from-emerald-500 to-green-600', change: `${Math.round((presentsAujourdhui / totalEmployes) * 100)}%`, changeUp: true },
     { title: 'En Congé', value: enConge, icon: CalendarDays, gradient: 'from-amber-500 to-amber-600', change: `${leaveRequestsList.filter(l => l.statut === 'en_attente').length} en attente`, changeUp: false },
-    { title: 'Postes Vacants', value: postesVacants, icon: Briefcase, gradient: 'from-rose-500 to-rose-600', change: `${jobOpenings.filter(j => j.statut === 'ouvert').length} ouverts`, changeUp: false },
+    { title: 'Postes Vacants', value: postesVacants, icon: Briefcase, gradient: 'from-rose-500 to-rose-600', change: `${jobOpeningsList.filter(j => j.statut === 'ouvert').length} ouverts`, changeUp: false },
     { title: 'Taux de Rotation', value: tauxRotation, icon: TrendingUp, gradient: 'from-orange-500 to-orange-600', change: '-0.5% vs S1', changeUp: true },
     { title: 'Masse Salariale', value: formatPrice(masseSalariale), icon: DollarSign, gradient: 'from-cyan-500 to-cyan-600', change: '+3.2% vs S2', changeUp: false },
   ];
@@ -720,7 +721,7 @@ export default function HRPage() {
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Postes ouverts</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white">{jobOpenings.filter(j => j.statut === 'ouvert').length}</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{jobOpeningsList.filter(j => j.statut === 'ouvert').length}</p>
                       </div>
                     </div>
                     <Button variant="outline" size="sm" className="w-full text-xs h-8" onClick={() => setActiveTab('recrutement')}>
@@ -1008,19 +1009,19 @@ export default function HRPage() {
               <div className="grid grid-cols-3 gap-3">
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-emerald-600">{jobOpenings.filter(j => j.statut === 'ouvert').length}</p>
+                    <p className="text-2xl font-bold text-emerald-600">{jobOpeningsList.filter(j => j.statut === 'ouvert').length}</p>
                     <p className="text-xs text-gray-500">Postes Ouverts</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-amber-600">{jobOpenings.filter(j => j.statut === 'en_cours').length}</p>
+                    <p className="text-2xl font-bold text-amber-600">{jobOpeningsList.filter(j => j.statut === 'en_cours').length}</p>
                     <p className="text-xs text-gray-500">En Cours</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-2xl font-bold text-gray-500">{jobOpenings.reduce((s, j) => s + j.candidats, 0)}</p>
+                    <p className="text-2xl font-bold text-gray-500">{jobOpeningsList.reduce((s, j) => s + j.candidats, 0)}</p>
                     <p className="text-xs text-gray-500">Total Candidats</p>
                   </CardContent>
                 </Card>
@@ -1028,7 +1029,7 @@ export default function HRPage() {
 
               {/* Job Openings Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {jobOpenings.map((job, idx) => {
+                {jobOpeningsList.map((job, idx) => {
                   const JobIcon = getDeptIcon(job.departement);
                   return (
                     <motion.div
@@ -1516,7 +1517,7 @@ export default function HRPage() {
               <Label htmlFor="email" className="text-xs">Email</Label>
               <Input
                 id="email"
-                placeholder="prenom.nom@logisway.pro"
+                placeholder="prenom.nom@guinee-logistique.pro"
                 type="email"
                 value={newEmployee.email}
                 onChange={e => setNewEmployee({ ...newEmployee, email: e.target.value })}
@@ -1739,7 +1740,9 @@ export default function HRPage() {
               <div className="flex flex-wrap gap-2 pt-2">
                 {selectedJob.statut === 'ouvert' && (
                   <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => {
-                    setSelectedJob({ ...selectedJob, statut: 'en_cours' });
+                    const updated = { ...selectedJob, statut: 'en_cours' as const };
+                    setSelectedJob(updated);
+                    setJobOpeningsList(prev => prev.map(j => j.id === selectedJob.id ? updated : j));
                     setShowJobDetailDialog(false);
                     toast.success('Poste mis à jour', `Le poste ${selectedJob.titre} est maintenant en cours.`);
                   }}>
@@ -1749,7 +1752,9 @@ export default function HRPage() {
                 )}
                 {(selectedJob.statut === 'ouvert' || selectedJob.statut === 'en_cours') && (
                   <Button size="sm" variant="outline" className="text-xs" onClick={() => {
-                    setSelectedJob({ ...selectedJob, statut: 'ferme' });
+                    const updated = { ...selectedJob, statut: 'ferme' as const };
+                    setSelectedJob(updated);
+                    setJobOpeningsList(prev => prev.map(j => j.id === selectedJob.id ? updated : j));
                     setShowJobDetailDialog(false);
                     toast.info('Poste fermé', `Le poste ${selectedJob.titre} a été fermé.`);
                   }}>
@@ -1759,7 +1764,9 @@ export default function HRPage() {
                 )}
                 {selectedJob.statut === 'ferme' && (
                   <Button size="sm" variant="outline" className="text-xs" onClick={() => {
-                    setSelectedJob({ ...selectedJob, statut: 'ouvert' });
+                    const updated = { ...selectedJob, statut: 'ouvert' as const };
+                    setSelectedJob(updated);
+                    setJobOpeningsList(prev => prev.map(j => j.id === selectedJob.id ? updated : j));
                     setShowJobDetailDialog(false);
                     toast.success('Poste réouvert', `Le poste ${selectedJob.titre} a été réouvert.`);
                   }}>

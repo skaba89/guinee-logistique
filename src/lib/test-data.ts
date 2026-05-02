@@ -223,7 +223,7 @@ export const users: User[] = [
     password: 'admin123',
     name: 'Ahmed Benali',
     role: 'Administrateur',
-    email: 'ahmed.benali@logisway.pro',
+    email: 'ahmed.benali@guinee-logistique.pro',
     pin: '1987',
   },
   {
@@ -232,7 +232,7 @@ export const users: User[] = [
     password: 'user123',
     name: 'Fatima Khelifi',
     role: 'Agent',
-    email: 'fatima.khelifi@logisway.pro',
+    email: 'fatima.khelifi@guinee-logistique.pro',
     pin: '2456',
   },
   {

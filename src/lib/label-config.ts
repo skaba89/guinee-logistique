@@ -1,5 +1,5 @@
 /**
- * Label & Printer Configuration System — LogisWay
+ * Label & Printer Configuration System — Guinée Logistique
  * Centralized configuration for Zebra/ZPL label generation,
  * printer management, label formats, and parcel size categories.
  */
@@ -720,9 +720,9 @@ export function generateLabelPreviewSVG(data: ZPLLabelData, formatId: string): s
 
 // ─── Local Storage Keys ────────────────────────────────────────
 
-const PRINTERS_KEY = 'logisway-printers';
-const DEFAULT_PRINTER_KEY = 'logisway-default-printer';
-const LABEL_SETTINGS_KEY = 'logisway-label-settings';
+const PRINTERS_KEY = 'guinee-logistique-printers';
+const DEFAULT_PRINTER_KEY = 'guinee-logistique-default-printer';
+const LABEL_SETTINGS_KEY = 'guinee-logistique-label-settings';
 
 export interface LabelSettings {
   defaultLabelFormat: string;

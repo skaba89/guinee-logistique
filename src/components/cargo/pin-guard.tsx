@@ -1,5 +1,5 @@
 /**
- * pin-guard.tsx — Wrapper de protection par code PIN pour LogisWay
+ * pin-guard.tsx — Wrapper de protection par code PIN pour Guinée Logistique
  *
  * Supporte les codes PIN par utilisateur. Le composant récupère
  * automatiquement le PIN et l'ID de l'utilisateur connecté depuis

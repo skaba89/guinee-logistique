@@ -1,5 +1,5 @@
 /**
- * validation-engine.ts — Moteur de validation pour le module de contrôle LogisWay
+ * validation-engine.ts — Moteur de validation pour le module de contrôle Guinée Logistique
  *
  * BRANCHEMENT : Importez les fonctions depuis ce fichier. Branchez sur vos données
  * en passant un tableau d'éléments et une interface de validation.
@@ -63,7 +63,7 @@ export interface ValidationStats {
 
 // ─── Persistance localStorage ───────────────────────────────────
 
-const VALIDATION_KEY = 'logisway-validation-sessions';
+const VALIDATION_KEY = 'guinee-logistique-validation-sessions';
 
 export function loadValidationSessions(): ValidationSession[] {
   if (typeof window === 'undefined') return [];

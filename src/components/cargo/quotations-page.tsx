@@ -517,7 +517,7 @@ export default function QuotationsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-quotations-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-quotations-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -593,7 +593,7 @@ export default function QuotationsPage() {
               { key: 'createdAt', header: 'Date Création' },
               { key: 'validUntil', header: 'Validité' },
             ]}
-            filename="logisway-devis"
+            filename="guinee-logistique-devis"
             title="Rapport des Devis"
           />
           <Button variant="outline" size="sm" className="text-xs" onClick={handleExportCSV}>

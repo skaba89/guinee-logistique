@@ -1,5 +1,5 @@
 /**
- * Notifications & Workflow System — LogisWay
+ * Notifications & Workflow System — Guinée Logistique
  * Système de notifications en temps réel, workflow d'approbation,
  * alertes automatiques et règles de notification.
  */
@@ -53,7 +53,7 @@ export interface Notification {
 
 // ─── Persistance des notifications ─────────────────────────────
 
-const NOTIFICATIONS_KEY = 'logisway-notifications';
+const NOTIFICATIONS_KEY = 'guinee-logistique-notifications';
 
 export function loadNotifications(): Notification[] {
   if (typeof window === 'undefined') return [];
@@ -142,7 +142,7 @@ export interface NotificationPreferences {
   autoArchiveAfterDays: number;
 }
 
-const NOTIFICATION_PREFS_KEY = 'logisway-notification-prefs';
+const NOTIFICATION_PREFS_KEY = 'guinee-logistique-notification-prefs';
 
 export const defaultNotificationPrefs: NotificationPreferences = {
   enabledTypes: {},
@@ -207,7 +207,7 @@ export interface ApprovalRequest {
   expiresAt: string;
 }
 
-const APPROVALS_KEY = 'logisway-approvals';
+const APPROVALS_KEY = 'guinee-logistique-approvals';
 
 export function loadApprovals(): ApprovalRequest[] {
   if (typeof window === 'undefined') return [];

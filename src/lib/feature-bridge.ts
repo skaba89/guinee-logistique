@@ -1,5 +1,5 @@
 /**
- * feature-bridge.ts — Point de branchement central pour les nouvelles fonctionnalités LogisWay
+ * feature-bridge.ts — Point de branchement central pour les nouvelles fonctionnalités Guinée Logistique
  *
  * Ce fichier exporte tout ce dont vous avez besoin pour activer les nouvelles
  * fonctionnalités dans votre application. Suivez les instructions ci-dessous

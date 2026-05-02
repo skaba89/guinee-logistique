@@ -44,9 +44,9 @@ interface ChatApiResponse {
 
 // ─── Constants ────────────────────────────────────────────────────
 
-const STORAGE_KEY_HISTORY = 'logisway-chatbot-history';
-const STORAGE_KEY_OPEN = 'logisway-chatbot-open';
-const INITIAL_GREETING = "Bonjour ! 👋 Je suis FlowBot, votre assistant logistique. Comment puis-je vous aider ?";
+const STORAGE_KEY_HISTORY = 'guinee-logistique-chatbot-history';
+const STORAGE_KEY_OPEN = 'guinee-logistique-chatbot-open';
+const INITIAL_GREETING = "Bonjour ! 👋 Je suis GL Bot, votre assistant logistique. Comment puis-je vous aider ?";
 
 const QUICK_ACTIONS = [
   { label: 'Suivi d\'expédition', icon: Package, message: 'Je souhaite suivre une expédition' },
@@ -67,7 +67,7 @@ const LOGISTICS_PATTERNS: Array<{
 ];
 
 const FALLBACK_RESPONSES = [
-  "Je rencontre un problème technique, mais voici quelques conseils utiles :\n\n• Vérifiez vos numéros de suivi au format FFP-XXXX-XXXX\n• Pour les conteneurs, utilisez le format MSKU-XXXXXXX\n• Consultez le tableau de bord pour une vue d'ensemble de vos expéditions\n• Contactez notre support à support@logisway.pro",
+  "Je rencontre un problème technique, mais voici quelques conseils utiles :\n\n• Vérifiez vos numéros de suivi au format FFP-XXXX-XXXX\n• Pour les conteneurs, utilisez le format MSKU-XXXXXXX\n• Consultez le tableau de bord pour une vue d'ensemble de vos expéditions\n• Contactez notre support à support@guinee-logistique.pro",
   "Désolé, je suis temporairement indisponible. En attendant :\n\n• Vos expéditions en cours sont visibles dans la section 'Expéditions'\n• Les tarifs de fret sont mis à jour dans 'Gestion des Tarifs'\n• Pour les douanes, consultez la section dédiée\n• Notre équipe est disponible au +33 1 23 45 67 89",
   "Une erreur s'est produite. Voici ce que vous pouvez faire :\n\n• Réessayez dans quelques instants\n• Utilisez la recherche (Ctrl+K) pour trouver vos expéditions\n• Consultez les notifications pour les mises à jour\n• Les documents sont accessibles dans la section 'Documents'",
 ];
@@ -482,7 +482,7 @@ export default function ChatbotWidget() {
             onClick={toggleChat}
             className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center group cursor-pointer"
             style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
-            aria-label="Ouvrir le chat FlowBot"
+            aria-label="Ouvrir le chat GL Bot"
           >
             {/* Pulsing ring animation */}
             <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} />
@@ -492,7 +492,7 @@ export default function ChatbotWidget() {
 
             {/* Tooltip */}
             <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-              FlowBot
+              GL Bot
               <span className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-900 dark:border-l-gray-100" />
             </span>
           </motion.button>
@@ -524,10 +524,10 @@ export default function ChatbotWidget() {
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold leading-tight">FlowBot</h3>
+                  <h3 className="text-sm font-bold leading-tight">GL Bot</h3>
                   <p className="text-[11px] text-white/70 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                    Assistant IA LogisWay
+                    Assistant IA Guinée Logistique
                   </p>
                 </div>
               </div>
@@ -646,7 +646,7 @@ export default function ChatbotWidget() {
 
               {/* Footer hint */}
               <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">
-                FlowBot peut faire des erreurs. Vérifiez les informations importantes.
+                GL Bot peut faire des erreurs. Vérifiez les informations importantes.
               </p>
             </div>
           </motion.div>

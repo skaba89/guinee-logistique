@@ -1,6 +1,6 @@
 /**
  * ══════════════════════════════════════════════════════════════════
- *  Design Tokens — LogisWay
+ *  Design Tokens — Guinée Logistique
  * ══════════════════════════════════════════════════════════════════
  *
  *  Centralized design tokens for status colors, type colors,

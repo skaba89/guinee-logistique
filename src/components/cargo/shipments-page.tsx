@@ -257,7 +257,7 @@ export default function ShipmentsPage() {
     const printContent = `
       <html>
       <head>
-        <title>LogisWay — Expéditions</title>
+        <title>Guinée Logistique — Expéditions</title>
         <style>
           body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; color: #1a1a1a; }
           .header { display: flex; align-items: center; gap: 16px; border-bottom: 3px solid #0d9488; padding-bottom: 20px; margin-bottom: 24px; }
@@ -286,7 +286,7 @@ export default function ShipmentsPage() {
       <body>
         <div class="header">
           <div>
-            <div class="logo">LogisWay</div>
+            <div class="logo">Guinée Logistique</div>
             <div class="subtitle">Logistique Internationale</div>
           </div>
           <div style="margin-left: auto; text-align: right;">
@@ -340,7 +340,7 @@ export default function ShipmentsPage() {
         </table>
 
         <div class="footer">
-          LogisWay — Plateforme de Logistique Internationale | Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
+          Guinée Logistique — Plateforme de Logistique Internationale | Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}
         </div>
       </body>
       </html>
@@ -380,7 +380,7 @@ export default function ShipmentsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-shipments-${new Date().toISOString().slice(0,10)}.xls`;
+    a.download = `guinee-logistique-shipments-${new Date().toISOString().slice(0,10)}.xls`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -408,7 +408,7 @@ export default function ShipmentsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-shipments-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-shipments-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -435,7 +435,7 @@ export default function ShipmentsPage() {
               { key: 'price', header: 'Prix' },
               { key: 'dateCreation', header: 'Date création' },
             ]}
-            filename="logisway-expeditions"
+            filename="guinee-logistique-expeditions"
             title="Rapport des Expéditions"
           />
           {/* Export dropdown */}

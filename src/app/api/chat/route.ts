@@ -10,7 +10,7 @@ interface ChatRequestBody {
   history: ChatHistoryItem[];
 }
 
-const SYSTEM_PROMPT = `Tu es FlowBot, l'assistant IA de LogisWay, une plateforme logistique professionnelle. Tu aides les utilisateurs avec :
+const SYSTEM_PROMPT = `Tu es GL Bot, l'assistant IA de Guinée Logistique, une plateforme logistique professionnelle. Tu aides les utilisateurs avec :
 
 - Suivi d'expéditions (numéros FFP-XXXX-XXXX)
 - Statut des conteneurs maritimes (numéros MSKU-XXXXXXX)
@@ -29,7 +29,7 @@ Règles :
 - Si on te donne un numéro de suivi, simule une réponse de suivi réaliste
 - Donne des conseils pratiques et concrets
 - Utilise des emojis avec parcimonie pour rendre la conversation agréable
-- Si tu ne connais pas quelque chose, oriente vers le support (support@logisway.pro)
+- Si tu ne connais pas quelque chose, oriente vers le support (support@guinee-logistique.pro)
 - Garde tes réponses concises (max 3-4 paragraphes)`;
 
 // Simulated logistics data for realistic responses
@@ -82,7 +82,7 @@ function generateLogisticsResponse(message: string, history: ChatHistoryItem[]):
 
   // Aide
   if (lowerMsg.includes('aide') || lowerMsg.includes('help') || lowerMsg.includes('besoin') || lowerMsg.includes('problème') || lowerMsg.includes('probleme')) {
-    return `🤝 **Comment puis-je vous aider ?**\n\nVoici ce que je peux faire pour vous :\n\n📦 **Suivi** — Suivez vos expéditions en temps réel\n💼 **Tarifs** — Consultez les tarifs de fret actuels\n📋 **Colis** — Vérifiez le statut de vos colis\n✈️ **Vols** — Info sur les vols de fret\n🚢 **Maritime** — Conteneurs et navires\n🏢 **Douanes** — Procédures et documents\n\n💡 **Astuce** : Utilisez Ctrl+K pour rechercher rapidement dans toute la plateforme.\n\nPour un support technique, contactez : support@logisway.pro`;
+    return `🤝 **Comment puis-je vous aider ?**\n\nVoici ce que je peux faire pour vous :\n\n📦 **Suivi** — Suivez vos expéditions en temps réel\n💼 **Tarifs** — Consultez les tarifs de fret actuels\n📋 **Colis** — Vérifiez le statut de vos colis\n✈️ **Vols** — Info sur les vols de fret\n🚢 **Maritime** — Conteneurs et navires\n🏢 **Douanes** — Procédures et documents\n\n💡 **Astuce** : Utilisez Ctrl+K pour rechercher rapidement dans toute la plateforme.\n\nPour un support technique, contactez : support@guinee-logistique.pro`;
   }
 
   // Douanes
@@ -116,7 +116,7 @@ function generateLogisticsResponse(message: string, history: ChatHistoryItem[]):
   }
 
   // Default response
-  return `Merci pour votre question ! 🤔\n\nJe suis FlowBot, votre assistant logistique. Je peux vous aider avec :\n\n📦 **Suivi** — Donnez-moi un numéro (FFP-XXXX-XXXX, MSKU-XXXXXXX, etc.)\n💰 **Tarifs** — Demandez les tarifs de fret\n📋 **Colis** — Vérifiez le statut de vos colis\n🏢 **Douanes** — Procédures et documents\n🛡️ **Assurance** — Couvertures et réclamations\n📜 **Incoterms** — Guides et explications\n\nComment puis-je vous être utile ?`;
+  return `Merci pour votre question ! 🤔\n\nJe suis GL Bot, votre assistant logistique. Je peux vous aider avec :\n\n📦 **Suivi** — Donnez-moi un numéro (FFP-XXXX-XXXX, MSKU-XXXXXXX, etc.)\n💰 **Tarifs** — Demandez les tarifs de fret\n📋 **Colis** — Vérifiez le statut de vos colis\n🏢 **Douanes** — Procédures et documents\n🛡️ **Assurance** — Couvertures et réclamations\n📜 **Incoterms** — Guides et explications\n\nComment puis-je vous être utile ?`;
 }
 
 export async function POST(request: NextRequest) {

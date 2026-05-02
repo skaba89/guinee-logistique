@@ -38,6 +38,7 @@ import {
   ThumbsDown,
   AlertTriangle,
   FileCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -163,10 +164,10 @@ export default function SettingsPage() {
   }, [permissionMatrix, selectedPermGroup]);
 
   const [companyInfo, setCompanyInfo] = useState({
-    name: 'LogisWay',
+    name: 'Guinée Logistique',
     address: '23 Rue Didouche Mourad, Alger Centre',
     phone: '+213 21 00 00 00',
-    email: 'contact@logisway.pro',
+    email: 'contact@guinee-logistique.pro',
   });
 
   const [notifications, setNotifications] = useState({
@@ -188,7 +189,7 @@ export default function SettingsPage() {
   }>>(() => {
     if (typeof window === 'undefined') return [];
     try {
-      const raw = localStorage.getItem('logisway-printers');
+      const raw = localStorage.getItem('guinee-logistique-printers');
       if (raw) return JSON.parse(raw);
     } catch { /* ignore */ }
     return [
@@ -243,7 +244,7 @@ export default function SettingsPage() {
     primaryColor: '#0d9488',
     secondaryColor: '#059669',
     logoUrl: '',
-    companyName: 'LogisWay',
+    companyName: 'Guinée Logistique',
   });
 
   const handleSave = () => {
@@ -1565,7 +1566,7 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500 text-xs">Application</p>
-              <p className="font-medium">LogisWay</p>
+              <p className="font-medium">Guinée Logistique</p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">Version</p>
@@ -1573,7 +1574,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <p className="text-gray-500 text-xs">Support technique</p>
-              <p className="font-medium">support@logisway.pro</p>
+              <p className="font-medium">support@guinee-logistique.pro</p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">Contact commercial</p>
@@ -1581,7 +1582,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-xs text-gray-500">
-            © 2026 LogisWay. Tous droits réservés. Plateforme logistique mondiale.
+            © 2026 Guinée Logistique. Tous droits réservés. Plateforme logistique mondiale.
           </div>
         </CardContent>
       </Card>

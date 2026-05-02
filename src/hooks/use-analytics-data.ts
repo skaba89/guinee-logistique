@@ -1,5 +1,5 @@
 /**
- * use-analytics-data.ts — Hook de données pour le tableau analytique LogisWay
+ * use-analytics-data.ts — Hook de données pour le tableau analytique Guinée Logistique
  *
  * BRANCHEMENT : Ce hook lit les données depuis test-data.ts.
  * Pour le connecter à une vraie API/DB, remplacez les imports de test-data

@@ -1,5 +1,5 @@
 /**
- * validation-module.tsx — Module de contrôle / validation pour LogisWay
+ * validation-module.tsx — Module de contrôle / validation pour Guinée Logistique
  *
  * BRANCHEMENT : Importez ValidationModule depuis ce fichier.
  * Fournissez les éléments à valider via la prop `items`.

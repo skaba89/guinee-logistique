@@ -509,9 +509,9 @@ export default function ParcelsPage() {
       carrier: parcel.carrier,
       price: parcel.price,
       barcode: parcel.barcode,
-      qrData: `https://logisway.pro/track/${parcel.trackingNumber}`,
+      qrData: `https://guinee-logistique.pro/track/${parcel.trackingNumber}`,
       date: new Date().toLocaleDateString('fr-FR'),
-      companyName: 'LogisWay',
+      companyName: 'Guinée Logistique',
     };
 
     const printer = printers.find(p => p.id === selectedPrinterId);
@@ -597,7 +597,7 @@ export default function ParcelsPage() {
               { key: 'serviceLevel', header: 'Service' },
               { key: 'price', header: 'Prix' },
             ]}
-            filename="logisway-colis"
+            filename="guinee-logistique-colis"
             title="Rapport des Colis"
           />
           <Button className="text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => setShowAddDialog(true)}>

@@ -420,7 +420,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* ─── Mobile Sidebar (Sheet) ────────────────────────────── */}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent side="left" className="p-0 w-72 sm:max-w-xs" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #0a2520 100%)' }}>
-            <SheetTitle className="sr-only">Navigation LogisWay</SheetTitle>
+            <SheetTitle className="sr-only">Navigation Guinée Logistique</SheetTitle>
             <CollapsibleSidebarNav collapsed={false} onNavigate={() => setSidebarOpen(false)} />
           </SheetContent>
         </Sheet>
@@ -637,7 +637,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 className="flex items-center gap-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors font-medium"
               >
                 <Home className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">LogisWay</span>
+                <span className="hidden sm:inline">Guinée Logistique</span>
               </button>
               <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
               <motion.span
@@ -667,7 +667,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </main>
         </div>
 
-        {/* FlowBot Chatbot Widget */}
+        {/* GL Bot Chatbot Widget */}
         <ChatbotWidget />
 
         {/* Command Palette Dialog */}

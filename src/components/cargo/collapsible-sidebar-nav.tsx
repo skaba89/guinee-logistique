@@ -2,7 +2,7 @@
 
 /**
  * ══════════════════════════════════════════════════════════════════
- *  Collapsible Sidebar Navigation — LogisWay
+ *  Collapsible Sidebar Navigation — Guinée Logistique
  * ══════════════════════════════════════════════════════════════════
  *
  *  Barre latérale avec menus déroulants par catégorie.
@@ -225,7 +225,7 @@ export default function CollapsibleSidebarNav({ collapsed = false, onNavigate }:
             </div>
           </div>
           <div>
-            <h1 className="text-base font-bold text-white tracking-tight">LogisWay</h1>
+            <h1 className="text-base font-bold text-white tracking-tight">Guinée Logistique</h1>
             <p className="text-[9px] text-teal-300/50 uppercase tracking-widest">Logistique</p>
           </div>
         </div>

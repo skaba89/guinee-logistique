@@ -354,7 +354,7 @@ const mockTickets: PortalTicket[] = [
     subject: 'Retard de livraison FFP-0005-2026', description: 'Mon expédition FFP-0005-2026 est en retard depuis plus de 2 semaines. Veuillez me fournir une mise à jour sur le statut.',
     createdAt: '2026-02-15', updatedAt: '2026-02-16', shipmentRef: 'FFP-0005-2026',
     responses: [
-      { date: '2026-02-16', author: 'Support LogisWay', message: 'Bonjour, nous vérifions le statut de votre expédition. Le retard est dû à des conditions météorologiques défavorables dans les Alpes. Nous vous tiendrons informé.' },
+      { date: '2026-02-16', author: 'Support Guinée Logistique', message: 'Bonjour, nous vérifions le statut de votre expédition. Le retard est dû à des conditions météorologiques défavorables dans les Alpes. Nous vous tiendrons informé.' },
     ],
   },
   {
@@ -368,7 +368,7 @@ const mockTickets: PortalTicket[] = [
     subject: 'Problème de dédouanement FFP-0007-2026', description: 'Le colis FFP-0007-2026 est bloqué en douane à Casablanca. Les documents fournis ne sont pas conformes.',
     createdAt: '2026-03-01', updatedAt: '2026-03-02', shipmentRef: 'FFP-0007-2026',
     responses: [
-      { date: '2026-03-02', author: 'Support LogisWay', message: 'Nous avons contacté notre agent en douane à Casablanca. Des documents complémentaires vous seront demandés par email.' },
+      { date: '2026-03-02', author: 'Support Guinée Logistique', message: 'Nous avons contacté notre agent en douane à Casablanca. Des documents complémentaires vous seront demandés par email.' },
     ],
   },
   {
@@ -376,7 +376,7 @@ const mockTickets: PortalTicket[] = [
     subject: 'Question sur l\'assurance transport', description: 'Quelle est la couverture d\'assurance incluse dans mon contrat pour les expéditions maritimes ?',
     createdAt: '2026-01-25', updatedAt: '2026-01-26',
     responses: [
-      { date: '2026-01-26', author: 'Support LogisWay', message: 'Votre contrat inclut une assurance tous risques couvrant la valeur déclarée de la marchandise jusqu\'à 150% du CIF. Pour plus de détails, consultez la section assurance de votre portail.' },
+      { date: '2026-01-26', author: 'Support Guinée Logistique', message: 'Votre contrat inclut une assurance tous risques couvrant la valeur déclarée de la marchandise jusqu\'à 150% du CIF. Pour plus de détails, consultez la section assurance de votre portail.' },
     ],
   },
   {
@@ -765,13 +765,13 @@ export default function CustomerPortalPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `logisway-customer-portal-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `guinee-logistique-customer-portal-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const handleDownloadDocument = (doc: PortalDocument) => {
-    const content = `DOCUMENT - ${doc.name}\n${'='.repeat(40)}\n\nType: ${documentTypeLabels[doc.type]}\nRéférence expédition: ${doc.shipmentRef}\nDate: ${formatDate(doc.date)}\nTaille: ${doc.fileSize}\n\nCe document est généré à titre d'aperçu.\nPour obtenir le document original, veuillez contacter votre chargé d'affaires LogisWay.`;
+    const content = `DOCUMENT - ${doc.name}\n${'='.repeat(40)}\n\nType: ${documentTypeLabels[doc.type]}\nRéférence expédition: ${doc.shipmentRef}\nDate: ${formatDate(doc.date)}\nTaille: ${doc.fileSize}\n\nCe document est généré à titre d'aperçu.\nPour obtenir le document original, veuillez contacter votre chargé d'affaires Guinée Logistique.`;
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -884,7 +884,7 @@ export default function CustomerPortalPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4" style={{ background: 'rgba(15, 23, 42, 0.05)' }}>
+        <TabsList className="grid w-full grid-cols-5" style={{ background: 'rgba(15, 23, 42, 0.05)' }}>
           <TabsTrigger value="suivi" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white">
             <Package className="w-4 h-4 mr-1 hidden sm:inline" />
             Suivi
@@ -896,6 +896,10 @@ export default function CustomerPortalPage() {
           <TabsTrigger value="devis" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white">
             <ArrowUpDown className="w-4 h-4 mr-1 hidden sm:inline" />
             Devis
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white">
+            <Paperclip className="w-4 h-4 mr-1 hidden sm:inline" />
+            Documents
           </TabsTrigger>
           <TabsTrigger value="support" className="text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white">
             <MessageSquare className="w-4 h-4 mr-1 hidden sm:inline" />
@@ -1025,77 +1029,81 @@ export default function CustomerPortalPage() {
             <PaginationControls current={shipmentPage} total={shipmentTotalPages} onChange={setShipmentPage} />
           </Card>
 
-          {/* Documents section under Suivi */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Paperclip className="w-4 h-4 text-teal-600" />
+        </TabsContent>
+
+        {/* ─── Documents Tab ──────────────────────────────────────────────────── */}
+        <TabsContent value="documents" className="mt-4 space-y-4">
+          {/* Documents header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Paperclip className="w-5 h-5 text-teal-600" />
                 Mes Documents
-              </CardTitle>
-              <CardDescription>Connaissements, factures, documents douaniers</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Document</TableHead>
-                      <TableHead className="text-xs">Type</TableHead>
-                      <TableHead className="text-xs hidden sm:table-cell">Expédition</TableHead>
-                      <TableHead className="text-xs hidden md:table-cell">Date</TableHead>
-                      <TableHead className="text-xs hidden md:table-cell">Taille</TableHead>
-                      <TableHead className="text-xs">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {documents.map((doc) => (
-                      <TableRow key={doc.id}>
-                        <TableCell className="text-xs font-medium">
-                          <div className="flex items-center gap-2">
-                            <span>{documentTypeIcons[doc.type]}</span>
-                            <span className="truncate max-w-[160px]">{doc.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
-                            {documentTypeLabels[doc.type]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs font-mono hidden sm:table-cell">{doc.shipmentRef}</TableCell>
-                        <TableCell className="text-xs hidden md:table-cell">{formatDate(doc.date)}</TableCell>
-                        <TableCell className="text-xs hidden md:table-cell">{doc.fileSize}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs gap-1"
-                              style={{ color: '#0d9488' }}
-                              onClick={() => { setShowDocumentPreview(doc); toast.info('Aperçu document', `Consultation de ${doc.name}`); }}
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              Voir
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs gap-1"
-                              disabled={!doc.downloadable}
-                              style={doc.downloadable ? { color: '#0d9488' } : {}}
-                              onClick={() => handleDownloadDocument(doc)}
-                            >
-                              <FileDown className="w-3.5 h-3.5" />
-                              {doc.downloadable ? 'Télécharger' : 'Bientôt'}
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Connaissements, factures, documents douaniers</p>
+            </div>
+            <Badge variant="secondary" className="text-xs">{documents.length} documents</Badge>
+          </div>
+
+          {/* Document Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {documents.map((doc) => (
+              <Card key={doc.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-lg flex-shrink-0">
+                      {documentTypeIcons[doc.type]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{doc.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+                          {documentTypeLabels[doc.type]}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider">Expédition</p>
+                      <p className="font-mono font-medium text-gray-700 dark:text-gray-300 truncate">{doc.shipmentRef}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider">Date</p>
+                      <p className="font-medium text-gray-700 dark:text-gray-300">{formatDate(doc.date)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider">Taille</p>
+                      <p className="font-medium text-gray-700 dark:text-gray-300">{doc.fileSize}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs gap-1 flex-1"
+                      style={{ color: '#0d9488' }}
+                      onClick={() => { setShowDocumentPreview(doc); toast.info('Aperçu document', `Consultation de ${doc.name}`); }}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      Voir
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 text-xs gap-1 flex-1"
+                      disabled={!doc.downloadable}
+                      style={doc.downloadable ? { color: '#0d9488' } : {}}
+                      onClick={() => handleDownloadDocument(doc)}
+                    >
+                      <FileDown className="w-3.5 h-3.5" />
+                      {doc.downloadable ? 'Télécharger' : 'Bientôt'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
         {/* ─── Factures Tab ──────────────────────────────────────────────────── */}
