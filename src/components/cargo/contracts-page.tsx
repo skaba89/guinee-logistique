@@ -469,6 +469,36 @@ export default function ContractsPage() {
     setNewRateCards([{ origin: '', destination: '', ratePerKg: 0, ratePerContainer: 0, ratePerKm: 0, transitTime: '' }]);
   };
 
+  const handleDownloadContract = (contract: Contract) => {
+    const content = `CONTRAT TRANSPORTEUR - ${contract.contractNumber}\n${'='.repeat(50)}\n\nTransporteur: ${contract.carrier}\nType: ${typeLabels[contract.type]}\nRoute: ${contract.mainRoute}\nDate début: ${formatDate(contract.startDate)}\nDate fin: ${formatDate(contract.endDate)}\nValeur annuelle: ${formatCurrency(contract.annualValue, symbol)}\nStatut: ${statusLabels[contract.status]}\nConformité: ${contract.compliance}%\nPonctualité: ${contract.onTimeDelivery}%\n\nCONDITIONS GÉNÉRALES\n${'-'.repeat(30)}\n${contract.terms}\n\nCONDITIONS DE PAIEMENT\n${'-'.repeat(30)}\n${contract.paymentTerms}\n\nSLA LIVRAISON\n${'-'.repeat(30)}\nDélai: ${contract.slaDeliveryDays} jours\nLimite avarie: ${contract.slaDamageLimit}%\n\nCLAUSE DE PÉNALITÉ\n${'-'.repeat(30)}\n${contract.penaltyClause}\n\nCONDITIONS SPÉCIALES\n${'-'.repeat(30)}\n${contract.specialConditions}\n\nGRILLE TARIFAIRE\n${'-'.repeat(30)}\n${contract.rateCards.map(rc => `${rc.origin} → ${rc.destination}: ${rc.ratePerKg > 0 ? rc.ratePerKg + ' ' + symbol + '/kg' : rc.ratePerContainer > 0 ? rc.ratePerContainer + ' ' + symbol + '/EVP' : rc.ratePerKm > 0 ? rc.ratePerKm + ' ' + symbol + '/km' : 'N/A'} (Transit: ${rc.transitTime})`).join('\n')}\n\n${contract.amendments.length > 0 ? 'AVENANTS\n' + '-'.repeat(30) + '\n' + contract.amendments.map(a => `[${formatDate(a.date)}] ${a.description} — ${a.author}`).join('\n') : ''}\n`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `contrat-${contract.contractNumber}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRenewContract = (contract: Contract) => {
+    const renewed: Contract = {
+      ...contract,
+      id: `ct${data.length + 1}`,
+      contractNumber: `CTR-2026-${String(data.length + 1).padStart(3, '0')}`,
+      startDate: contract.endDate,
+      endDate: new Date(new Date(contract.endDate).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      status: 'en_negociation',
+      amendments: [...contract.amendments, { id: `a${Date.now()}`, date: new Date().toISOString().split('T')[0], description: 'Renouvellement du contrat', author: 'Ahmed Benali' }],
+    };
+    setData([renewed, ...data]);
+    setShowDetailDialog(false);
+  };
+
+  const handleResiliateContract = (contract: Contract) => {
+    setData(prev => prev.map(c => c.id === contract.id ? { ...c, status: 'resilie' as ContractStatus } : c));
+    setShowDetailDialog(false);
+  };
+
   const toggleCompare = (id: string) => {
     setCompareIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : prev.length < 4 ? [...prev, id] : prev);
   };
@@ -663,7 +693,7 @@ export default function ContractsPage() {
                                 <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={e => { e.stopPropagation(); handleViewDetail(contract); }}>
                                   <Eye className="w-4 h-4 text-gray-400" />
                                 </button>
-                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={e => e.stopPropagation()}>
+                                <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" onClick={e => { e.stopPropagation(); handleDownloadContract(contract); }}>
                                   <Download className="w-4 h-4 text-gray-400" />
                                 </button>
                               </div>
@@ -1134,18 +1164,18 @@ export default function ContractsPage() {
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-2 pt-2">
                 {selectedContract.status === 'actif' && daysUntil(selectedContract.endDate) <= 90 && (
-                  <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}>
+                  <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => handleRenewContract(selectedContract)}>
                     <RefreshCw className="w-4 h-4 mr-1" />Renouveler
                   </Button>
                 )}
-                <Button size="sm" variant="outline" className="text-xs">
+                <Button size="sm" variant="outline" className="text-xs" onClick={() => setShowDetailDialog(false)}>
                   <Edit className="w-4 h-4 mr-1" />Modifier
                 </Button>
-                <Button size="sm" variant="outline" className="text-xs">
+                <Button size="sm" variant="outline" className="text-xs" onClick={() => handleDownloadContract(selectedContract)}>
                   <Download className="w-4 h-4 mr-1" />Télécharger PDF
                 </Button>
                 {selectedContract.status === 'actif' && (
-                  <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20">
+                  <Button size="sm" variant="outline" className="text-xs text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleResiliateContract(selectedContract)}>
                     <Trash2 className="w-4 h-4 mr-1" />Résilier
                   </Button>
                 )}

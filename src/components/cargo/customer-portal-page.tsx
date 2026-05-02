@@ -592,6 +592,7 @@ export default function CustomerPortalPage() {
   const [showShipmentDetail, setShowShipmentDetail] = useState<PortalShipment | null>(null);
   const [showInvoiceDetail, setShowInvoiceDetail] = useState<PortalInvoice | null>(null);
   const [showTicketDetail, setShowTicketDetail] = useState<PortalTicket | null>(null);
+  const [showDocumentPreview, setShowDocumentPreview] = useState<PortalDocument | null>(null);
 
   // New ticket form
   const [newTicket, setNewTicket] = useState({
@@ -763,6 +764,17 @@ export default function CustomerPortalPage() {
     const a = document.createElement('a');
     a.href = url;
     a.download = `logisway-customer-portal-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadDocument = (doc: PortalDocument) => {
+    const content = `DOCUMENT - ${doc.name}\n${'='.repeat(40)}\n\nType: ${documentTypeLabels[doc.type]}\nRéférence expédition: ${doc.shipmentRef}\nDate: ${formatDate(doc.date)}\nTaille: ${doc.fileSize}\n\nCe document est généré à titre d'aperçu.\nPour obtenir le document original, veuillez contacter votre chargé d'affaires LogisWay.`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${doc.name.replace(/\s+/g, '-')}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -1050,16 +1062,30 @@ export default function CustomerPortalPage() {
                         <TableCell className="text-xs hidden md:table-cell">{formatDate(doc.date)}</TableCell>
                         <TableCell className="text-xs hidden md:table-cell">{doc.fileSize}</TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs gap-1"
-                            disabled={!doc.downloadable}
-                            style={doc.downloadable ? { color: '#0d9488' } : {}}
-                          >
-                            <FileDown className="w-3.5 h-3.5" />
-                            {doc.downloadable ? 'Télécharger' : 'Bientôt'}
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              disabled={!doc.downloadable}
+                              style={doc.downloadable ? { color: '#0d9488' } : {}}
+                              onClick={() => setShowDocumentPreview(doc)}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Voir
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              disabled={!doc.downloadable}
+                              style={doc.downloadable ? { color: '#0d9488' } : {}}
+                              onClick={() => handleDownloadDocument(doc)}
+                            >
+                              <FileDown className="w-3.5 h-3.5" />
+                              {doc.downloadable ? 'Télécharger' : 'Bientôt'}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1810,6 +1836,80 @@ export default function CustomerPortalPage() {
               Soumettre le ticket
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Document Preview Dialog ──────────────────────────────────── */}
+      <Dialog open={!!showDocumentPreview} onOpenChange={(open) => { if (!open) setShowDocumentPreview(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Paperclip className="w-5 h-5 text-teal-500" />
+              Aperçu du document
+            </DialogTitle>
+            <DialogDescription>Informations et actions pour ce document</DialogDescription>
+          </DialogHeader>
+          {showDocumentPreview && (
+            <div className="space-y-4">
+              {/* Document Header */}
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center flex-shrink-0 text-xl">
+                  {documentTypeIcons[showDocumentPreview.type]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base truncate">{showDocumentPreview.name}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400 mr-2">
+                      {documentTypeLabels[showDocumentPreview.type]}
+                    </Badge>
+                  </p>
+                </div>
+              </div>
+
+              {/* Document Info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <span className="text-xs text-gray-500">Référence expédition</span>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5 font-mono">{showDocumentPreview.shipmentRef}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <span className="text-xs text-gray-500">Date</span>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">{formatDate(showDocumentPreview.date)}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <span className="text-xs text-gray-500">Taille du fichier</span>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">{showDocumentPreview.fileSize}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <span className="text-xs text-gray-500">Disponibilité</span>
+                  <p className={`text-sm font-medium mt-0.5 ${showDocumentPreview.downloadable ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {showDocumentPreview.downloadable ? 'Disponible' : 'En cours de traitement'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Preview area */}
+              <div className="p-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-center">
+                <div className="text-3xl mb-2">{documentTypeIcons[showDocumentPreview.type]}</div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{showDocumentPreview.name}</p>
+                <p className="text-xs text-gray-500 mt-1">Aperçu du document — {showDocumentPreview.fileSize}</p>
+                <p className="text-[10px] text-gray-400 mt-2">Pour des raisons de sécurité, l'aperçu complet est disponible après téléchargement.</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                {showDocumentPreview.downloadable && (
+                  <Button size="sm" className="flex-1 text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => handleDownloadDocument(showDocumentPreview)}>
+                    <FileDown className="w-4 h-4 mr-1" />
+                    Télécharger
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setShowDocumentPreview(null)}>
+                  Fermer
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

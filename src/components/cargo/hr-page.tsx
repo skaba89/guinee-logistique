@@ -380,6 +380,11 @@ export default function HRPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
+  // Recruitment detail dialog state
+  const [showJobDetailDialog, setShowJobDetailDialog] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<JobOpening | null>(null);
+  const [jobSearchQuery, setJobSearchQuery] = useState('');
+
   // Add employee form state
   const [newEmployee, setNewEmployee] = useState({
     prenom: '',
@@ -1059,7 +1064,7 @@ export default function HRPage() {
                           </div>
                           <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
                             <span className="text-[10px] text-gray-400">Publié le {formatDate(job.datePublication)}</span>
-                            <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-600 hover:text-teal-700">
+                            <Button variant="ghost" size="sm" className="h-7 text-xs text-teal-600 hover:text-teal-700" onClick={() => { setSelectedJob(job); setShowJobDetailDialog(true); }}>
                               Détails
                               <ChevronRight className="w-3 h-3 ml-1" />
                             </Button>
@@ -1639,6 +1644,124 @@ export default function HRPage() {
               Enregistrer
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Job Detail Dialog ──────────────────────────────────────── */}
+      <Dialog open={showJobDetailDialog} onOpenChange={setShowJobDetailDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-teal-500" />
+              Détails du poste
+            </DialogTitle>
+            <DialogDescription>Informations complètes sur l'offre d'emploi</DialogDescription>
+          </DialogHeader>
+          {selectedJob && (
+            <div className="space-y-4">
+              {/* Job Header */}
+              <div className="flex items-start gap-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                  {React.createElement(getDeptIcon(selectedJob.departement), { className: 'w-5 h-5 text-white' })}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base">{selectedJob.titre}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedJob.departement}</p>
+                </div>
+                <Badge variant="secondary" className={`text-xs px-2.5 py-1 ${jobStatusConfig[selectedJob.statut].color}`}>
+                  {jobStatusConfig[selectedJob.statut].label}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-500">Lieu</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedJob.lieu}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FileText className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-500">Type de contrat</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedJob.typeContrat}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-500">Candidats</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedJob.candidats} candidat(s)</p>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-500">Publié le</span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{formatDate(selectedJob.datePublication)}</p>
+                </div>
+              </div>
+
+              {/* Candidate Pipeline */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  Pipeline de recrutement
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+                    <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Candidatures reçues</span>
+                    <span className="text-sm font-bold text-emerald-600">{selectedJob.candidats}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                    <span className="text-xs text-blue-700 dark:text-blue-400 font-medium">En cours d'entretien</span>
+                    <span className="text-sm font-bold text-blue-600">{Math.floor(selectedJob.candidats * 0.3)}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                    <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">Tests techniques</span>
+                    <span className="text-sm font-bold text-amber-600">{Math.floor(selectedJob.candidats * 0.15)}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-teal-50 dark:bg-teal-900/20">
+                    <span className="text-xs text-teal-700 dark:text-teal-400 font-medium">Sélectionnés</span>
+                    <span className="text-sm font-bold text-teal-600">{selectedJob.candidats > 0 ? 1 : 0}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {selectedJob.statut === 'ouvert' && (
+                  <Button size="sm" className="text-xs text-white" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} onClick={() => {
+                    setSelectedJob({ ...selectedJob, statut: 'en_cours' });
+                    setShowJobDetailDialog(false);
+                  }}>
+                    <UserPlus className="w-4 h-4 mr-1" />
+                    Passer en cours
+                  </Button>
+                )}
+                {(selectedJob.statut === 'ouvert' || selectedJob.statut === 'en_cours') && (
+                  <Button size="sm" variant="outline" className="text-xs" onClick={() => {
+                    setSelectedJob({ ...selectedJob, statut: 'ferme' });
+                    setShowJobDetailDialog(false);
+                  }}>
+                    <XCircle className="w-4 h-4 mr-1" />
+                    Fermer le poste
+                  </Button>
+                )}
+                {selectedJob.statut === 'ferme' && (
+                  <Button size="sm" variant="outline" className="text-xs" onClick={() => {
+                    setSelectedJob({ ...selectedJob, statut: 'ouvert' });
+                    setShowJobDetailDialog(false);
+                  }}>
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    Réouvrir le poste
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

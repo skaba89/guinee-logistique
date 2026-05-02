@@ -27,6 +27,9 @@ import {
   ChevronDown,
   MoreHorizontal,
   Download,
+  Eye,
+  Edit3,
+  Trash2,
 } from 'lucide-react';
 import {
   BarChart,
@@ -44,6 +47,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { useCurrency } from '@/lib/use-currency';
 
 /* ─── Types ─── */
@@ -198,6 +216,10 @@ export default function ExpensesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [expenseData, setExpenseData] = useState<ExpenseEntry[]>(expenses);
   const [newExpense, setNewExpense] = useState({ employe: '', categorie: 'deplacement' as ExpenseCategory, montant: '', description: '', departement: '' });
+
+  // Expense detail/view dialog
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseEntry | null>(null);
 
   /* KPI calculations */
   const totalDepenses = expenseData.reduce((a, b) => a + b.montant, 0);
@@ -532,9 +554,50 @@ export default function ExpensesPage() {
                                 </Badge>
                               </td>
                               <td className="px-4 py-3 hidden md:table-cell">
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                  <MoreHorizontal className="w-4 h-4" />
-                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                      <MoreHorizontal className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem className="text-xs" onClick={() => { setSelectedExpense(exp); setShowDetailDialog(true); }}>
+                                      <Eye className="w-3.5 h-3.5 mr-2" />
+                                      Voir les détails
+                                    </DropdownMenuItem>
+                                    {exp.statut === 'en_attente' && (
+                                      <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-xs text-emerald-600" onClick={() => handleApprove(exp.id)}>
+                                          <CheckCircle2 className="w-3.5 h-3.5 mr-2" />
+                                          Approuver
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-xs text-red-600" onClick={() => handleReject(exp.id)}>
+                                          <XCircle className="w-3.5 h-3.5 mr-2" />
+                                          Rejeter
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
+                                    {exp.statut !== 'rejetee' && (
+                                      <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-xs" onClick={() => {
+                                          const content = `NOTE DE FRAIS - ${exp.id}\n${'='.repeat(40)}\n\nEmployé: ${exp.employe}\nCatégorie: ${CATEGORY_LABELS[exp.categorie]}\nMontant: ${formatPrice(exp.montant)}\nDate: ${new Date(exp.date).toLocaleDateString('fr-FR')}\nStatut: ${STATUS_LABELS[exp.statut]}\nDescription: ${exp.description}\nDépartement: ${exp.departement}`;
+                                          const blob = new Blob([content], { type: 'text/plain;charset=utf-8;' });
+                                          const url = URL.createObjectURL(blob);
+                                          const a = document.createElement('a');
+                                          a.href = url;
+                                          a.download = `note-frais-${exp.id}.txt`;
+                                          a.click();
+                                          URL.revokeObjectURL(url);
+                                        }}>
+                                          <Download className="w-3.5 h-3.5 mr-2" />
+                                          Télécharger
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </td>
                             </motion.tr>
                           );
@@ -905,6 +968,80 @@ export default function ExpensesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ─── Expense Detail Dialog ──────────────────────────────────── */}
+      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-teal-500" />
+              Détails de la note de frais
+            </DialogTitle>
+            <DialogDescription>Informations complètes sur la dépense</DialogDescription>
+          </DialogHeader>
+          {selectedExpense && (() => {
+            const CatIcon = CATEGORY_ICONS[selectedExpense.categorie];
+            return (
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <CatIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-base">{selectedExpense.id}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{selectedExpense.employe}</p>
+                  </div>
+                  <Badge variant="secondary" className={`text-xs px-2.5 py-1 ${STATUS_COLORS[selectedExpense.statut]}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full mr-1 ${STATUS_DOT[selectedExpense.statut]}`} />
+                    {STATUS_LABELS[selectedExpense.statut]}
+                  </Badge>
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <span className="text-xs text-gray-500">Montant</span>
+                    <p className="text-base font-bold text-gray-900 dark:text-white mt-0.5">{formatPrice(selectedExpense.montant)}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <span className="text-xs text-gray-500">Catégorie</span>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">{CATEGORY_LABELS[selectedExpense.categorie]}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <span className="text-xs text-gray-500">Date</span>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">{new Date(selectedExpense.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                    <span className="text-xs text-gray-500">Département</span>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white mt-0.5">{selectedExpense.departement}</p>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <span className="text-xs text-gray-500">Description</span>
+                  <p className="text-sm text-gray-900 dark:text-white mt-0.5">{selectedExpense.description}</p>
+                </div>
+
+                {/* Actions */}
+                {selectedExpense.statut === 'en_attente' && (
+                  <div className="flex gap-2 pt-2">
+                    <Button size="sm" className="flex-1 text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 h-9 text-xs" onClick={() => { handleApprove(selectedExpense.id); setShowDetailDialog(false); }}>
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                      Approuver
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1 h-9 text-xs text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-950/30" onClick={() => { handleReject(selectedExpense.id); setShowDetailDialog(false); }}>
+                      <XCircle className="w-3.5 h-3.5 mr-1" />
+                      Rejeter
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

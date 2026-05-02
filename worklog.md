@@ -1,60 +1,48 @@
 ---
 Task ID: 1
 Agent: Main Agent
-Task: UI/UX Improvements for LogisWay
+Task: Fix 4 bugs: Contrats actions, RH Recrutement détails, Notes de frais menu 3 points, Portail Client Documents
 
 Work Log:
-- Added sidebarCollapsed and pageHistory state to cargo-store.ts with persistence
-- Created page-skeleton.tsx with KPI, Chart, Table, Dashboard, and Generic skeletons
-- Created toast-provider.tsx with success/error/warning/info toast types
-- Created design-tokens.ts with centralized status colors, type colors, brand gradient, chart palette
-- Created tooltip.tsx and skeleton.tsx UI primitives (were missing)
-- Rewrote dashboard-layout.tsx with:
-  - Collapsible sidebar (icon-only mode) with animated width transition
-  - Sheet-based mobile sidebar (replacing overlay)
-  - Skeleton loaders during page transitions (350ms)
-  - Enhanced breadcrumbs with back button and home icon
-  - Backdrop blur on header bar
-  - Active scale feedback on buttons
-  - TooltipProvider wrapper
-  - ToastProvider integration
-- Rewrote collapsible-sidebar-nav.tsx with:
-  - Collapsed mode: icon-only sidebar with tooltips
-  - onNavigate callback for closing mobile Sheet
-  - Active bar indicator in collapsed mode
-  - Group section dividers in collapsed mode
-- Rewrote dashboard-page.tsx with:
-  - Mini sparkline charts on KPI cards
-  - Weekly performance bar chart
-  - Animated progress bar for vehicles
-  - Staggered entrance animations on activity feed and alerts
-  - card-hover class on all cards
-  - btn-press class on action buttons
-  - badge-pulse on urgent alerts
-  - Toast notifications on export and navigation actions
-- Rewrote login-page.tsx with:
-  - Stats section (150+ pays, 2M+ expéditions, etc.)
-  - Improved layout proportions (45%/55%)
-  - AnimatePresence for error messages and demo credentials
-  - Click-to-fill demo credentials
-  - Toast notifications on login and portal access
-  - Sparkles icon in header
-  - Decorative gradient orb
-  - Bottom decorative line on left panel
-- Added micro-interactions CSS to globals.css:
-  - card-hover (shadow + translate on hover)
-  - btn-press (scale on active)
-  - focus-ring (teal ring on focus-visible)
-  - animate-shimmer (loading shimmer)
-  - glow-teal (box-shadow glow)
-  - gradient-text (brand gradient on text)
-  - badge-pulse (pulse animation)
-  - stagger-children (sequential fadeUp animation)
-  - Smooth transitions for buttons, links, table rows
+- Analyzed all 4 buggy components to identify the root causes
+- Contracts page: Download button had empty onClick, Renew/Modify/Resiliate buttons in detail dialog had no handlers
+- HR Recruitment: "Détails" button on job cards had no onClick handler, no detail dialog existed
+- Expenses Notes de Frais: MoreHorizontal (3 dots) button had no onClick, no dropdown menu
+- Customer Portal Documents: Download button had no onClick, no preview capability
+
+- Fixed contracts-page.tsx:
+  - Added handleDownloadContract() - generates and downloads a text file with full contract details
+  - Added handleRenewContract() - creates a renewed contract copy with new dates
+  - Added handleResiliateContract() - changes contract status to 'resilie'
+  - Updated all action buttons in detail dialog with onClick handlers
+  - Updated Download button in table with handleDownloadContract onClick
+
+- Fixed hr-page.tsx:
+  - Added showJobDetailDialog and selectedJob state
+  - Added onClick handler to "Détails" button on job cards
+  - Created full Job Detail Dialog with: header, info grid (lieu, contrat, candidats, date), recruitment pipeline visualization, and action buttons (Passer en cours, Fermer le poste, Réouvrir)
+
+- Fixed expenses-page.tsx:
+  - Added DropdownMenu, Dialog imports and Eye, Edit3, Trash2 icon imports
+  - Added showDetailDialog and selectedExpense state
+  - Replaced dead MoreHorizontal button with full DropdownMenu containing:
+    - "Voir les détails" - opens detail dialog
+    - "Approuver" (only for en_attente status)
+    - "Rejeter" (only for en_attente status)
+    - "Télécharger" - generates and downloads expense note as text file
+  - Added Expense Detail Dialog with full info and approve/reject actions
+
+- Fixed customer-portal-page.tsx:
+  - Added showDocumentPreview state
+  - Added handleDownloadDocument() function - generates downloadable text file
+  - Replaced single dead Download button with two buttons: "Voir" (preview) and "Télécharger" (download)
+  - Added Document Preview Dialog with: header with type icon, info grid, preview area, download/close actions
+
+- Build passed successfully with zero errors
 
 Stage Summary:
-- All 8 planned UI/UX improvements completed
-- 0 new TypeScript errors introduced
-- All changes compile successfully
-- Key new files: page-skeleton.tsx, toast-provider.tsx, design-tokens.ts, tooltip.tsx, skeleton.tsx
-- Modified files: cargo-store.ts, dashboard-layout.tsx, collapsible-sidebar-nav.tsx, dashboard-page.tsx, login-page.tsx, page.tsx, globals.css
+- All 4 bugs fixed and verified with successful build
+- Contracts: Download, Renew, Modify, Resiliate actions now functional
+- HR Recruitment: Detail dialog now shows job info and recruitment pipeline
+- Expenses: 3-dot menu now shows dropdown with View/Approve/Reject/Download actions
+- Customer Portal: Documents can now be previewed and downloaded
