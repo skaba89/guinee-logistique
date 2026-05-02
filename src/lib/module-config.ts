@@ -45,6 +45,7 @@ import {
   Briefcase,
   Wallet,
   PackageSearch,
+  Route,
 } from 'lucide-react';
 import type { PageType } from './cargo-store';
 
@@ -215,6 +216,7 @@ export const iconNameToComponent: Record<string, React.ElementType> = {
   Briefcase,
   Wallet,
   PackageSearch,
+  Route,
 };
 
 // ─── Module Definitions (Single Source of Truth) ────────────────
@@ -378,6 +380,17 @@ export const moduleDefinitions: ModuleDefinition[] = [
     premium: true,
     description: 'Scanner QR/Barcode — vérification, génération, historique',
     defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
+  },
+  {
+    id: 'route-optimization',
+    label: 'Optimisation Tournées',
+    icon: 'Route',
+    group: 'services',
+    order: 8,
+    enabled: true,
+    premium: false,
+    description: 'Optimisation intelligente des tournées — algorithme chemin court, visualisation routes, gains temps/carburant',
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'write' },
   },
 
   // Commercial

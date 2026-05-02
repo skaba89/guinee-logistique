@@ -57,6 +57,7 @@ import ValidationModule from '@/components/cargo/validation-module';
 import ValidationPageWrapper from '@/components/cargo/validation-page-wrapper';
 import MessagingPage from '@/components/cargo/messaging-page';
 import PinGuard from '@/components/cargo/pin-guard';
+import RouteOptimizationPage from '@/components/cargo/route-optimization-page';
 
 // ─── Access Denied Page ─────────────────────────────────────────
 
@@ -192,6 +193,8 @@ function PageRenderer() {
       return <ValidationPageWrapper />;
     case 'messaging':
       return <MessagingPage />;
+    case 'route-optimization':
+      return <RouteOptimizationPage />;
     // Pages protégées par PIN (le code PIN est récupéré automatiquement depuis l'utilisateur connecté)
     case 'settings':
       return (
