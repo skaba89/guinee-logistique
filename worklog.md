@@ -200,3 +200,32 @@ Stage Summary:
 - Algorithms produce verifiable distance/time/fuel savings
 - Real Guinean geographic data used
 - All 5 tabs fully functional with interactive elements
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Rendre le chatbot complètement autonome
+
+Work Log:
+- Analysé le chatbot existant (pattern-matching basique, /api/chat avec réponses codées en dur)
+- Lu les données mock (22 expéditions, 10 conteneurs, 10 vols, 12 colis, 10 déclarations douanières, 15 clients, etc.)
+- Réécrit /api/chat/route.ts avec z-ai-web-dev-sdk (LLM réel) + fallback intelligent
+- Créé un system prompt complet (~150 lignes) avec toutes les données réelles de l'app
+- Le LLM reçoit le contexte utilisateur (rôle, nom, page actuelle)
+- Réécrit chatbot-widget.tsx avec capacités enrichies :
+  - Navigation : le bot détecte les mots-clés et suggère des pages (boutons cliquables)
+  - 8 raccourcis d'actions rapides (Suivi, Colis, Optimisation, Ramasseurs, Tarifs, Facturation, Analytics, Aide)
+  - Détection de références logistiques (FFP, MSKU, PC-FP, DOU, vols)
+  - Rendu Markdown simplifié (gras, italique, listes)
+  - Barre de statut "IA Autonome — Données en temps réel"
+  - Indicateur "GL Bot réfléchit..." pendant le chargement
+  - Boutons de navigation contextuels dans les réponses du bot
+- Testé l'API : le LLM répond avec des données précises et contextuelles
+- Build réussi sans erreurs
+
+Stage Summary:
+- Chatbot maintenant 100% autonome avec LLM réel (z-ai-web-dev-sdk)
+- Connaît toutes les données de l'app et peut répondre à toute question
+- Peut naviguer l'utilisateur vers les pages pertinentes
+- Fallback intelligent si le LLM est indisponible
+- Réponses enrichies avec Markdown, références détectées, actions suggérées

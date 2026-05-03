@@ -17,25 +17,48 @@ import {
   Plane,
   Clock,
   AlertCircle,
+  Navigation,
+  BarChart3,
+  Backpack,
+  Route,
+  Receipt,
+  FileText,
+  Users,
+  Settings,
+  Zap,
+  TrendingUp,
+  Globe,
+  Shield,
+  Calculator,
+  Warehouse,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
+import { useCargoStore, type PageType } from '@/lib/cargo-store';
 
 // ─── Types ────────────────────────────────────────────────────────
+
+interface DetectedReference {
+  type: 'tracking' | 'container' | 'flight' | 'parcel' | 'customs';
+  value: string;
+}
+
+interface SuggestedAction {
+  label: string;
+  icon: React.ElementType;
+  page: PageType;
+  description: string;
+}
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
-  detectedReferences?: LogisticsReference[];
+  detectedReferences?: DetectedReference[];
+  suggestedActions?: SuggestedAction[];
   error?: boolean;
-}
-
-interface LogisticsReference {
-  type: 'tracking' | 'container' | 'flight' | 'parcel';
-  value: string;
 }
 
 interface ChatApiResponse {
@@ -46,31 +69,97 @@ interface ChatApiResponse {
 
 const STORAGE_KEY_HISTORY = 'guinee-logistique-chatbot-history';
 const STORAGE_KEY_OPEN = 'guinee-logistique-chatbot-open';
-const INITIAL_GREETING = "Bonjour ! 👋 Je suis GL Bot, votre assistant logistique. Comment puis-je vous aider ?";
+const INITIAL_GREETING = "Bonjour ! Je suis **GL Bot**, votre assistant IA autonome Guinée Logistique. 🤖\n\nJe peux vous aider avec :\n• 📦 Suivi d'expéditions en temps réel\n• 💰 Tarifs, devis et facturation\n• 🗺️ Optimisation de tournées\n• 🎒 Ramassage et livraison\n• 🏢 Douanes et conformité\n• 📊 Analytics et reporting\n\nPosez-moi n'importe quelle question ou utilisez les raccourcis ci-dessous !";
 
 const QUICK_ACTIONS = [
-  { label: 'Suivi d\'expédition', icon: Package, message: 'Je souhaite suivre une expédition' },
-  { label: 'Statut des colis', icon: Truck, message: 'Quel est le statut de mes colis ?' },
-  { label: 'Tarifs fret', icon: Ship, message: 'Quels sont les tarifs de fret actuels ?' },
-  { label: 'Aide', icon: Sparkles, message: 'J\'ai besoin d\'aide' },
+  { label: 'Suivi expédition', icon: Package, message: 'Je souhaite suivre une expédition. Quelles expéditions sont actuellement en cours ?', page: 'tracking' as PageType },
+  { label: 'Mes colis', icon: Truck, message: 'Quel est le statut de mes colis en cours ?', page: 'parcels' as PageType },
+  { label: 'Optimiser tournée', icon: Route, message: 'Comment optimiser mes tournées de livraison à Conakry ?', page: 'route-optimization' as PageType },
+  { label: 'Ramasseurs', icon: Backpack, message: 'Quel est l\'état des ramassages en cours ?', page: 'collector-portal' as PageType },
+  { label: 'Tarifs fret', icon: Ship, message: 'Quels sont les tarifs de fret actuels pour maritime, aérien et terrestre ?', page: 'rates' as PageType },
+  { label: 'Facturation', icon: Receipt, message: 'Quelles factures sont en retard de paiement ?', page: 'billing' as PageType },
+  { label: 'Analytics', icon: BarChart3, message: 'Donnez-moi un résumé des performances logistiques du mois', page: 'analytics' as PageType },
+  { label: 'Aide', icon: Sparkles, message: 'Comment puis-je naviguer dans l\'application ?', page: 'dashboard' as PageType },
 ] as const;
 
 const LOGISTICS_PATTERNS: Array<{
-  type: LogisticsReference['type'];
+  type: DetectedReference['type'];
   regex: RegExp;
   icon: React.ElementType;
 }> = [
   { type: 'tracking', regex: /\bFFP-\d{4}-\d{4}\b/gi, icon: Package },
   { type: 'container', regex: /\bMSKU-\d{7}\b/gi, icon: Ship },
-  { type: 'flight', regex: /\b[A-Z]{2}\d{3,4}\b/g, icon: Plane },
-  { type: 'parcel', regex: /\bPRC-\d{6}\b/gi, icon: Truck },
+  { type: 'flight', regex: /\b[A-Z]{2}-?\d{3,4}\b/g, icon: Plane },
+  { type: 'parcel', regex: /\bPC-FP-\d{4}-\d{4}\b/gi, icon: Truck },
+  { type: 'customs', regex: /\bDOU-\d{4}-\d{4}\b/gi, icon: FileText },
 ];
 
-const FALLBACK_RESPONSES = [
-  "Je rencontre un problème technique, mais voici quelques conseils utiles :\n\n• Vérifiez vos numéros de suivi au format FFP-XXXX-XXXX\n• Pour les conteneurs, utilisez le format MSKU-XXXXXXX\n• Consultez le tableau de bord pour une vue d'ensemble de vos expéditions\n• Contactez notre support à support@guinee-logistique.pro",
-  "Désolé, je suis temporairement indisponible. En attendant :\n\n• Vos expéditions en cours sont visibles dans la section 'Expéditions'\n• Les tarifs de fret sont mis à jour dans 'Gestion des Tarifs'\n• Pour les douanes, consultez la section dédiée\n• Notre équipe est disponible au +33 1 23 45 67 89",
-  "Une erreur s'est produite. Voici ce que vous pouvez faire :\n\n• Réessayez dans quelques instants\n• Utilisez la recherche (Ctrl+K) pour trouver vos expéditions\n• Consultez les notifications pour les mises à jour\n• Les documents sont accessibles dans la section 'Documents'",
-];
+// Page name mapping for navigation suggestions
+const PAGE_NAMES: Record<string, string> = {
+  dashboard: 'Tableau de bord',
+  shipments: 'Expéditions',
+  tracking: 'Suivi',
+  maritime: 'Fret Maritime',
+  'air-freight': 'Fret Aérien',
+  'ground-transport': 'Transport Terrestre',
+  parcels: 'Colis & Courier',
+  customs: 'Douanes',
+  warehouse: 'Entrepôt',
+  quotations: 'Devis',
+  clients: 'Clients',
+  billing: 'Facturation',
+  contracts: 'Contrats',
+  rates: 'Tarifs',
+  fleet: 'Flotte',
+  drivers: 'Conducteurs',
+  documents: 'Documents',
+  'route-optimization': 'Optimisation Tournées',
+  'customer-portal': 'Portail Client',
+  'collector-portal': 'Portail Ramasseurs',
+  hr: 'Ressources Humaines',
+  expenses: 'Dépenses',
+  chat: 'Messagerie',
+  analytics: 'Analytics',
+  reports: 'Rapports',
+  insurance: 'Assurance Cargo',
+  incoterms: 'Incoterms',
+  'credit-management': 'Crédit & Risque',
+  compliance: 'Conformité',
+  settings: 'Paramètres',
+};
+
+// Keywords to page mapping for smart navigation suggestions
+const NAVIGATION_KEYWORDS: Record<string, PageType[]> = {
+  'expédition|shipment|envoi|colis envoi': ['shipments', 'tracking'],
+  'suivi|tracking|localiser|où est': ['tracking', 'shipments'],
+  'maritime|conteneur|navire|fret mer': ['maritime'],
+  'aérien|vol|avion|fret air': ['air-freight'],
+  'terrestre|camion|route|fret terre': ['ground-transport'],
+  'colis|courrier|parcel|paquet': ['parcels'],
+  'douane|customs|déclaration|hs code': ['customs'],
+  'entrepôt|stock|warehouse|stockage': ['warehouse'],
+  'devis|quotation|citation': ['quotations'],
+  'client|customer': ['clients'],
+  'factur|paiement|payment|relance': ['billing'],
+  'contrat|contract': ['contracts'],
+  'tarif|prix|rate|cost': ['rates'],
+  'flotte|véhicule|vehicle|camion': ['fleet'],
+  'conducteur|chauffeur|driver': ['drivers'],
+  'document|bl|lta|connaissement': ['documents'],
+  'optimis|tournée|route|chemin|livraison': ['route-optimization'],
+  'ramass|collect|pickup|ramasseur': ['collector-portal'],
+  'portail client|self-service': ['customer-portal'],
+  'employé|rh|paie|congé|recrutement': ['hr'],
+  'dépense|budget|expense|finance': ['expenses'],
+  'messagerie|chat|message': ['chat'],
+  'analyt|kpi|statistique|performance': ['analytics'],
+  'rapport|report|export': ['reports'],
+  'assurance|insurance|dommage': ['insurance'],
+  'incoterm|fob|cif|ddp': ['incoterms'],
+  'crédit|risque|encours': ['credit-management'],
+  'conformité|réglement|kyc': ['compliance'],
+  'paramètre|settings|config': ['settings'],
+};
 
 // ─── Utility Functions ────────────────────────────────────────────
 
@@ -78,8 +167,8 @@ function generateId(): string {
   return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function detectLogisticsReferences(text: string): LogisticsReference[] {
-  const refs: LogisticsReference[] = [];
+function detectLogisticsReferences(text: string): DetectedReference[] {
+  const refs: DetectedReference[] = [];
   for (const pattern of LOGISTICS_PATTERNS) {
     const matches = text.matchAll(pattern.regex);
     for (const match of matches) {
@@ -89,24 +178,60 @@ function detectLogisticsReferences(text: string): LogisticsReference[] {
   return refs;
 }
 
-function getReferenceIcon(type: LogisticsReference['type']): React.ElementType {
-  const mapping: Record<LogisticsReference['type'], React.ElementType> = {
+function getReferenceIcon(type: DetectedReference['type']): React.ElementType {
+  const mapping: Record<DetectedReference['type'], React.ElementType> = {
     tracking: Package,
     container: Ship,
     flight: Plane,
     parcel: Truck,
+    customs: FileText,
   };
   return mapping[type];
 }
 
-function getReferenceColor(type: LogisticsReference['type']): string {
-  const mapping: Record<LogisticsReference['type'], string> = {
+function getReferenceColor(type: DetectedReference['type']): string {
+  const mapping: Record<DetectedReference['type'], string> = {
     tracking: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
     container: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
     flight: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
     parcel: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    customs: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
   };
   return mapping[type];
+}
+
+function detectSuggestedActions(text: string): SuggestedAction[] {
+  const actions: SuggestedAction[] = [];
+  const lowerText = text.toLowerCase();
+
+  for (const [keywords, pages] of Object.entries(NAVIGATION_KEYWORDS)) {
+    const keywordList = keywords.split('|');
+    if (keywordList.some((kw) => lowerText.includes(kw))) {
+      for (const page of pages) {
+        const pageName = PAGE_NAMES[page] || page;
+        const iconMap: Record<string, React.ElementType> = {
+          shipments: Package, tracking: Package, maritime: Ship, 'air-freight': Plane,
+          'ground-transport': Truck, parcels: Package, customs: Shield, warehouse: Warehouse,
+          quotations: FileText, clients: Users, billing: Receipt, contracts: FileText,
+          rates: Calculator, fleet: Truck, drivers: Users, documents: FileText,
+          'route-optimization': Route, 'collector-portal': Backpack, 'customer-portal': Users,
+          hr: Users, expenses: Receipt, chat: MessageSquare, analytics: BarChart3,
+          reports: FileText, insurance: Shield, incoterms: Calculator,
+          'credit-management': Receipt, compliance: Shield, settings: Settings,
+        };
+        if (!actions.find((a) => a.page === page)) {
+          actions.push({
+            label: `Voir ${pageName}`,
+            icon: iconMap[page] || Package,
+            page,
+            description: `Naviguer vers ${pageName}`,
+          });
+        }
+      }
+    }
+  }
+
+  return actions.slice(0, 3); // Max 3 suggestions
 }
 
 function loadHistory(): ChatMessage[] {
@@ -118,7 +243,7 @@ function loadHistory(): ChatMessage[] {
       return Array.isArray(parsed) ? parsed : [];
     }
   } catch {
-    // ignore parse errors
+    // ignore
   }
   return [];
 }
@@ -126,19 +251,17 @@ function loadHistory(): ChatMessage[] {
 function saveHistory(messages: ChatMessage[]): void {
   if (typeof window === 'undefined') return;
   try {
-    // Keep only the last 100 messages to avoid storage overflow
     const toSave = messages.slice(-100);
     localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(toSave));
   } catch {
-    // ignore storage errors
+    // ignore
   }
 }
 
 function loadOpenState(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    const stored = localStorage.getItem(STORAGE_KEY_OPEN);
-    return stored === 'true';
+    return localStorage.getItem(STORAGE_KEY_OPEN) === 'true';
   } catch {
     return false;
   }
@@ -149,7 +272,7 @@ function saveOpenState(open: boolean): void {
   try {
     localStorage.setItem(STORAGE_KEY_OPEN, String(open));
   } catch {
-    // ignore storage errors
+    // ignore
   }
 }
 
@@ -167,8 +290,60 @@ function playBeep(): void {
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
     oscillator.stop(audioCtx.currentTime + 0.15);
   } catch {
-    // Audio not supported — silent fallback
+    // silent
   }
+}
+
+// ─── Markdown-like renderer (simple) ─────────────────────────────
+
+function renderMessageContent(content: string): React.ReactNode {
+  // Split by lines and handle basic markdown
+  const lines = content.split('\n');
+  return lines.map((line, i) => {
+    // Bold
+    let processed = line.replace(/\*\*(.+?)\*\*/g, '⟪B⟫$1⟪/B⟫');
+    // Italic
+    processed = processed.replace(/\*(.+?)\*/g, '⟪I⟫$1⟪/I⟫');
+
+    // Split by markers and create spans
+    const parts = processed.split(/(⟪\/?[BI]⟫)/);
+    const elements: React.ReactNode[] = [];
+    let currentTag: string | null = null;
+
+    for (const part of parts) {
+      if (part === '⟪B⟫') { currentTag = 'bold'; continue; }
+      if (part === '⟪/B⟫') { currentTag = null; continue; }
+      if (part === '⟪I⟫') { currentTag = 'italic'; continue; }
+      if (part === '⟪/I⟫') { currentTag = null; continue; }
+
+      if (currentTag === 'bold') {
+        elements.push(<strong key={`b-${i}-${elements.length}`} className="font-semibold">{part}</strong>);
+      } else if (currentTag === 'italic') {
+        elements.push(<em key={`i-${i}-${elements.length}`}>{part}</em>);
+      } else {
+        elements.push(part);
+      }
+    }
+
+    // Bullet points
+    if (line.trimStart().startsWith('•') || line.trimStart().startsWith('- ') || line.trimStart().startsWith('* ')) {
+      const bulletText = line.replace(/^\s*[•\-*]\s*/, '');
+      return <div key={i} className="flex gap-1.5 ml-2"><span className="text-teal-500 flex-shrink-0">•</span><span>{elements}</span></div>;
+    }
+
+    // Numbered lists
+    const numMatch = line.match(/^(\d+)\.\s/);
+    if (numMatch) {
+      return <div key={i} className="flex gap-1.5 ml-2"><span className="text-teal-500 font-medium flex-shrink-0">{numMatch[1]}.</span><span>{elements}</span></div>;
+    }
+
+    // Empty line
+    if (line.trim() === '') {
+      return <div key={i} className="h-2" />;
+    }
+
+    return <div key={i}>{elements}</div>;
+  });
 }
 
 // ─── Typing Indicator Component ───────────────────────────────────
@@ -188,14 +363,10 @@ function TypingIndicator() {
               key={i}
               className="w-2 h-2 rounded-full bg-teal-500"
               animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
-              transition={{
-                duration: 1.2,
-                repeat: Infinity,
-                delay: i * 0.2,
-                ease: 'easeInOut',
-              }}
+              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
             />
           ))}
+          <span className="text-[10px] text-gray-400 ml-2">GL Bot réfléchit...</span>
         </div>
       </div>
     </div>
@@ -204,7 +375,15 @@ function TypingIndicator() {
 
 // ─── Message Bubble Component ─────────────────────────────────────
 
-function MessageBubble({ message, onRetry }: { message: ChatMessage; onRetry?: (msg: ChatMessage) => void }) {
+function MessageBubble({
+  message,
+  onRetry,
+  onNavigate,
+}: {
+  message: ChatMessage;
+  onRetry?: (msg: ChatMessage) => void;
+  onNavigate?: (page: PageType) => void;
+}) {
   const isUser = message.role === 'user';
 
   return (
@@ -216,11 +395,7 @@ function MessageBubble({ message, onRetry }: { message: ChatMessage; onRetry?: (
     >
       {/* Avatar */}
       <div
-        className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-          isUser
-            ? 'bg-gray-200 dark:bg-gray-700'
-            : ''
-        }`}
+        className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
         style={!isUser ? { background: 'linear-gradient(135deg, #0d9488, #059669)' } : undefined}
       >
         {isUser ? (
@@ -231,16 +406,16 @@ function MessageBubble({ message, onRetry }: { message: ChatMessage; onRetry?: (
       </div>
 
       {/* Bubble content */}
-      <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
         <div
-          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
+          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words ${
             isUser
               ? 'text-white rounded-tr-sm'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-tl-sm'
           }`}
           style={isUser ? { background: 'linear-gradient(135deg, #0d9488, #059669)' } : undefined}
         >
-          {message.content}
+          {isUser ? message.content : renderMessageContent(message.content)}
         </div>
 
         {/* Detected logistics references */}
@@ -260,6 +435,32 @@ function MessageBubble({ message, onRetry }: { message: ChatMessage; onRetry?: (
                   <RefIcon className="w-3 h-3" />
                   {ref.value}
                 </motion.span>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Suggested actions */}
+        {message.suggestedActions && message.suggestedActions.length > 0 && onNavigate && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {message.suggestedActions.map((action, idx) => {
+              const ActionIcon = action.icon;
+              return (
+                <motion.button
+                  key={`action-${idx}`}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + idx * 0.1 }}
+                  onClick={() => onNavigate(action.page)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium
+                    bg-teal-50 text-teal-700 hover:bg-teal-100
+                    dark:bg-teal-900/20 dark:text-teal-300 dark:hover:bg-teal-900/40
+                    transition-colors border border-teal-200/50 dark:border-teal-700/30"
+                >
+                  <ActionIcon className="w-3 h-3" />
+                  {action.label}
+                  <ArrowUp className="w-2.5 h-2.5 rotate-45" />
+                </motion.button>
               );
             })}
           </div>
@@ -293,10 +494,13 @@ export default function ChatbotWidget() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [showAllActions, setShowAllActions] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const { setPage, user, roleKey, currentPage } = useCargoStore();
 
   // ─── Initialize state from localStorage ───────────────────────
   useEffect(() => {
@@ -310,12 +514,16 @@ export default function ChatbotWidget() {
     if (savedHistory.length > 0) {
       setMessages(savedHistory);
     } else {
-      // Add initial greeting
       const greeting: ChatMessage = {
         id: generateId(),
         role: 'assistant',
         content: INITIAL_GREETING,
         timestamp: Date.now(),
+        suggestedActions: [
+          { label: 'Voir Suivi', icon: Package, page: 'tracking', description: 'Naviguer vers Suivi' },
+          { label: 'Voir Expéditions', icon: Ship, page: 'shipments', description: 'Naviguer vers Expéditions' },
+          { label: 'Voir Optimisation', icon: Route, page: 'route-optimization', description: 'Naviguer vers Optimisation Tournées' },
+        ],
       };
       setMessages([greeting]);
       saveHistory([greeting]);
@@ -345,6 +553,20 @@ export default function ChatbotWidget() {
     }
   }, [isOpen]);
 
+  // ─── Handle navigation from chatbot ───────────────────────────
+  const handleNavigate = useCallback((page: PageType) => {
+    setPage(page);
+    // Add a system message about navigation
+    const navMsg: ChatMessage = {
+      id: generateId(),
+      role: 'assistant',
+      content: `📍 Navigation vers **${PAGE_NAMES[page] || page}** — Vous y êtes !`,
+      timestamp: Date.now(),
+    };
+    setMessages((prev) => [...prev, navMsg]);
+    saveHistory([...messages, navMsg]);
+  }, [setPage, messages]);
+
   // ─── Send message to API ──────────────────────────────────────
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -365,8 +587,8 @@ export default function ChatbotWidget() {
     setInputValue('');
     setIsLoading(true);
 
-    // Prepare history for API (exclude detected references and error flags)
-    const apiHistory = updatedMessages.map((m) => ({
+    // Prepare history for API
+    const apiHistory = updatedMessages.slice(-20).map((m) => ({
       role: m.role,
       content: m.content,
     }));
@@ -375,7 +597,13 @@ export default function ChatbotWidget() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, history: apiHistory }),
+        body: JSON.stringify({
+          message: trimmed,
+          history: apiHistory,
+          userRole: roleKey,
+          userName: user?.name || '',
+          currentPage: currentPage || '',
+        }),
       });
 
       if (!response.ok) {
@@ -384,27 +612,34 @@ export default function ChatbotWidget() {
 
       const data = (await response.json()) as ChatApiResponse;
       const botRefs = detectLogisticsReferences(data.reply);
+      const suggestedActions = detectSuggestedActions(trimmed + ' ' + data.reply);
+
       const botMessage: ChatMessage = {
         id: generateId(),
         role: 'assistant',
         content: data.reply,
         timestamp: Date.now(),
         detectedReferences: botRefs.length > 0 ? botRefs : undefined,
+        suggestedActions: suggestedActions.length > 0 ? suggestedActions : undefined,
       };
 
       const newMessages = [...updatedMessages, botMessage];
       setMessages(newMessages);
       saveHistory(newMessages);
       playBeep();
-    } catch (err) {
-      // Fallback response with logistics tips
-      const fallbackText = FALLBACK_RESPONSES[Math.floor(Math.random() * FALLBACK_RESPONSES.length)];
+    } catch {
+      // Fallback response
+      const fallbackText = `Je rencontre un problème technique temporaire. En attendant :\n\n• Utilisez **Ctrl+K** pour rechercher dans l'application\n• Consultez le **Tableau de bord** pour une vue d'ensemble\n• Les numéros de suivi sont au format **FFP-XXXX-XXXX**\n\nRéessayez dans quelques instants ou contactez support@guinee-logistique.pro`;
       const errorMessage: ChatMessage = {
         id: generateId(),
         role: 'assistant',
         content: fallbackText,
         timestamp: Date.now(),
         error: true,
+        suggestedActions: [
+          { label: 'Tableau de bord', icon: BarChart3, page: 'dashboard', description: 'Aller au dashboard' },
+          { label: 'Expéditions', icon: Package, page: 'shipments', description: 'Voir les expéditions' },
+        ],
       };
 
       const newMessages = [...updatedMessages, errorMessage];
@@ -413,20 +648,17 @@ export default function ChatbotWidget() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, roleKey, user, currentPage]);
 
   // ─── Retry failed message ─────────────────────────────────────
   const handleRetry = useCallback((failedMsg: ChatMessage) => {
-    // Find the user message right before this failed bot message
     const idx = messages.findIndex((m) => m.id === failedMsg.id);
     if (idx > 0) {
       const userMsg = messages[idx - 1];
       if (userMsg.role === 'user') {
-        // Remove the error message and resend
         const newMessages = messages.slice(0, idx);
         setMessages(newMessages);
         saveHistory(newMessages);
-        // Small delay so state updates first
         setTimeout(() => sendMessage(userMsg.content), 50);
       }
     }
@@ -439,14 +671,19 @@ export default function ChatbotWidget() {
       role: 'assistant',
       content: INITIAL_GREETING,
       timestamp: Date.now(),
+      suggestedActions: [
+        { label: 'Voir Suivi', icon: Package, page: 'tracking', description: 'Naviguer vers Suivi' },
+        { label: 'Voir Expéditions', icon: Ship, page: 'shipments', description: 'Naviguer vers Expéditions' },
+        { label: 'Voir Optimisation', icon: Route, page: 'route-optimization', description: 'Optimisation Tournées' },
+      ],
     };
     setMessages([greeting]);
     saveHistory([greeting]);
   }, []);
 
   // ─── Handle quick action ──────────────────────────────────────
-  const handleQuickAction = useCallback((message: string) => {
-    sendMessage(message);
+  const handleQuickAction = useCallback((action: typeof QUICK_ACTIONS[number]) => {
+    sendMessage(action.message);
   }, [sendMessage]);
 
   // ─── Handle form submit ───────────────────────────────────────
@@ -468,6 +705,9 @@ export default function ChatbotWidget() {
     setIsOpen((prev) => !prev);
   }, []);
 
+  // Visible quick actions
+  const visibleActions = showAllActions ? QUICK_ACTIONS : QUICK_ACTIONS.slice(0, 4);
+
   // ─── Render ───────────────────────────────────────────────────
   return (
     <>
@@ -484,15 +724,13 @@ export default function ChatbotWidget() {
             style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
             aria-label="Ouvrir le chat GL Bot"
           >
-            {/* Pulsing ring animation */}
             <span className="absolute inset-0 rounded-full animate-ping opacity-20" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} />
             <span className="absolute inset-0 rounded-full opacity-30 animate-pulse" style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }} />
-
             <MessageSquare className="w-6 h-6 text-white relative z-10 group-hover:scale-110 transition-transform" />
 
             {/* Tooltip */}
             <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
-              GL Bot
+              GL Bot — Assistant IA
               <span className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-900 dark:border-l-gray-100" />
             </span>
           </motion.button>
@@ -508,11 +746,11 @@ export default function ChatbotWidget() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
             className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-50
-              w-full h-full sm:w-[400px] sm:h-[550px]
+              w-full h-full sm:w-[420px] sm:h-[580px]
               sm:rounded-2xl sm:shadow-2xl
               flex flex-col overflow-hidden
               bg-white dark:bg-gray-900
-              border border-gray-200 dark:border-gray-700 sm:border-gray-200 dark:sm:border-gray-700"
+              border border-gray-200 dark:border-gray-700"
           >
             {/* ── Header ─────────────────────────────────────────── */}
             <div
@@ -527,30 +765,44 @@ export default function ChatbotWidget() {
                   <h3 className="text-sm font-bold leading-tight">GL Bot</h3>
                   <p className="text-[11px] text-white/70 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                    Assistant IA Guinée Logistique
+                    Assistant IA Autonome
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1">
-                {/* Clear conversation */}
                 <button
                   onClick={handleClearConversation}
                   className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
-                  aria-label="Effacer la conversation"
+                  aria-label="Nouvelle conversation"
                   title="Nouvelle conversation"
                 >
                   <RotateCcw className="w-4 h-4" />
                 </button>
-
-                {/* Close button */}
                 <button
                   onClick={toggleChat}
                   className="p-1.5 rounded-lg hover:bg-white/20 transition-colors"
-                  aria-label="Fermer le chat"
+                  aria-label="Fermer"
                 >
                   <X className="w-4 h-4" />
                 </button>
+              </div>
+            </div>
+
+            {/* ── Status Bar ─────────────────────────────────────── */}
+            <div className="flex-shrink-0 px-3 py-1.5 bg-teal-50 dark:bg-teal-900/10 border-b border-teal-100 dark:border-teal-800/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[10px] text-teal-600 dark:text-teal-400">
+                  <Zap className="w-3 h-3" />
+                  <span>IA Autonome — Données en temps réel</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {user && (
+                    <span className="text-[10px] text-teal-600/70 dark:text-teal-400/70">
+                      {user.name}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -562,6 +814,7 @@ export default function ChatbotWidget() {
                     key={msg.id}
                     message={msg}
                     onRetry={msg.error ? handleRetry : undefined}
+                    onNavigate={handleNavigate}
                   />
                 ))}
 
@@ -583,22 +836,34 @@ export default function ChatbotWidget() {
                 className="flex-shrink-0 px-3 pb-2"
               >
                 <div className="flex flex-wrap gap-1.5">
-                  {QUICK_ACTIONS.map((action) => {
+                  {visibleActions.map((action) => {
                     const ActionIcon = action.icon;
                     return (
                       <button
                         key={action.label}
-                        onClick={() => handleQuickAction(action.message)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
+                        onClick={() => handleQuickAction(action)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium
                           bg-teal-50 text-teal-700 hover:bg-teal-100
                           dark:bg-teal-900/20 dark:text-teal-300 dark:hover:bg-teal-900/40
                           transition-colors border border-teal-200/50 dark:border-teal-700/30"
                       >
-                        <ActionIcon className="w-3.5 h-3.5" />
+                        <ActionIcon className="w-3 h-3" />
                         {action.label}
                       </button>
                     );
                   })}
+                  {!showAllActions && QUICK_ACTIONS.length > 4 && (
+                    <button
+                      onClick={() => setShowAllActions(true)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-medium
+                        text-gray-500 hover:text-teal-600 hover:bg-gray-50
+                        dark:text-gray-400 dark:hover:text-teal-400 dark:hover:bg-gray-800
+                        transition-colors"
+                    >
+                      <Globe className="w-3 h-3" />
+                      Plus...
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -612,7 +877,7 @@ export default function ChatbotWidget() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Écrivez votre message..."
+                    placeholder="Posez n'importe quelle question..."
                     disabled={isLoading}
                     className="pr-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700
                       focus-visible:ring-teal-500/50 focus-visible:border-teal-500
@@ -638,15 +903,15 @@ export default function ChatbotWidget() {
                   disabled={isLoading || !inputValue.trim()}
                   className="h-10 w-10 rounded-xl flex-shrink-0 text-white disabled:opacity-50"
                   style={{ background: 'linear-gradient(135deg, #0d9488, #059669)' }}
-                  aria-label="Envoyer le message"
+                  aria-label="Envoyer"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </form>
 
-              {/* Footer hint */}
+              {/* Footer */}
               <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-2">
-                GL Bot peut faire des erreurs. Vérifiez les informations importantes.
+                GL Bot — IA Autonome Guinée Logistique • Réponses contextuelles en temps réel
               </p>
             </div>
           </motion.div>
