@@ -316,7 +316,7 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { currentPage, setPage, user, logout, sidebarOpen, toggleSidebar, setSidebarOpen, roleKey, permissionsConfig } = useCargoStore();
+  const { currentPage, setPage, user, logout, sidebarOpen, toggleSidebar, setSidebarOpen, roleKey, permissionsConfig, clientId } = useCargoStore();
   const sidebarCollapsed = useCargoStore((s) => s.sidebarCollapsed);
   const toggleSidebarCollapsed = useCargoStore((s) => s.toggleSidebarCollapsed);
   const pageHistory = useCargoStore((s) => s.pageHistory);
@@ -331,10 +331,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     setPendingApprovals(getPendingApprovals().length);
   }, [roleKey]);
 
-  // Build dynamic navigation based on user role and permissions
+  // Build dynamic navigation based on user role, permissions, and client visibility
   const filteredNavGroups = React.useMemo(() => {
-    return getFilteredNavigation(roleKey, permissionsConfig);
-  }, [roleKey, permissionsConfig]);
+    return getFilteredNavigation(roleKey, permissionsConfig, clientId || undefined);
+  }, [roleKey, permissionsConfig, clientId]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -363,18 +363,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const handleSearchSelect = (page: PageType) => {
     setCommandOpen(false);
     // Only navigate if user has permission
-    if (canViewPage(page, roleKey, permissionsConfig)) {
+    if (canViewPage(page, roleKey, permissionsConfig, clientId || undefined)) {
       setPage(page);
     }
   };
 
   // Filter search items based on user permissions
   const accessibleSearchItems = React.useMemo(() => {
-    return searchItems.filter((item) => canViewPage(item.page, roleKey, permissionsConfig));
+    return searchItems.filter((item) => canViewPage(item.page, roleKey, permissionsConfig, clientId || undefined));
   }, [roleKey, permissionsConfig]);
 
   const accessibleRecentSearches = React.useMemo(() => {
-    return recentSearches.filter((item) => canViewPage(item.page, roleKey, permissionsConfig));
+    return recentSearches.filter((item) => canViewPage(item.page, roleKey, permissionsConfig, clientId || undefined));
   }, [roleKey, permissionsConfig]);
 
   // Breadcrumb: can go back?

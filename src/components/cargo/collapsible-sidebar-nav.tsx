@@ -86,13 +86,13 @@ interface CollapsibleSidebarNavProps {
 }
 
 export default function CollapsibleSidebarNav({ collapsed = false, onNavigate }: CollapsibleSidebarNavProps) {
-  const { currentPage, setPage, roleKey, permissionsConfig, logout } = useCargoStore();
+  const { currentPage, setPage, roleKey, permissionsConfig, clientId, logout } = useCargoStore();
   const { isOpen, toggle, ensureGroupOpen, openAll } = useSidebarCollapse();
 
-  // Construire la navigation filtrée par rôle & permissions
+  // Construire la navigation filtrée par rôle & permissions (et visibilité client)
   const filteredNavGroups = useMemo(() => {
-    return getFilteredNavigation(roleKey, permissionsConfig);
-  }, [roleKey, permissionsConfig]);
+    return getFilteredNavigation(roleKey, permissionsConfig, clientId || undefined);
+  }, [roleKey, permissionsConfig, clientId]);
 
   // Auto-ouvrir le groupe contenant la page active quand elle change
   useEffect(() => {

@@ -32,29 +32,136 @@ export interface ModuleFeatureFlags {
   [moduleId: string]: boolean;
 }
 
+export interface ClientModuleVisibility {
+  /** Key format: clientId → { moduleId → boolean (visible/hidden) } */
+  [clientId: string]: {
+    [moduleId: string]: boolean;
+  };
+}
+
 export interface PermissionsConfig {
   /** Overridden permissions (delta from defaults) */
   overrides: PermissionOverrides;
   /** Feature flags (which modules are enabled) */
   featureFlags: ModuleFeatureFlags;
+  /** Per-client module visibility overrides */
+  clientVisibility: ClientModuleVisibility;
 }
 
 const PERMISSIONS_CONFIG_KEY = 'guinee-logistique-permissions-config';
+const CLIENT_VISIBILITY_KEY = 'guinee-logistique-client-visibility';
 
 /** Load persisted permissions configuration */
 export function loadPermissionsConfig(): PermissionsConfig {
   if (typeof window === 'undefined') {
-    return { overrides: {}, featureFlags: {} };
+    return { overrides: {}, featureFlags: {}, clientVisibility: {} };
   }
   try {
     const raw = localStorage.getItem(PERMISSIONS_CONFIG_KEY);
     if (raw) {
-      return JSON.parse(raw) as PermissionsConfig;
+      const parsed = JSON.parse(raw);
+      // Ensure clientVisibility exists (backward compat)
+      return {
+        overrides: parsed.overrides ?? {},
+        featureFlags: parsed.featureFlags ?? {},
+        clientVisibility: parsed.clientVisibility ?? loadClientModuleVisibility(),
+      };
     }
   } catch {
     // ignore parse errors
   }
-  return { overrides: {}, featureFlags: {} };
+  return { overrides: {}, featureFlags: {}, clientVisibility: loadClientModuleVisibility() };
+}
+
+// ─── Client Module Visibility ─────────────────────────────────
+
+/** Load client module visibility overrides from localStorage */
+export function loadClientModuleVisibility(): ClientModuleVisibility {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(CLIENT_VISIBILITY_KEY);
+    if (raw) return JSON.parse(raw) as ClientModuleVisibility;
+  } catch { /* ignore */ }
+  return {};
+}
+
+/** Save client module visibility overrides to localStorage */
+export function saveClientModuleVisibility(vis: ClientModuleVisibility): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(CLIENT_VISIBILITY_KEY, JSON.stringify(vis));
+  } catch { /* ignore */ }
+}
+
+/**
+ * Check if a module is visible for a given client.
+ * If no override exists, the module is visible by default (true).
+ */
+export function isModuleVisibleForClient(
+  moduleId: PageType,
+  clientId: string,
+  clientVisibility?: ClientModuleVisibility
+): boolean {
+  const vis = clientVisibility ?? loadClientModuleVisibility();
+  const clientOverrides = vis[clientId];
+  if (!clientOverrides) return true; // No overrides = all visible
+  if (clientOverrides[moduleId] === undefined) return true; // No override for this module = visible
+  return clientOverrides[moduleId];
+}
+
+/**
+ * Set visibility for a single module for a specific client.
+ */
+export function setClientModuleVisibility(
+  clientId: string,
+  moduleId: PageType,
+  visible: boolean,
+  currentVisibility?: ClientModuleVisibility
+): ClientModuleVisibility {
+  const vis = currentVisibility ?? loadClientModuleVisibility();
+  const clientOverrides = vis[clientId] ?? {};
+  return {
+    ...vis,
+    [clientId]: {
+      ...clientOverrides,
+      [moduleId]: visible,
+    },
+  };
+}
+
+/**
+ * Set all modules visible or hidden for a specific client.
+ */
+export function setAllClientModulesVisibility(
+  clientId: string,
+  visible: boolean,
+  currentVisibility?: ClientModuleVisibility
+): ClientModuleVisibility {
+  const vis = currentVisibility ?? loadClientModuleVisibility();
+  const allModules: Record<string, boolean> = {};
+  // Set visibility for all modules that the client role can access by default
+  moduleDefinitions.forEach((m) => {
+    if (m.defaultPermissions.client !== 'none') {
+      allModules[m.id] = visible;
+    }
+  });
+  return {
+    ...vis,
+    [clientId]: allModules,
+  };
+}
+
+/**
+ * Reset all visibility overrides for a specific client.
+ */
+export function resetClientModuleVisibility(
+  clientId: string,
+  currentVisibility?: ClientModuleVisibility
+): ClientModuleVisibility {
+  const vis = currentVisibility ?? loadClientModuleVisibility();
+  const newVis = { ...vis };
+  delete newVis[clientId];
+  return newVis;
 }
 
 /** Save permissions configuration to localStorage */
@@ -122,26 +229,42 @@ export function hasPermission(
 
 /**
  * Check if a user with a given role can view (at least read) a page.
+ * For client-role users, also checks client module visibility.
  */
 export function canViewPage(
   page: PageType,
   role: RoleKey | string,
-  config?: PermissionsConfig
+  config?: PermissionsConfig,
+  clientId?: string
 ): boolean {
   const roleKey = typeof role === 'string' ? mapRoleString(role) : role;
-  return hasPermission(page, roleKey, 'read', config);
+  if (!hasPermission(page, roleKey, 'read', config)) return false;
+  // For client role, also check client-specific visibility
+  if (roleKey === 'client' && clientId) {
+    const cfg = config ?? loadPermissionsConfig();
+    return isModuleVisibleForClient(page, clientId, cfg.clientVisibility);
+  }
+  return true;
 }
 
 /**
  * Check if a user with a given role can edit (write) on a page.
+ * For client-role users, also checks client module visibility.
  */
 export function canEditPage(
   page: PageType,
   role: RoleKey | string,
-  config?: PermissionsConfig
+  config?: PermissionsConfig,
+  clientId?: string
 ): boolean {
   const roleKey = typeof role === 'string' ? mapRoleString(role) : role;
-  return hasPermission(page, roleKey, 'write', config);
+  if (!hasPermission(page, roleKey, 'write', config)) return false;
+  // For client role, also check client-specific visibility
+  if (roleKey === 'client' && clientId) {
+    const cfg = config ?? loadPermissionsConfig();
+    return isModuleVisibleForClient(page, clientId, cfg.clientVisibility);
+  }
+  return true;
 }
 
 /**
@@ -182,7 +305,8 @@ interface NavGroupResult {
  */
 export function getFilteredNavigation(
   role: RoleKey | string,
-  config?: PermissionsConfig
+  config?: PermissionsConfig,
+  clientId?: string
 ): NavGroupResult[] {
   const roleKey = typeof role === 'string' ? mapRoleString(role) : role;
   const cfg = config ?? loadPermissionsConfig();
@@ -193,6 +317,13 @@ export function getFilteredNavigation(
         .filter((m) => m.group === group.key)
         .filter((m) => isModuleEnabled(m.id, cfg))
         .filter((m) => hasPermission(m.id, roleKey, 'read', cfg))
+        // Filter by client visibility if a clientId is provided and role is client
+        .filter((m) => {
+          if (clientId && roleKey === 'client') {
+            return isModuleVisibleForClient(m.id, clientId, cfg.clientVisibility);
+          }
+          return true;
+        })
         .sort((a, b) => a.order - b.order)
         .map((m) => ({
           id: m.id,
@@ -316,4 +447,17 @@ export function getInaccessibleModules(
 // ─── Re-export types for convenience ────────────────────────────
 
 export type { RoleKey, PermissionLevel, ModuleDefinition, NavGroupKey };
-export { moduleDefinitions, navGroups, roleDefinitions, mapRoleString, getModuleById };
+export {
+  moduleDefinitions,
+  navGroups,
+  roleDefinitions,
+  mapRoleString,
+  getModuleById,
+  ClientModuleVisibility,
+  loadClientModuleVisibility,
+  saveClientModuleVisibility,
+  isModuleVisibleForClient,
+  setClientModuleVisibility,
+  setAllClientModulesVisibility,
+  resetClientModuleVisibility,
+};

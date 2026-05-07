@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   User,
+  Users,
   Building,
   Bell,
   Moon,
@@ -132,7 +133,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   // ─── Module & Permissions Configuration ─────────────
-  const [activeModuleTab, setActiveModuleTab] = useState<'features' | 'permissions'>('features');
+  const [activeModuleTab, setActiveModuleTab] = useState<'features' | 'permissions' | 'client-visibility'>('features');
   const [selectedPermGroup, setSelectedPermGroup] = useState<NavGroupKey | 'all'>('all');
 
   // Permission matrix derived from config
@@ -154,8 +155,37 @@ export default function SettingsPage() {
 
   const handleResetPermissions = () => {
     resetPermissionsConfig();
-    setPermissionsConfig({ overrides: {}, featureFlags: {} });
+    setPermissionsConfig({ overrides: {}, featureFlags: {}, clientVisibility: {} });
   };
+
+  // ─── Client Module Visibility ─────────────
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+
+  const handleClientModuleToggle = (clientId: string, moduleId: string, visible: boolean) => {
+    const newVis = setClientModuleVisibility(clientId, moduleId as any, visible, permissionsConfig.clientVisibility);
+    const newConfig = { ...permissionsConfig, clientVisibility: newVis };
+    savePermissionsConfig(newConfig);
+    setPermissionsConfig(newConfig);
+  };
+
+  const handleAllClientModulesToggle = (clientId: string, visible: boolean) => {
+    const newVis = setAllClientModulesVisibility(clientId, visible, permissionsConfig.clientVisibility);
+    const newConfig = { ...permissionsConfig, clientVisibility: newVis };
+    savePermissionsConfig(newConfig);
+    setPermissionsConfig(newConfig);
+  };
+
+  const handleResetClientVisibility = (clientId: string) => {
+    const newVis = resetClientModuleVisibility(clientId, permissionsConfig.clientVisibility);
+    const newConfig = { ...permissionsConfig, clientVisibility: newVis };
+    savePermissionsConfig(newConfig);
+    setPermissionsConfig(newConfig);
+  };
+
+  // Get modules that are accessible to the 'client' role by default
+  const clientAccessibleModules = useMemo(() => {
+    return moduleDefinitions.filter((m) => m.defaultPermissions.client !== 'none');
+  }, []);
 
   // Filter modules by group
   const filteredModules = useMemo(() => {
@@ -451,6 +481,17 @@ export default function SettingsPage() {
               <Shield className="w-4 h-4 inline mr-1.5" />
               Matrice de Permissions
             </button>
+            <button
+              onClick={() => setActiveModuleTab('client-visibility')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeModuleTab === 'client-visibility'
+                  ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400'
+                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <Users className="w-4 h-4 inline mr-1.5" />
+              Visibilité Client
+            </button>
             <div className="ml-auto">
               <Button
                 variant="outline"
@@ -667,6 +708,192 @@ export default function SettingsPage() {
                     {Object.keys(permissionsConfig.overrides).length} permission{Object.keys(permissionsConfig.overrides).length > 1 ? 's' : ''} personnalisée{Object.keys(permissionsConfig.overrides).length > 1 ? 's' : ''} (anneau bleu).
                     Cliquez sur « Réinitialiser » pour restaurer les valeurs par défaut.
                   </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ─── Client Module Visibility Tab ─── */}
+          {activeModuleTab === 'client-visibility' && (
+            <div className="space-y-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Contrôlez les modules visibles pour chaque client. Sélectionnez un client, puis activez ou désactivez les modules qu&apos;il peut voir dans son portail.
+                Un module masqué pour un client n&apos;apparaîtra pas dans sa barre latérale, même si son rôle lui donne normalement accès.
+              </p>
+
+              {/* Client selector */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Sélectionner un client</Label>
+                <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                  <SelectTrigger className="w-full sm:w-80">
+                    <SelectValue placeholder="Choisir un client..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientsData.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{c.name}</span>
+                          <span className="text-xs text-gray-400">— {c.city}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Selected client details & module toggles */}
+              {selectedClientId ? (() => {
+                const client = clientsData.find((c) => c.id === selectedClientId);
+                if (!client) return null;
+                const clientOverrides = permissionsConfig.clientVisibility[selectedClientId] ?? {};
+                const overrideCount = Object.keys(clientOverrides).length;
+                const visibleCount = clientAccessibleModules.filter((m) =>
+                  isModuleVisibleForClient(m.id, selectedClientId, permissionsConfig.clientVisibility)
+                ).length;
+                const hiddenCount = clientAccessibleModules.length - visibleCount;
+
+                return (
+                  <div className="space-y-4">
+                    {/* Client info banner */}
+                    <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}>
+                          <Users className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-semibold text-gray-900 dark:text-white">{client.name}</h3>
+                          <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{client.city}</span>
+                            <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{client.email}</span>
+                            <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{client.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-3 mt-2">
+                            <Badge className="text-[10px] bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+                              {client.type === 'entreprise' ? 'Entreprise' : 'Particulier'}
+                            </Badge>
+                            <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                              {visibleCount} module{visibleCount !== 1 ? 's' : ''} visible{visibleCount !== 1 ? 's' : ''}
+                            </Badge>
+                            {hiddenCount > 0 && (
+                              <Badge className="text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                {hiddenCount} masqué{hiddenCount !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                            {overrideCount > 0 && (
+                              <Badge className="text-[10px] bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
+                                {overrideCount} personnalisé{overrideCount !== 1 ? 's' : ''}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-[10px] h-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/20"
+                            onClick={() => handleAllClientModulesToggle(selectedClientId, true)}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            Tout afficher
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-[10px] h-7 text-gray-600 border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                            onClick={() => handleAllClientModulesToggle(selectedClientId, false)}
+                          >
+                            <EyeOff className="w-3 h-3 mr-1" />
+                            Tout masquer
+                          </Button>
+                          {overrideCount > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-[10px] h-7 text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-900/20"
+                              onClick={() => handleResetClientVisibility(selectedClientId)}
+                            >
+                              <RotateCcw className="w-3 h-3 mr-1" />
+                              Réinitialiser
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Module visibility grid — only show modules the client role has access to by default */}
+                    {navGroups.map((group) => {
+                      const groupModules = clientAccessibleModules.filter((m) => m.group === group.key);
+                      if (groupModules.length === 0) return null;
+                      return (
+                        <div key={group.key}>
+                          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 mt-3 first:mt-0">
+                            {group.label}
+                          </p>
+                          <div className="space-y-1.5">
+                            {groupModules.map((mod) => {
+                              const isVisible = isModuleVisibleForClient(mod.id, selectedClientId, permissionsConfig.clientVisibility);
+                              const isOverridden = clientOverrides[mod.id] !== undefined;
+                              const IconComponent = iconNameToComponent[mod.icon];
+                              return (
+                                <div
+                                  key={mod.id}
+                                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                                    isVisible
+                                      ? 'border-gray-200 dark:border-gray-700'
+                                      : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 opacity-60'
+                                  }`}
+                                >
+                                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                                    isVisible ? 'bg-violet-100 dark:bg-violet-900/20' : 'bg-gray-100 dark:bg-gray-800'
+                                  }`}>
+                                    {IconComponent && <IconComponent className={`w-4.5 h-4.5 ${isVisible ? 'text-violet-600 dark:text-violet-400' : 'text-gray-400'}`} />}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-sm font-medium text-gray-900 dark:text-white">{mod.label}</p>
+                                      {mod.premium && (
+                                        <Badge className="text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0">
+                                          Premium
+                                        </Badge>
+                                      )}
+                                      {isOverridden && (
+                                        <Badge className="text-[9px] bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 px-1.5 py-0">
+                                          Personnalisé
+                                        </Badge>
+                                      )}
+                                      {!isVisible && (
+                                        <Badge className="text-[9px] bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0">
+                                          Masqué
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{mod.description}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-xs font-medium ${isVisible ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400'}`}>
+                                      {isVisible ? 'Visible' : 'Masqué'}
+                                    </span>
+                                    <Switch
+                                      checked={isVisible}
+                                      onCheckedChange={(checked) => handleClientModuleToggle(selectedClientId, mod.id, checked)}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })() : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-violet-100 dark:bg-violet-900/20 mb-4">
+                    <Users className="w-8 h-8 text-violet-500 dark:text-violet-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Sélectionnez un client</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Choisissez un client ci-dessus pour configurer la visibilité de ses modules.</p>
                 </div>
               )}
             </div>

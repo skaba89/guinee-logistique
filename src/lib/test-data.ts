@@ -16,6 +16,8 @@ export interface User {
   avatar?: string;
   /** Code PIN de sécurité (4-8 chiffres) pour l'accès aux sections protégées */
   pin: string;
+  /** For Client role users: links to the corresponding Client record */
+  clientId?: string;
 }
 
 export interface Shipment {
@@ -243,6 +245,7 @@ export const users: User[] = [
     role: 'Client',
     email: 'karim.bouzidi@spa-hydro.dz',
     pin: '3674',
+    clientId: 'c2',
   },
   {
     id: '4',

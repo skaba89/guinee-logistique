@@ -82,6 +82,8 @@ interface CargoState {
   user: User | null;
   /** Normalized role key derived from user.role */
   roleKey: RoleKey;
+  /** Client ID for client-role users (linked from user.clientId) */
+  clientId: string;
   sidebarOpen: boolean;
   /** Whether sidebar is collapsed to icon-only mode on desktop */
   sidebarCollapsed: boolean;
@@ -112,6 +114,7 @@ export const useCargoStore = create<CargoState>()(
       currentPage: 'dashboard' as PageType,
       user: null,
       roleKey: 'viewer' as RoleKey,
+      clientId: '',
       sidebarOpen: false,
       sidebarCollapsed: false,
       permissionsConfig: loadPermissionsConfig(),
@@ -128,6 +131,7 @@ export const useCargoStore = create<CargoState>()(
             isAuthenticated: true,
             user: found,
             roleKey,
+            clientId: found.clientId ?? '',
             currentPage: 'dashboard' as PageType,
             permissionsConfig: loadPermissionsConfig(),
           });
@@ -143,6 +147,7 @@ export const useCargoStore = create<CargoState>()(
           isAuthenticated: false,
           user: null,
           roleKey: 'viewer' as RoleKey,
+          clientId: '',
           currentPage: 'dashboard' as PageType,
           sidebarOpen: false,
         });
@@ -189,12 +194,12 @@ export const useCargoStore = create<CargoState>()(
 
       canView: (page: PageType) => {
         const state = get();
-        return canViewPage(page, state.roleKey, state.permissionsConfig);
+        return canViewPage(page, state.roleKey, state.permissionsConfig, state.clientId || undefined);
       },
 
       canEdit: (page: PageType) => {
         const state = get();
-        return canEditPage(page, state.roleKey, state.permissionsConfig);
+        return canEditPage(page, state.roleKey, state.permissionsConfig, state.clientId || undefined);
       },
     }),
     {
@@ -204,6 +209,7 @@ export const useCargoStore = create<CargoState>()(
         user: state.user,
         currentPage: state.currentPage,
         roleKey: state.roleKey,
+        clientId: state.clientId,
         currency: state.currency,
         sidebarCollapsed: state.sidebarCollapsed,
       }),
