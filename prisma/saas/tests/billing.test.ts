@@ -8,6 +8,7 @@ import {billingPdf,billingCsv,csvCell} from '../../../src/lib/billing-export';
 import {GET as pdfGet} from '../../../src/app/api/saas/billing/[id]/pdf/route';
 import {GET as billingGet} from '../../../src/app/api/saas/billing/route';
 import {NextRequest} from 'next/server';
+import {commercialProfile,commercialInput,updateCommercialProfile} from '../../../src/lib/commercial-profile';
 
 test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent payments',async()=>{
   const admin=new PrismaClient({datasourceUrl:process.env.SAAS_DATABASE_URL!});
@@ -134,6 +135,58 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await admin.billingDocument.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.customer.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.session.deleteMany({where:{accountId:{in:users}}});
+    await admin.membership.deleteMany({where:{organizationId:{in:orgs}}});
+    await admin.account.deleteMany({where:{id:{in:users}}});
+    await admin.organization.deleteMany({where:{id:{in:orgs}}});
+    await admin.$disconnect();await restricted.$disconnect();
+  }
+},30000);
+
+test('commercial profile: tenant isolation and immutable seller snapshot',async()=>{
+  const admin=new PrismaClient({datasourceUrl:process.env.SAAS_DATABASE_URL!});
+  const restricted=new PrismaClient({datasourceUrl:process.env.SAAS_TENANT_DATABASE_URL!});
+  const orgs=['commercial-a','commercial-b'],users=['commercial-admin','commercial-other','commercial-agent'];
+  await admin.organization.createMany({data:orgs.map(id=>({id,name:id,slug:id}))});
+  await admin.account.createMany({data:users.map(id=>({id,email:id+'@example.invalid',displayName:id}))});
+  await admin.membership.createMany({data:users.map((accountId,i)=>({accountId,organizationId:i===1?orgs[1]:orgs[0],role:i===2?'agent':'admin'}))});
+  const identity=(i:number):Identity=>({accountId:users[i],organizationId:i===1?orgs[1]:orgs[0],role:i===2?'agent':'admin',displayName:users[i]});
+  const a=identity(0),b=identity(1),agent=identity(2);
+  const config={legalName:'Transport Alpha',address:'Conakry',email:'contact@example.invalid',phone:'+224 600 00 00 00',taxId:'NIF-DECLARED'};
+  try{
+    expect((await commercialProfile(a)).legalName).toBe(orgs[0]);
+    expect(commercialInput.safeParse({...config,email:'invalid'}).success).toBe(false);
+    expect(commercialInput.safeParse({...config,legalName:'  '}).success).toBe(false);
+    await expect(updateCommercialProfile(agent,config)).rejects.toThrow();
+    await expect(commercialProfile(agent)).rejects.toThrow();
+    await updateCommercialProfile(a,config);
+    expect((await commercialProfile(a)).legalName).toBe(config.legalName);
+    expect((await commercialProfile(b)).legalName).toBe(orgs[1]);
+    expect(await restricted.commercialProfile.count()).toBe(0);
+    const customer=await createCustomer(a,{name:'Client'});
+    const quote=await createQuote(a,{customerId:customer.id,description:'Transport',quantity:1,unitPrice:1000});
+    expect(quote.sellerName).toBe(config.legalName);
+    expect(quote.sellerTaxId).toBe(config.taxId);
+    await updateCommercialProfile(a,{...config,legalName:'Transport Beta',taxId:'OTHER'});
+    const invoice=await issueInvoice(a,quote.id,0);
+    expect(invoice.sellerName).toBe(config.legalName);
+    expect(invoice.sellerTaxId).toBe(config.taxId);
+    const next=await createQuote(a,{customerId:customer.id,description:'Transport',quantity:1,unitPrice:1000});
+    expect(next.sellerName).toBe('Transport Beta');
+    expect(new TextDecoder().decode(billingPdf(await billingDocument(a,quote.id)).slice(0,5))).toBe('%PDF-');
+    await expect(restricted.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT set_config('gl.organization_id',${orgs[0]},true),set_config('gl.finance','on',true)`;
+      return tx.billingDocument.update({where:{id:quote.id},data:{sellerName:'Tampered'}});
+    })).rejects.toThrow();
+    await restricted.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT set_config('gl.organization_id',${orgs[1]},true),set_config('gl.finance','on',true)`;
+      expect(await tx.commercialProfile.count()).toBe(0);
+    });
+  }finally{
+    await admin.billingCounter.deleteMany({where:{organizationId:{in:orgs}}});
+    await admin.billingLine.deleteMany({where:{organizationId:{in:orgs}}});
+    await admin.billingDocument.deleteMany({where:{organizationId:{in:orgs}}});
+    await admin.commercialProfile.deleteMany({where:{organizationId:{in:orgs}}});
+    await admin.customer.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.membership.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.account.deleteMany({where:{id:{in:users}}});
     await admin.organization.deleteMany({where:{id:{in:orgs}}});

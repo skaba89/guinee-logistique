@@ -25,6 +25,7 @@ export default async function SaaSHome() {
     {identity.role==='ramasseur' && <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/missions">Mes missions</Link></p>}
     <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/activity">Activité opérationnelle</Link></p>
     {canManageFinance(identity)&&<p><Link prefetch={false} className="text-teal-600 underline" href="/saas/billing">Gestion commerciale</Link></p>}
+    {canManageFinance(identity)&&<p><Link prefetch={false} className="text-teal-600 underline" href="/saas/commercial">Paramètres commerciaux</Link></p>}
     <p className="text-sm text-slate-500">Les autres modules seront disponibles après leur migration vers les données réelles.</p>
   </section>;
 }

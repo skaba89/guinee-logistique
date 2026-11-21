@@ -9,9 +9,13 @@ export function billingPdf(document:BillingDocument&{lines:BillingLine[];organiz
   pdf.setTextColor(255,255,255);pdf.setFontSize(18);pdf.text('GUINÉE LOGISTIQUE',14,14);
   pdf.setFontSize(12);pdf.text(document.status==='invoice'?'FACTURE INTERNE':'DEVIS',14,25);
   pdf.setTextColor(30,41,59);pdf.setFontSize(10);
-  const organization=pdf.splitTextToSize('Organisation : '+document.organizationName,180);
-  pdf.text(organization,14,44);
-  let y=44+organization.length*5;
+  const seller=[document.sellerName?'Émetteur : '+document.sellerName:'Organisation actuelle : '+document.organizationName+' (historique non renseigné)',
+    document.sellerAddress,document.sellerEmail,document.sellerPhone,document.sellerTaxId?'Identifiant fiscal déclaré : '+document.sellerTaxId:null].filter((line):line is string=>!!line);
+  let y=44;
+  for(const line of seller){
+    const wrapped=pdf.splitTextToSize(line,180);
+    pdf.text(wrapped,14,y);y+=wrapped.length*5;
+  }
   pdf.text('Référence : '+(document.invoiceNumber??document.quoteNumber),14,y);y+=5;
   pdf.text('Date : '+(document.issuedAt??document.createdAt).toISOString().slice(0,10),14,y);y+=5;
   const customer=pdf.splitTextToSize('Client : '+document.customerName,180);
