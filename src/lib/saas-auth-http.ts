@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export function saasRequested() {
+  return process.env.SAAS_AUTH_ENABLED === 'true';
+}
+
 export function authEnabled() {
-  return process.env.SAAS_AUTH_ENABLED === 'true' && !!process.env.SAAS_AUTH_DATABASE_URL && !!process.env.SAAS_PUBLIC_ORIGIN;
+  return saasRequested() && !!process.env.SAAS_AUTH_DATABASE_URL && !!process.env.SAAS_PUBLIC_ORIGIN;
 }
 
 export function json(body: object, status = 200) {

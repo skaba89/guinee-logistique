@@ -34,6 +34,26 @@ jobs:
           trap 'kill "$pid" 2>/dev/null || true; tail -30 /tmp/guinee-logistique.log' EXIT
           curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 2 http://127.0.0.1:3000/api/health | jq -e '.status == "ok" and .service == "guinee-logistique"'
           curl --fail --silent --show-error http://127.0.0.1:3000/ > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/saas)" = 404
+          kill "$pid"
+          wait "$pid" || true
+          SAAS_AUTH_ENABLED=true SAAS_AUTH_DATABASE_URL= SAAS_PUBLIC_ORIGIN= PORT=3000 HOSTNAME=127.0.0.1 node .next/standalone/server.js >> /tmp/guinee-logistique.log 2>&1 &
+          pid=$!
+          curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 2 http://127.0.0.1:3000/api/health > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/)" = 307
+          curl -fsS http://127.0.0.1:3000/saas > /tmp/saas-unavailable.html
+          grep -q 'Service temporairement indisponible' /tmp/saas-unavailable.html
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/scan)" = 503
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:3000/api/chat)" = 503
+          kill "$pid"
+          wait "$pid" || true
+          SAAS_AUTH_ENABLED=true SAAS_AUTH_DATABASE_URL=postgresql://unused:unused@localhost:5432/unused SAAS_PUBLIC_ORIGIN=https://example.invalid PORT=3000 HOSTNAME=127.0.0.1 node .next/standalone/server.js >> /tmp/guinee-logistique.log 2>&1 &
+          pid=$!
+          curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 2 http://127.0.0.1:3000/api/health > /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/saas)" = 307
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/saas/members)" = 307
+          curl -fsS http://127.0.0.1:3000/saas/login > /tmp/saas-login.html
+          grep -q 'Se connecter' /tmp/saas-login.html
 
   postgres-isolation:
     runs-on: ubuntu-latest

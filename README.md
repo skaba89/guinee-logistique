@@ -246,6 +246,19 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ## 🛠 Scripts
 
+### Mode SaaS sécurisé
+
+La démo historique reste le mode par défaut. Après avoir provisionné PostgreSQL, appliqué les migrations SaaS et créé un compte avec une adhésion et un mot de passe haché par `hashPassword`, configurez `SAAS_AUTH_ENABLED=true`, `SAAS_AUTH_DATABASE_URL` (rôle de connexion membre de `gl_auth`) et `SAAS_PUBLIC_ORIGIN` (origine HTTPS exacte, sans barre finale).
+
+Générez les deux clients Prisma avant le développement ou la compilation :
+
+```bash
+bun run db:generate
+bunx prisma generate --schema prisma/saas/schema.prisma
+```
+
+La page d'accueil redirige alors vers `/saas`. La connexion exige l'identifiant de l'organisation, l'e-mail et le mot de passe. L'annuaire `/saas/members` est en lecture seule, réservé aux administrateurs de leur propre organisation. Les modules de démo, dont les API de chat et scan, sont désactivés en mode SaaS. Une configuration incomplète ne réactive jamais la démo. Les autres modules métier restent à migrer.
+
 Le pipeline CI vérifie le typage, le lint, la compilation et les réponses HTTP de la page d'accueil et de `/api/health`. Cette dernière est une sonde de vie, pas une certification de disponibilité de la base de données.
 
 ```bash
