@@ -11,6 +11,12 @@ docker compose --env-file "$file" -p "guinee-logistique-$stage" config --quiet
 compose=(docker compose --env-file "$file" -p "guinee-logistique-$stage")
 "${compose[@]}" build app migrate
 "${compose[@]}" up -d --wait db
+existing=$("${compose[@]}" exec -T db psql -U postgres -d guinee_logistique -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('public._prisma_migrations') IS NOT NULL")
+if [[ "$existing" == t ]]; then
+  backup=$(bash scripts/backup.sh "$stage")
+  echo "Backup: $backup"
+  if [[ "$stage" == prod ]]; then bash scripts/verify-restore.sh "$backup"; fi
+fi
 "${compose[@]}" run --rm provision
 "${compose[@]}" run --rm migrate
 "${compose[@]}" up -d --no-deps --wait app
