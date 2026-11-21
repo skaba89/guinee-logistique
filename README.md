@@ -117,10 +117,15 @@ L'interface est entièrement en français et adaptée aux flux métier africains
 
 ## 🚀 Installation
 
+> Statut : prototype de démonstration. L'authentification, les données métier et les permissions côté serveur ne sont pas encore adaptées à une exploitation avec des données réelles. Ne pas exposer cette version à des clients en production.
+
 ```bash
 # Cloner le dépôt
 git clone https://github.com/skaba89/guinee-logistique.git
 cd guinee-logistique
+
+# Configurer la base de démonstration
+cp .env.example .env
 
 # Installer les dépendances
 npm install
@@ -241,6 +246,8 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ## 🛠 Scripts
 
+Le pipeline CI vérifie le typage, le lint, la compilation et les réponses HTTP de la page d'accueil et de `/api/health`. Cette dernière est une sonde de vie, pas une certification de disponibilité de la base de données.
+
 ```bash
 # Développement
 npm run dev
@@ -253,6 +260,9 @@ npm run start
 
 # Lint
 npm run lint
+
+# Contrôle TypeScript
+npm run typecheck
 
 # Base de données (Prisma)
 npm run db:push      # Synchroniser le schéma
