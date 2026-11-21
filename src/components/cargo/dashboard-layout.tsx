@@ -137,6 +137,8 @@ const pageNameMap: Record<PageType, string> = {
   sustainability: 'Durabilité & RSE',
   rates: 'Gestion des Tarifs',
   'customer-portal': 'Portail Client',
+  'collector-portal': 'Portail Ramasseurs',
+  'route-optimization': 'Optimisation des tournées',
   users: 'Utilisateurs & Rôles',
   chat: 'Messagerie',
   scanner: 'Scanner',
@@ -327,8 +329,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [commandOpen, setCommandOpen] = useState(false);
   // Load notifications from real system
   useEffect(() => {
-    setNotifications(getNotificationsForRole(roleKey));
-    setPendingApprovals(getPendingApprovals().length);
+    const refresh = () => {
+      setNotifications(getNotificationsForRole(roleKey));
+      setPendingApprovals(getPendingApprovals().length);
+    };
+    const timer = window.setTimeout(refresh, 0);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('storage', refresh);
+    };
   }, [roleKey]);
 
   // Build dynamic navigation based on user role, permissions, and client visibility
@@ -371,11 +381,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Filter search items based on user permissions
   const accessibleSearchItems = React.useMemo(() => {
     return searchItems.filter((item) => canViewPage(item.page, roleKey, permissionsConfig, clientId || undefined));
-  }, [roleKey, permissionsConfig]);
+  }, [roleKey, permissionsConfig, clientId]);
 
   const accessibleRecentSearches = React.useMemo(() => {
     return recentSearches.filter((item) => canViewPage(item.page, roleKey, permissionsConfig, clientId || undefined));
-  }, [roleKey, permissionsConfig]);
+  }, [roleKey, permissionsConfig, clientId]);
 
   // Breadcrumb: can go back?
   const previousPage = pageHistory.length > 0 ? pageHistory[pageHistory.length - 1] : null;

@@ -41,7 +41,6 @@ import {
   Hash,
   AlertTriangle,
   Send,
-  CheckboxIcon,
   CheckSquare,
   Square,
   FileCheck,
@@ -445,7 +444,7 @@ export default function ParcelsPage() {
     return applyFiltersToArray(parcelsList, activeFilters, {
       dateField: 'estimatedDelivery',
       categoryField: 'carrier',
-    }) as Parcel[];
+    });
   }, [parcelsList, activeFilters]);
 
   const filtered = filteredParcels.filter(p => {

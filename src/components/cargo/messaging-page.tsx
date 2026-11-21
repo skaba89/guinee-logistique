@@ -83,25 +83,30 @@ export default function MessagingPage() {
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
 
-  // Charger les données initiales
-  useEffect(() => {
-    seedMessages();
-    refreshConversations();
-  }, []);
-
   const refreshConversations = useCallback(() => {
     const convs = getConversationsForUser(userId);
     setConversations(convs);
   }, [userId]);
 
+  // Charger les données initiales après le montage et à chaque changement d'utilisateur.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      seedMessages();
+      refreshConversations();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [refreshConversations]);
+
   // Charger les messages d'une conversation
   useEffect(() => {
-    if (selectedConvId) {
+    if (!selectedConvId) return;
+    const timer = window.setTimeout(() => {
       const msgs = getMessagesForConversation(selectedConvId);
       setMessages(msgs);
       markConversationRead(selectedConvId, userId);
       refreshConversations();
-    }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [selectedConvId, userId, refreshConversations]);
 
   // Filtrer les conversations

@@ -453,11 +453,4 @@ export {
   roleDefinitions,
   mapRoleString,
   getModuleById,
-  ClientModuleVisibility,
-  loadClientModuleVisibility,
-  saveClientModuleVisibility,
-  isModuleVisibleForClient,
-  setClientModuleVisibility,
-  setAllClientModulesVisibility,
-  resetClientModuleVisibility,
 };

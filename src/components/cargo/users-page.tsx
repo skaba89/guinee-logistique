@@ -122,7 +122,7 @@ interface SessionRecord {
   id: string;
   userId: string;
   userName: string;
-  device: 'desktop' | 'mobile' | 'tablet';
+  device: 'desktop' | 'mobile' | 'tablet' | 'laptop';
   browser: string;
   os: string;
   ip: string;

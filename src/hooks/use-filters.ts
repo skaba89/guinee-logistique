@@ -215,7 +215,7 @@ export function useFilters(options: UseFiltersOptions = {}): UseFiltersReturn {
 
 // ─── Helper : filtrer des données génériques ────────────────────
 
-export function applyFiltersToArray<T extends Record<string, unknown>>(
+export function applyFiltersToArray<T extends object>(
   data: T[],
   filters: FilterState,
   options?: {
@@ -229,6 +229,7 @@ export function applyFiltersToArray<T extends Record<string, unknown>>(
   }
 ): T[] {
   let result = [...data];
+  const read = (item: T, field: string): unknown => Object.prototype.hasOwnProperty.call(item, field) ? Reflect.get(item, field) : undefined;
 
   const {
     dateField = 'dateCreation',
@@ -243,45 +244,45 @@ export function applyFiltersToArray<T extends Record<string, unknown>>(
   // Filtre par date
   if (filters.dateFrom) {
     result = result.filter(item => {
-      const date = String(item[dateField] || '');
+      const date = String(read(item, dateField) || '');
       return date >= filters.dateFrom;
     });
   }
   if (filters.dateTo) {
     result = result.filter(item => {
-      const date = String(item[dateField] || '');
+      const date = String(read(item, dateField) || '');
       return date <= filters.dateTo;
     });
   }
 
   // Filtre par catégorie
   if (filters.category) {
-    result = result.filter(item => String(item[categoryField] || '') === filters.category);
+    result = result.filter(item => String(read(item, categoryField) || '') === filters.category);
   }
 
   // Filtre par statut
   if (filters.status) {
-    result = result.filter(item => String(item[statusField] || '') === filters.status);
+    result = result.filter(item => String(read(item, statusField) || '') === filters.status);
   }
 
   // Filtre par origine
   if (filters.origin) {
     result = result.filter(item =>
-      String(item[originField] || '').toLowerCase().includes(filters.origin.toLowerCase())
+      String(read(item, originField) || '').toLowerCase().includes(filters.origin.toLowerCase())
     );
   }
 
   // Filtre par destination
   if (filters.destination) {
     result = result.filter(item =>
-      String(item[destinationField] || '').toLowerCase().includes(filters.destination.toLowerCase())
+      String(read(item, destinationField) || '').toLowerCase().includes(filters.destination.toLowerCase())
     );
   }
 
   // Filtre par client
   if (filters.client) {
     result = result.filter(item =>
-      String(item[clientField] || '').toLowerCase().includes(filters.client.toLowerCase())
+      String(read(item, clientField) || '').toLowerCase().includes(filters.client.toLowerCase())
     );
   }
 
@@ -290,7 +291,7 @@ export function applyFiltersToArray<T extends Record<string, unknown>>(
     const searchLower = filters.search.toLowerCase();
     result = result.filter(item =>
       searchFields.some(field => {
-        const val = String(item[field] || '').toLowerCase();
+        const val = String(read(item, field) || '').toLowerCase();
         return val.includes(searchLower);
       })
     );
@@ -300,7 +301,7 @@ export function applyFiltersToArray<T extends Record<string, unknown>>(
   Object.entries(filters.custom).forEach(([key, value]) => {
     if (value) {
       result = result.filter(item =>
-        String(item[key] || '').toLowerCase().includes(value.toLowerCase())
+        String(read(item, key) || '').toLowerCase().includes(value.toLowerCase())
       );
     }
   });

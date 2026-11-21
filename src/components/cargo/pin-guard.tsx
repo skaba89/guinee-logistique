@@ -79,14 +79,27 @@ export default function PinGuard({
 
   // Initialiser le hash du PIN et vérifier la session existante
   useEffect(() => {
-    if (!userId) return;
-
-    storePinHash(userPin, userId);
-
-    if (isPinSessionActive(userId)) {
-      setIsAuthenticated(true);
-      setShowDialog(false);
-    }
+    let cancelled = false;
+    const initialize = async () => {
+      let active = false;
+      try {
+        if (userId) {
+          await storePinHash(userPin, userId);
+          active = isPinSessionActive(userId);
+        }
+      } catch {
+        // Un accès au stockage indisponible ne doit pas ouvrir la section.
+      }
+      if (!cancelled) {
+        setIsAuthenticated(active);
+        setShowDialog(!active);
+      }
+    };
+    const timer = window.setTimeout(() => void initialize(), 0);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [userId, userPin]);
 
   // Timer de session
@@ -109,7 +122,15 @@ export default function PinGuard({
 
   // Soumettre le PIN
   const handleSubmit = useCallback(async () => {
-    const isValid = await authenticateWithPin(pinInput, userId, timeout);
+    if (!userId) return;
+    let isValid = false;
+    try {
+      await storePinHash(userPin, userId);
+      isValid = await authenticateWithPin(pinInput, userId, timeout);
+    } catch {
+      setError('Impossible de vérifier le code PIN.');
+      return;
+    }
 
     if (isValid) {
       setIsAuthenticated(true);
@@ -133,7 +154,7 @@ export default function PinGuard({
         }, 30000); // 30 secondes de verrouillage
       }
     }
-  }, [pinInput, userId, timeout, attempts, onAuthenticated, onAuthenticationFailed]);
+  }, [pinInput, userId, userPin, timeout, attempts, onAuthenticated, onAuthenticationFailed]);
 
   // Afficher le contenu protégé
   if (isAuthenticated) {

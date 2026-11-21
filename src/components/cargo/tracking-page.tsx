@@ -89,7 +89,7 @@ const cityCoords: Record<string, { x: number; y: number }> = {
   'Montréal': { x: 245, y: 115 },
 };
 
-function getTimelineForShipment(shipment: Shipment): TimelineStep[] {
+function getTimelineForShipment(shipment: Shipment): (TimelineStep & { stepState: 'completed' | 'current' | 'pending' })[] {
   const steps: TimelineStep[] = [
     { label: 'Colis créé', status: 'en_attente', location: shipment.origin, date: shipment.dateCreation },
     { label: 'Confirmé', status: 'confirmee', location: shipment.origin, date: shipment.dateCreation },

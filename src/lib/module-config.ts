@@ -561,7 +561,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: false,
     description: 'Suivi des dépenses — notes de frais, budgets, approbations, rapports',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'write', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
 
   // Communication
@@ -620,7 +620,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Conformité réglementaire — KYC, sanctions, embargo, licences, audits',
-    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'write', agent: 'read', viewer: 'read', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'sustainability',
@@ -668,7 +668,7 @@ export const moduleDefinitions: ModuleDefinition[] = [
     enabled: true,
     premium: true,
     description: 'Intégrations API — ERP, CRM, douanes, transporteurs',
-    defaultPermissions: { admin: 'write', manager: 'read', agent: 'none', viewer: 'none', client: 'none' },
+    defaultPermissions: { admin: 'write', manager: 'read', agent: 'none', viewer: 'none', client: 'none', ramasseur: 'none' },
   },
   {
     id: 'settings',

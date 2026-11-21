@@ -302,7 +302,7 @@ export default function CompliancePage() {
   }, [rules]);
 
   const activeRulesCount = useMemo(() => rules.filter(r => r.enabled).length, [rules]);
-  const violationsThisMonth = 3;
+  const violationsThisMonth: number = 3;
   const expiredDocs = useMemo(() => mockLicenses.filter(l => l.status === 'expired').length, []);
   const pendingApprovals = 4;
   const plannedAudits = 2;
