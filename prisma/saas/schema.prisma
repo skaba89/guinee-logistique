@@ -223,6 +223,7 @@ model BillingDocument {
   customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
   payments BillingPayment[]
   credits BillingCredit[]
+  mobileIntents MobilePaymentIntent[]
   lines BillingLine[]
   subtotal Int
   taxTotal Int @default(0)
@@ -291,6 +292,7 @@ model BillingPayment {
   createdAt DateTime @default(now())
   document BillingDocument @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Restrict)
   reconciliation BillingReconciliation?
+  mobileIntent MobilePaymentIntent?
   @@unique([organizationId, id])
   @@unique([organizationId, reference])
   @@index([organizationId, documentId])
@@ -307,5 +309,36 @@ model BillingReconciliation {
   payment BillingPayment @relation(fields: [organizationId, paymentId], references: [organizationId, id], onDelete: Restrict)
   @@unique([organizationId, paymentId])
   @@unique([organizationId, statementReference])
+  @@index([organizationId, createdAt])
+}
+
+enum MobileProvider {
+  orange_money
+  mtn_momo
+}
+
+enum MobileIntentStatus {
+  pending
+  matched
+  cancelled
+}
+
+model MobilePaymentIntent {
+  id String @id @default(cuid())
+  organizationId String
+  documentId String
+  reference String
+  provider MobileProvider
+  amount Int
+  status MobileIntentStatus @default(pending)
+  paymentId String?
+  actorId String
+  closedById String?
+  createdAt DateTime @default(now())
+  closedAt DateTime?
+  document BillingDocument @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Restrict)
+  payment BillingPayment? @relation(fields: [organizationId, paymentId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, reference])
+  @@unique([organizationId, paymentId])
   @@index([organizationId, createdAt])
 }
