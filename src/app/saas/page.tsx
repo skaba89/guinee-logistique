@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { pageSession } from '@/lib/saas-page';
 import { hasRole } from '@/lib/saas-auth';
+import { canReadLogistics } from '@/lib/saas-logistics';
 import LogoutButton from '@/components/saas/logout-button';
 import Unavailable from '@/components/saas/unavailable';
 
@@ -19,6 +20,7 @@ export default async function SaaSHome() {
       <dt className="text-sm text-slate-500">Rôle</dt><dd>{identity.role}</dd>
     </dl>
     {hasRole(identity, ['admin']) && <Link prefetch={false} className="inline-block text-teal-600 underline" href="/saas/members">Membres de l’organisation</Link>}
-    <p className="text-sm text-slate-500">Les modules logistiques seront disponibles après leur migration vers les données réelles.</p>
+    {canReadLogistics(identity) && <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/logistics">Clients et expéditions</Link></p>}
+    <p className="text-sm text-slate-500">Les autres modules seront disponibles après leur migration vers les données réelles.</p>
   </section>;
 }

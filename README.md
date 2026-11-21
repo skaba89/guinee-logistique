@@ -246,6 +246,12 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ## 🛠 Scripts
 
+### Clients et expéditions SaaS
+
+Après application des migrations PostgreSQL, configurez aussi `SAAS_TENANT_DATABASE_URL` avec un login non propriétaire membre uniquement de `gl_tenant` (distinct du rôle d'authentification et du rôle de migration). Ne jamais utiliser le superutilisateur pour l'application. L'espace `/saas/logistics` permet de créer des clients, créer des expéditions, modifier un itinéraire à l'état brouillon et suivre l'historique des statuts. Les 100 enregistrements les plus récents sont affichés. Les administrateurs, managers et agents écrivent, les viewers lisent, les clients et ramasseurs n'ont pas accès à ce module interne.
+
+API : GET/POST `/api/saas/customers`, GET/POST `/api/saas/shipments`, GET/PATCH `/api/saas/shipments/:id`. Les mutations JSON nécessitent une session et l'origine HTTPS configurée. PATCH exige la version courante; une version obsolète renvoie 409. Statuts : brouillon → confirmé → en transit → livré, annulation possible avant transit. Les événements de statut sont ajoutés dans la même transaction; aucun droit de modification ou suppression d'événement n'est accordé au rôle runtime.
+
 ### Mode SaaS sécurisé
 
 La démo historique reste le mode par défaut. Après avoir provisionné PostgreSQL, appliqué les migrations SaaS et créé un compte avec une adhésion et un mot de passe haché par `hashPassword`, configurez `SAAS_AUTH_ENABLED=true`, `SAAS_AUTH_DATABASE_URL` (rôle de connexion membre de `gl_auth`) et `SAAS_PUBLIC_ORIGIN` (origine HTTPS exacte, sans barre finale).
