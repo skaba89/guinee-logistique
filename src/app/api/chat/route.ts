@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import ZAI from 'z-ai-web-dev-sdk';
+import { saasRequested, json } from '@/lib/saas-auth-http';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -190,6 +191,7 @@ function generateFallbackResponse(message: string): string {
 // ─── API Route Handler ─────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  if (saasRequested()) return json({ error: 'Module indisponible en mode SaaS' }, 503);
   try {
     const body = await request.json() as ChatRequestBody;
 

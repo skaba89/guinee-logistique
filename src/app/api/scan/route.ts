@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { saasRequested, json } from '@/lib/saas-auth-http';
 
 // ─── Mock Data for Scan Results ──────────────────────────────────
 
@@ -121,6 +122,7 @@ function lookupCode(code: string): ScanResult {
 // ─── POST Handler ────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  if (saasRequested()) return json({ error: 'Module indisponible en mode SaaS' }, 503);
   try {
     const body = await request.json();
     const { code, action } = body;
@@ -189,6 +191,7 @@ export async function POST(request: NextRequest) {
 // ─── GET Handler ─────────────────────────────────────────────────
 
 export async function GET() {
+  if (saasRequested()) return json({ error: 'Module indisponible en mode SaaS' }, 503);
   return NextResponse.json({
     service: 'Guinée Logistique Scanner API',
     version: '1.0.0',

@@ -85,3 +85,14 @@ export async function logout(token: string | undefined) {
 export function hasRole(identity: Identity | null, roles: readonly TenantRole[]): boolean {
   return identity !== null && roles.includes(identity.role);
 }
+
+// Never accept a tenant ID or role from the browser for this directory.
+export async function organizationMembers(token: string | undefined) {
+  const identity = await sessionIdentity(token);
+  if (!identity || !hasRole(identity, ['admin'])) return null;
+  return db().membership.findMany({
+    where: { organizationId: identity.organizationId },
+    select: { accountId: true, role: true, active: true, account: { select: { displayName: true, email: true } } },
+    orderBy: { accountId: 'asc' },
+  });
+}
