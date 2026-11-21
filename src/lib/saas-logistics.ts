@@ -36,13 +36,14 @@ const writers = ['admin', 'manager', 'agent'] as const;
 export function canReadLogistics(identity: Identity) { return hasRole(identity, readers); }
 export function canWriteLogistics(identity: Identity) { return hasRole(identity, writers); }
 
-async function tenant<T>(identity: Identity, write: boolean, action: (tx: Prisma.TransactionClient) => Promise<T>, portal = false) {
-  if (!(portal ? !write && identity.role === 'client' : write ? canWriteLogistics(identity) : canReadLogistics(identity))) throw new LogisticsError(403, 'Accès refusé');
+async function tenant<T>(identity: Identity, write: boolean, action: (tx: Prisma.TransactionClient) => Promise<T>, portal = false, collector = false) {
+  if (!(collector ? identity.role==='ramasseur' : portal ? !write && identity.role === 'client' : write ? canWriteLogistics(identity) : canReadLogistics(identity))) throw new LogisticsError(403, 'Accès refusé');
   return db().$transaction(async tx => {
     await tx.$queryRaw`SELECT set_config('gl.organization_id', ${identity.organizationId}, true)`;
     await tx.$queryRaw`SELECT set_config('gl.portal_account_id', ${portal ? identity.accountId : ''}, true)`;
+    await tx.$queryRaw`SELECT set_config('gl.collector_id', ${collector ? identity.accountId : ''}, true)`;
     const membership = await tx.membership.findUnique({ where: { organizationId_accountId: { organizationId: identity.organizationId, accountId: identity.accountId } } });
-    if (!membership?.active || !(portal ? membership.role === 'client' : (write ? writers : readers).some(role => role === membership.role))) throw new LogisticsError(403, 'Accès refusé');
+    if (!membership?.active || !(collector ? membership.role==='ramasseur' : portal ? membership.role === 'client' : (write ? writers : readers).some(role => role === membership.role))) throw new LogisticsError(403, 'Accès refusé');
     return action(tx);
   });
 }
@@ -120,6 +121,7 @@ export function updateShipment(identity: Identity, id: string, input: z.infer<ty
     const current = await tx.shipment.findUnique({where});
     if (!current) throw new LogisticsError(404, 'Expédition introuvable');
     if (current.version !== data.version) throw new LogisticsError(409, 'Version obsolète');
+    if (data.status && await tx.mission.findFirst({where:{organizationId:identity.organizationId,shipmentId:id,status:'assigned'}})) throw new LogisticsError(409,'Mission active : terminer ou annuler la mission');
     if (data.status && !transitions[current.status].includes(data.status)) throw new LogisticsError(409, 'Transition interdite');
     if ((data.origin !== undefined || data.destination !== undefined) && current.status !== 'draft') throw new LogisticsError(409, 'Itinéraire modifiable uniquement en brouillon');
     const next = await tx.shipment.updateMany({where:{id,organizationId:identity.organizationId,version:data.version},data:{origin:data.origin,destination:data.destination,status:data.status,version:{increment:1}}});
@@ -127,4 +129,56 @@ export function updateShipment(identity: Identity, id: string, input: z.infer<ty
     if (data.status) await tx.shipmentEvent.create({data:{organizationId:identity.organizationId,shipmentId:id,actorId:identity.accountId,status:data.status,version:data.version+1}});
     return tx.shipment.findUniqueOrThrow({where});
   });
+}
+
+export const missionInput=z.object({assigneeId:z.string().min(1).max(128),kind:z.enum(['pickup','delivery']),address:z.string().trim().min(1).max(300),version:z.number().int().min(0).max(2147483646)}).strict();
+export const receiptInput=z.object({recipient:z.string().trim().min(1).max(150),note:z.string().trim().max(500).optional()}).strict();
+export function listCollectors(identity:Identity){
+  return tenant(identity,false,tx=>tx.membership.findMany({where:{organizationId:identity.organizationId,role:'ramasseur',active:true},select:{accountId:true},take:100}));
+}
+export function listMissions(identity:Identity,shipmentId?:string){
+  const collector=identity.role==='ramasseur';
+  return tenant(identity,false,tx=>tx.mission.findMany({where:{organizationId:identity.organizationId,...(collector?{assigneeId:identity.accountId}:{}),...(shipmentId?{shipmentId}:{})},include:{shipment:{select:{trackingNumber:true,status:true}}},orderBy:{createdAt:'desc'},take:100}),false,collector);
+}
+export function assignMission(identity:Identity,shipmentId:string,input:z.infer<typeof missionInput>){
+  return tenant(identity,true,async tx=>{
+    const data=missionInput.parse(input);
+    const shipment=await tx.shipment.findUnique({where:{organizationId_id:{organizationId:identity.organizationId,id:shipmentId}}});
+    if(!shipment)throw new LogisticsError(404,'Expédition introuvable');
+    const assignee=await tx.membership.findUnique({where:{organizationId_accountId:{organizationId:identity.organizationId,accountId:data.assigneeId}}});
+    if(!assignee?.active||assignee.role!=='ramasseur')throw new LogisticsError(404,'Ramasseur introuvable');
+    const expected=data.kind==='pickup'?'confirmed':'in_transit';
+    const locked=await tx.shipment.updateMany({where:{id:shipmentId,organizationId:identity.organizationId,status:expected,version:data.version},data:{version:{increment:1}}});
+    if(locked.count!==1)throw new LogisticsError(409,'Statut ou version incompatible');
+    if(await tx.mission.findFirst({where:{organizationId:identity.organizationId,shipmentId,status:{not:'cancelled'},kind:data.kind}}))throw new LogisticsError(409,'Mission déjà existante');
+    return tx.mission.create({data:{organizationId:identity.organizationId,shipmentId,assigneeId:data.assigneeId,kind:data.kind,address:data.address}});
+  });
+}
+export function cancelMission(identity:Identity,id:string){
+  return tenant(identity,true,async tx=>{
+    const mission=await tx.mission.findFirst({where:{id,organizationId:identity.organizationId,status:'assigned'},include:{shipment:true}});
+    if(!mission)throw new LogisticsError(404,'Mission active introuvable');
+    const lock=await tx.shipment.updateMany({where:{id:mission.shipmentId,organizationId:identity.organizationId,version:mission.shipment.version},data:{version:{increment:1}}});
+    if(lock.count!==1)throw new LogisticsError(409,'Version obsolète');
+    const result=await tx.mission.updateMany({where:{id,organizationId:identity.organizationId,status:'assigned'},data:{status:'cancelled'}});
+    if(result.count!==1)throw new LogisticsError(409,'Mission non modifiable');
+    return {ok:true};
+  });
+}
+export function completeMission(identity:Identity,id:string,input:z.infer<typeof receiptInput>){
+  return tenant(identity,true,async tx=>{
+    const data=receiptInput.parse(input);
+    const mission=await tx.mission.findFirst({where:{id,organizationId:identity.organizationId,assigneeId:identity.accountId},include:{shipment:true}});
+    if(!mission)throw new LogisticsError(404,'Mission introuvable');
+    if(mission.status==='completed' && mission.recipient===data.recipient && mission.note===(data.note??null))return {ok:true};
+    if(mission.status!=='assigned')throw new LogisticsError(409,'Mission non modifiable');
+    const from=mission.kind==='pickup'?'confirmed':'in_transit';
+    const to=mission.kind==='pickup'?'in_transit':'delivered';
+    const lock=await tx.shipment.updateMany({where:{id:mission.shipmentId,organizationId:identity.organizationId,status:from,version:mission.shipment.version},data:{status:to,version:{increment:1}}});
+    if(lock.count!==1)throw new LogisticsError(409,'Statut ou version incompatible');
+    await tx.shipmentEvent.create({data:{organizationId:identity.organizationId,shipmentId:mission.shipmentId,actorId:identity.accountId,status:to,version:mission.shipment.version+1}});
+    const done=await tx.mission.updateMany({where:{id,organizationId:identity.organizationId,assigneeId:identity.accountId,status:'assigned'},data:{status:'completed',recipient:data.recipient,note:data.note??null,completedAt:new Date()}});
+    if(done.count!==1)throw new LogisticsError(409,'Mission non modifiable');
+    return {ok:true};
+  },false,true);
 }

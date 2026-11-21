@@ -22,6 +22,7 @@ export default async function SaaSHome() {
     {hasRole(identity, ['admin']) && <Link prefetch={false} className="inline-block text-teal-600 underline" href="/saas/members">Membres de l’organisation</Link>}
     {canReadLogistics(identity) && <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/logistics">Clients et expéditions</Link></p>}
     {identity.role==='client' && <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/portal">Mes expéditions</Link></p>}
+    {identity.role==='ramasseur' && <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/missions">Mes missions</Link></p>}
     <p className="text-sm text-slate-500">Les autres modules seront disponibles après leur migration vers les données réelles.</p>
   </section>;
 }
