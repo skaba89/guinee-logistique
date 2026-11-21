@@ -122,11 +122,20 @@ jobs:
           node-version: '22'
       - name: Generate isolated recipe configuration
         run: bash scripts/init-deploy-env.sh rec https://rec.example.invalid
+      - name: Check REC preflight and reject unsafe configuration
+        run: |
+          set -euo pipefail
+          python3 scripts/rec-preflight.py | jq -e '.status == "PASS" and .app_exists == false'
+          chmod 644 .env.rec
+          if python3 scripts/rec-preflight.py; then exit 1; fi
+          chmod 600 .env.rec
+          python3 scripts/rec-preflight.py
       - name: Build and start isolated stack
         run: bash scripts/deploy.sh rec
       - name: Verify actual runtime and security
         run: |
           set -euo pipefail
+          python3 scripts/rec-preflight.py | jq -e '.status == "PASS" and .app_exists and .db_exists'
           curl -fsS http://127.0.0.1:8401/api/health | jq -e '.status == "ok"'
           curl -fsS http://127.0.0.1:8401/api/ready | jq -e '.status == "ready"'
           check_http() {
@@ -205,6 +214,8 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/monitor.mjs rec
+          if python3 scripts/rec-evidence.py > /tmp/rec-evidence.json; then exit 1; fi
+          jq -e '.technical_status == "FAIL" and .checks.preflight and .checks.local_health_ready and .checks.containers_healthy and (.checks.https_health_ready == false) and (.production_authorized == false)' /tmp/rec-evidence.json
           logs=$(docker compose --env-file .env.rec logs --no-log-prefix --no-color app | sed -n '/^{"event":"saas_http"/p')
           printf '%s\n' "$logs" | jq -se '
             length > 20 and

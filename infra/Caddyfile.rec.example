@@ -1,0 +1,10 @@
+# Import only into your existing HTTPS reverse proxy after replacing the domain.
+# Do not replace your entire VPS Caddyfile or use the development proxy.
+rec-logistique.votre-domaine.example {
+    reverse_proxy 127.0.0.1:8401
+    header {
+        Strict-Transport-Security "max-age=86400"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

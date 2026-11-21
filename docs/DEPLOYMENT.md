@@ -1,5 +1,7 @@
 # Déploiement Docker — DEV, REC, PROD
 
+Pour le VPS Ubuntu partagé, utiliser d'abord la [procédure REC](VPS_RECETTE.md).
+
 La stack utilise PostgreSQL 16, un conteneur ponctuel de provision des rôles, un conteneur ponctuel de migration Prisma et un serveur Next.js standalone non-root. La base SQLite de démonstration n'est pas copiée dans l'image. Chaque environnement possède son propre projet Compose, réseau et volume PostgreSQL.
 
 | Environnement | Fichier secret | Port local | Usage |
