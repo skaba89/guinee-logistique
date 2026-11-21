@@ -26,7 +26,7 @@ export function billingPdf(document:BillingDocument&{lines:BillingLine[];organiz
   pdf.text('Taxes : '+gnf(document.taxTotal),14,y);y+=6;
   pdf.setFont('helvetica','bold');pdf.text('TOTAL : '+gnf(document.total),14,y);y+=6;
   pdf.setFont('helvetica','normal');
-  if(document.status==='invoice'){pdf.text('Encaissé : '+gnf(document.paid),14,y);y+=6;pdf.text('Solde : '+gnf(document.total-document.paid),14,y);}
+  if(document.status==='invoice'){pdf.text('Encaissé : '+gnf(document.paid),14,y);y+=6;pdf.text('Avoirs : '+gnf(document.credited),14,y);y+=6;pdf.text('Solde : '+gnf(document.total-document.paid-document.credited),14,y);}
   for(let page=1;page<=pdf.getNumberOfPages();page++){
     pdf.setPage(page);pdf.setFontSize(8);pdf.setTextColor(90);
     pdf.text('Document interne - conformité fiscale non validée',14,285);
@@ -42,6 +42,6 @@ export function csvCell(value:string|number){
   return '"'+cell.replace(/"/g,'""')+'"';
 }
 export function billingCsv(documents:BillingDocument[]){
-  const header=['Reference','Date','Client','Sous-total GNF','Taxes GNF','Total GNF','Encaisse GNF','Solde GNF'];
-  return '\uFEFF'+[header,...documents.map(d=>[d.invoiceNumber??'',d.issuedAt?.toISOString().slice(0,10)??'',d.customerName,d.subtotal,d.taxTotal,d.total,d.paid,d.total-d.paid])].map(row=>row.map(csvCell).join(';')).join('\r\n')+'\r\n';
+  const header=['Reference','Date','Client','Sous-total GNF','Taxes GNF','Total GNF','Encaisse GNF','Avoirs GNF','Solde GNF'];
+  return '\uFEFF'+[header,...documents.map(d=>[d.invoiceNumber??'',d.issuedAt?.toISOString().slice(0,10)??'',d.customerName,d.subtotal,d.taxTotal,d.total,d.paid,d.credited,d.total-d.paid-d.credited])].map(row=>row.map(csvCell).join(';')).join('\r\n')+'\r\n';
 }

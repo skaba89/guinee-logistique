@@ -18,7 +18,7 @@ export default async function Billing(){
     <h1 className="text-2xl font-bold">Gestion commerciale</h1>
     <a href="/api/saas/billing/export" download className="underline text-teal-600">Exporter les factures CSV</a>
     <p className="text-sm">Documents internes en GNF. Les références ne constituent pas une numérotation fiscale validée.</p>
-    <dl className="grid gap-3 sm:grid-cols-3">{([['Facturé',overview.totals.invoiced],['Encaissé',overview.totals.paid],['Reste à recevoir',overview.totals.outstanding]]).map(([label,value])=><div key={label} className="rounded border p-3"><dt>{label}</dt><dd className="font-bold">{gnf(value)}</dd></div>)}</dl>
+    <dl className="grid gap-3 sm:grid-cols-4">{([['Facturé',overview.totals.invoiced],['Encaissé',overview.totals.paid],['Avoirs',overview.totals.credited],['Reste à recevoir',overview.totals.outstanding]]).map(([label,value])=><div key={label} className="rounded border p-3"><dt>{label}</dt><dd className="font-bold">{gnf(value)}</dd></div>)}</dl>
     <BillingForm kind="quote" customers={customers.map(({id,name})=>({id,name}))}/>
     <h2 className="font-semibold">Devis et factures (100 derniers)</h2>
     {overview.documents.map(doc=><article key={doc.id} className="space-y-3 border rounded p-4">
@@ -27,9 +27,10 @@ export default async function Billing(){
       <ul>{doc.lines.map(line=><li key={line.id}>{line.description} · {line.quantity} × {gnf(line.unitPrice)} · Taxe {gnf(line.tax)} · {gnf(line.total)}</li>)}</ul>
       <p>Sous-total : {gnf(doc.subtotal)} · Taxes : {gnf(doc.taxTotal)}</p>
       <a href={'/api/saas/billing/'+doc.id+'/pdf'} download className="underline text-teal-600">Télécharger le PDF</a>
-      <p>Total : {gnf(doc.total)}{doc.status==='invoice'&&<> · Encaissé : {gnf(doc.paid)} · Solde : {gnf(doc.total-doc.paid)}</>}</p>
-      {doc.status==='quote'?<BillingForm kind="issue" id={doc.id} version={doc.version} balance={doc.total}/>:doc.paid<doc.total?<BillingForm kind="payment" id={doc.id} version={doc.version} balance={doc.total-doc.paid}/>:<p className="text-green-700">Soldée</p>}
+      <p>Total : {gnf(doc.total)}{doc.status==='invoice'&&<> · Encaissé : {gnf(doc.paid)} · Avoirs : {gnf(doc.credited)} · Solde : {gnf(doc.total-doc.paid-doc.credited)}</>}</p>
+      {doc.status==='quote'?<BillingForm kind="issue" id={doc.id} version={doc.version} balance={doc.total}/>:doc.paid+doc.credited<doc.total?<><BillingForm kind="payment" id={doc.id} version={doc.version} balance={doc.total-doc.paid-doc.credited}/><BillingForm kind="credit" id={doc.id} version={doc.version} balance={doc.total-doc.paid-doc.credited}/></>:<p className="text-green-700">Soldée</p>}
       {doc.payments.length>0&&<ul>{doc.payments.map(p=><li key={p.id}>{p.reference} · {gnf(p.amount)} · {p.method} · {p.createdAt.toISOString()}</li>)}</ul>}
+      {doc.credits.length>0&&<ul>{doc.credits.map(c=><li key={c.id}>Avoir {c.reference} · {gnf(c.amount)} · {c.reason} · {c.createdAt.toISOString()} · Auteur {c.actorId}</li>)}</ul>}
     </article>)}
   </section>;
 }

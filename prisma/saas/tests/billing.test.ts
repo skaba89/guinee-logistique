@@ -3,7 +3,7 @@ import {test,expect} from 'bun:test';
 import {PrismaClient} from '../../../generated/saas';
 import {type Identity,hashPassword,login} from '../../../src/lib/saas-auth';
 import {createCustomer} from '../../../src/lib/saas-logistics';
-import {createQuote,issueInvoice,recordPayment,billingOverview,quoteInput,billingDocument,billingExport} from '../../../src/lib/saas-billing';
+import {createQuote,issueInvoice,recordPayment,recordCredit,billingOverview,quoteInput,billingDocument,billingExport} from '../../../src/lib/saas-billing';
 import {billingPdf,billingCsv,csvCell} from '../../../src/lib/billing-export';
 import {GET as pdfGet} from '../../../src/app/api/saas/billing/[id]/pdf/route';
 import {GET as billingGet} from '../../../src/app/api/saas/billing/route';
@@ -50,9 +50,9 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     const concurrent=await Promise.allSettled(['PAY-2','PAY-3'].map(reference=>recordPayment(a,quote.id,{amount:200000,reference,method:'cash',version:2})));
     expect(concurrent.filter(r=>r.status==='fulfilled').length).toBe(1);
     const overview=await billingOverview(a);
-    expect(overview.totals).toEqual({invoiced:'300000',paid:'300000',outstanding:'0'});
+    expect(overview.totals).toEqual({invoiced:'300000',paid:'300000',credited:'0',outstanding:'0'});
     expect(overview.documents[0].payments.length).toBe(2);
-    expect((await billingOverview(b)).totals).toEqual({invoiced:'0',paid:'0',outstanding:'0'});
+    expect((await billingOverview(b)).totals).toEqual({invoiced:'0',paid:'0',credited:'0',outstanding:'0'});
     const multi=await createQuote(a,{customerId:cust.id,lines:[{description:'Fret',quantity:2,unitPrice:100001,taxBps:1800},{description:'Emballage',quantity:1,unitPrice:5000,taxBps:0}]});
     const detail=await billingDocument(a,multi.id);
     expect(detail.lines.length).toBe(2);
@@ -63,6 +63,30 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     expect(csvCell('=1+1')).toBe('"\'=1+1"');
     expect(billingCsv(await billingExport(a))).toContain('300000');
     expect(await billingExport(b)).toEqual([]);
+    const credit={reference:'AV-1',amount:41002,reason:'Remise commerciale',version:1};
+    await expect(recordCredit(a,multi.id,credit)).rejects.toThrow();
+    const issued=await issueInvoice(a,multi.id,0);
+    expect(issued.invoiceNumber?.endsWith('-000002')).toBe(true);
+    await expect(recordCredit(b,multi.id,credit)).rejects.toThrow();
+    await expect(recordCredit(agent,multi.id,credit)).rejects.toThrow();
+    await expect(recordCredit(a,multi.id,{...credit,amount:241003})).rejects.toThrow();
+    const adjustment=await recordCredit(a,multi.id,credit);
+    expect((await recordCredit(a,multi.id,credit)).id).toBe(adjustment.id);
+    await expect(recordCredit(a,multi.id,{...credit,reason:'Autre'})).rejects.toThrow();
+    await expect(recordPayment(a,multi.id,{amount:200001,reference:'EXCESS',method:'bank',version:2})).rejects.toThrow();
+    const competing=await Promise.allSettled([
+      recordPayment(a,multi.id,{amount:200000,reference:'FINAL',method:'bank',version:2}),
+      recordCredit(a,multi.id,{reference:'AV-2',amount:200000,reason:'Annulation',version:2}),
+    ]);
+    expect(competing.filter(r=>r.status==='fulfilled').length).toBe(1);
+    expect((await billingOverview(a)).totals.outstanding).toBe('0');
+    expect(await restricted.billingCredit.count()).toBe(0);
+    expect(await restricted.billingCounter.count()).toBe(0);
+    await restricted.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT set_config('gl.organization_id',${orgs[1]},true),set_config('gl.finance','on',true)`;
+      expect(await tx.billingCredit.count()).toBe(0);
+      expect(await tx.billingCounter.count()).toBe(0);
+    });
     await expect(billingDocument(b,multi.id)).rejects.toThrow();
     const ownLogin=await login(a.accountId+'@example.invalid',password,orgs[0]);
     if(ownLogin.status!=='ok')throw new Error('Login failed');
@@ -75,6 +99,8 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await admin.membership.update({where:{organizationId_accountId:{organizationId:orgs[0],accountId:a.accountId}},data:{role:'agent'}});
     await expect(billingOverview(a)).rejects.toThrow();
   }finally{
+    await admin.billingCredit.deleteMany({where:{organizationId:{in:orgs}}});
+    await admin.billingCounter.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingPayment.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingLine.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingDocument.deleteMany({where:{organizationId:{in:orgs}}});
