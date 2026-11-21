@@ -52,6 +52,8 @@ jobs:
           curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 2 http://127.0.0.1:3000/api/health > /dev/null
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/saas)" = 307
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/saas/members)" = 307
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/saas/missions)" = 307
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/saas/missions)" = 401
           curl -fsS http://127.0.0.1:3000/saas/login > /tmp/saas-login.html
           grep -q 'Se connecter' /tmp/saas-login.html
 
