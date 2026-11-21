@@ -126,11 +126,18 @@ jobs:
           set -euo pipefail
           curl -fsS http://127.0.0.1:8401/api/health | jq -e '.status == "ok"'
           curl -fsS http://127.0.0.1:8401/api/ready | jq -e '.status == "ready"'
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8401/saas)" = 307
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8401/api/saas/billing)" = 401
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8401/api/scan)" = 503
+          check_http() {
+            actual=$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8401$1")
+            echo "$1: HTTP $actual (expected $2)"
+            test "$actual" = "$2"
+          }
+          check_http /saas 307
+          check_http /api/saas/billing 401
+          check_http /api/scan 503
           docker compose --env-file .env.rec exec -T app sh -ec 'test "$(id -u)" != 0 && test -z "${SAAS_DATABASE_URL:-}"'
-          test -z "$(docker compose --env-file .env.rec port db 5432 2>/dev/null || true)"
+          echo "Runtime user and migration-credential isolation verified"
+          db_id=$(docker compose --env-file .env.rec ps -q db)
+          docker inspect --format '{{json .HostConfig.PortBindings}}' "$db_id" | jq -e '(. // {}) | length == 0'
       - name: Verify secrets and initialization are not overwritten
         run: |
           set -euo pipefail
