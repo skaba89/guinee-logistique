@@ -40,6 +40,7 @@ model Account {
   email       String       @unique
   displayName String
   createdAt   DateTime     @default(now())
+  passwordHash String?
   memberships Membership[]
 }
 
@@ -50,6 +51,23 @@ model Membership {
   active         Boolean      @default(true)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   account        Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  sessions Session[]
   @@id([organizationId, accountId])
   @@index([accountId])
+}
+
+model Session {
+  tokenHash      String   @id
+  organizationId String
+  accountId      String
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  membership     Membership @relation(fields: [organizationId, accountId], references: [organizationId, accountId], onDelete: Cascade)
+  @@index([expiresAt])
+}
+
+model LoginAttempt {
+  key          String   @id
+  count        Int
+  windowStart  DateTime
 }
