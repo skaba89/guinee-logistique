@@ -4,6 +4,8 @@ import { pageSession } from '@/lib/saas-page';
 import { canReadLogistics, canWriteLogistics, getShipment, LogisticsError } from '@/lib/saas-logistics';
 import Unavailable from '@/components/saas/unavailable';
 import ShipmentUpdateForm from '@/components/saas/shipment-update-form';
+import ParcelForm from '@/components/saas/parcel-form';
+import ParcelLabel from '@/components/saas/parcel-label';
 
 export default async function ShipmentDetail({params}: {params:Promise<{id:string}>}) {
   const session = await pageSession();
@@ -19,6 +21,10 @@ export default async function ShipmentDetail({params}: {params:Promise<{id:strin
     <h1 className="text-xl font-bold">{shipment.trackingNumber}</h1>
     <p>{shipment.customer.name} · {shipment.origin} → {shipment.destination} · {shipment.status}</p>
     {canWriteLogistics(session.identity) && <ShipmentUpdateForm id={id} version={shipment.version} status={shipment.status} origin={shipment.origin} destination={shipment.destination}/>}
+    <h2 className="font-semibold">Colis</h2>
+    {canWriteLogistics(session.identity) && shipment.status==='draft' && <ParcelForm id={id} version={shipment.version}/>}
+    {shipment.parcels.length===0 && <p>Aucun colis enregistré.</p>}
+    <ul className="grid gap-3 sm:grid-cols-2">{shipment.parcels.map(parcel=><li key={parcel.id} className="border rounded p-3"><p>{parcel.description} · {parcel.weightGrams} g</p><ParcelLabel code={parcel.barcode}/></li>)}</ul>
     <h2 className="font-semibold">Historique des statuts</h2>
     <ol className="space-y-2">{shipment.events.map(event=><li key={event.id} className="border rounded p-3">{event.status} — {event.createdAt.toISOString()}</li>)}</ol>
   </section>;

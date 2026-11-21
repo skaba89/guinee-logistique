@@ -54,6 +54,7 @@ model Membership {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   account        Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
   sessions Session[]
+  customerAccess CustomerAccess[]
   @@id([organizationId, accountId])
   @@index([accountId])
 }
@@ -91,6 +92,7 @@ model Customer {
   createdAt DateTime @default(now())
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   shipments Shipment[]
+  portalAccess CustomerAccess[]
   @@unique([organizationId, id])
   @@index([organizationId, createdAt])
 }
@@ -108,6 +110,7 @@ model Shipment {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
   events ShipmentEvent[]
+  parcels Parcel[]
   @@unique([organizationId, id])
   @@index([organizationId, createdAt])
   @@index([organizationId, customerId])
@@ -123,4 +126,26 @@ model ShipmentEvent {
   createdAt DateTime @default(now())
   shipment Shipment @relation(fields: [organizationId, shipmentId], references: [organizationId, id], onDelete: Restrict)
   @@unique([organizationId, shipmentId, version])
+}
+
+model CustomerAccess {
+  organizationId String
+  accountId String
+  customerId String
+  membership Membership @relation(fields: [organizationId, accountId], references: [organizationId, accountId], onDelete: Cascade)
+  customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Cascade)
+  @@id([organizationId, accountId, customerId])
+  @@index([organizationId, customerId])
+}
+
+model Parcel {
+  id String @id @default(cuid())
+  organizationId String
+  shipmentId String
+  barcode String @unique
+  description String
+  weightGrams Int
+  createdAt DateTime @default(now())
+  shipment Shipment @relation(fields: [organizationId, shipmentId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, shipmentId])
 }
