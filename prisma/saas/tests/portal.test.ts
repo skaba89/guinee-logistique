@@ -47,7 +47,7 @@ test('parcel lifecycle, portal customer isolation and revoked access', async()=>
     await expect(scanParcel(c,parcel.barcode)).rejects.toThrow();
     expect(await portalShipments(c)).toEqual([]);
     await admin.customerAccess.create({data:{organizationId:orgs[0],accountId:users[1],customerId:customer.id}});
-    await expect(admin.customerAccess.create({data:{organizationId:orgs[0],accountId:users[1],customerId:other.id}})).rejects.toThrow();
+    await expect(Promise.resolve(admin.customerAccess.create({data:{organizationId:orgs[0],accountId:users[1],customerId:other.id}}))).rejects.toThrow();
     const result=await login(users[1]+'@example.invalid',password,orgs[0]);
     if(result.status!=='ok')throw new Error('Login failed');
     const request=(path:string)=>new NextRequest('https://saas.example.invalid'+path,{headers:{cookie:'gl_session='+result.token}});
