@@ -248,6 +248,8 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ### Clients et expéditions SaaS
 
+Les agents, managers et administrateurs peuvent affecter une mission de ramassage (expédition confirmée) ou de livraison (en transit) à un membre actif de rôle ramasseur, depuis la fiche expédition. Le ramasseur consulte ses seules missions à `/saas/missions`. Une remise déclarée enregistre le nom du réceptionnaire, une observation facultative, la date serveur et l'identifiant du ramasseur; elle fait progresser l'expédition et ajoute un événement dans la même transaction. Ce justificatif déclaratif n'est pas une signature électronique certifiée. Une mission active empêche la modification manuelle du statut, et peut être annulée par un agent pour réaffectation. Une répétition à l'identique d'une confirmation déjà enregistrée est idempotente. La synchronisation hors connexion et les notifications externes restent à implémenter.
+
 Les colis sont ajoutés aux expéditions en brouillon, avec poids en grammes et code-barres Code 39 unique. L'écran logistique accepte les lecteurs de codes-barres fonctionnant comme clavier ou une saisie manuelle. Le scan retourne le statut enregistré de l'expédition, sans simulation GPS.
 
 Le portail `/saas/portal` et son API GET `/api/saas/portal/shipments` sont réservés au rôle client et affichent uniquement les expéditions explicitement associées par `CustomerAccess`. Le provisionnement initial se fait avec le rôle d'administration PostgreSQL (aucun droit d'écriture sur les associations n'est accordé au runtime) :

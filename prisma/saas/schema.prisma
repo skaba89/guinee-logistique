@@ -55,6 +55,7 @@ model Membership {
   account        Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
   sessions Session[]
   customerAccess CustomerAccess[]
+  missions Mission[]
   @@id([organizationId, accountId])
   @@index([accountId])
 }
@@ -111,6 +112,7 @@ model Shipment {
   customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
   events ShipmentEvent[]
   parcels Parcel[]
+  missions Mission[]
   @@unique([organizationId, id])
   @@index([organizationId, createdAt])
   @@index([organizationId, customerId])
@@ -147,5 +149,34 @@ model Parcel {
   weightGrams Int
   createdAt DateTime @default(now())
   shipment Shipment @relation(fields: [organizationId, shipmentId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, shipmentId])
+}
+
+enum MissionKind {
+  pickup
+  delivery
+}
+
+enum MissionStatus {
+  assigned
+  completed
+  cancelled
+}
+
+model Mission {
+  id String @id @default(cuid())
+  organizationId String
+  shipmentId String
+  assigneeId String
+  kind MissionKind
+  status MissionStatus @default(assigned)
+  address String
+  recipient String?
+  note String?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  shipment Shipment @relation(fields: [organizationId, shipmentId], references: [organizationId, id], onDelete: Restrict)
+  assignee Membership @relation(fields: [organizationId, assigneeId], references: [organizationId, accountId], onDelete: Restrict)
+  @@index([organizationId, assigneeId, status])
   @@index([organizationId, shipmentId])
 }
