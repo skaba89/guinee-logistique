@@ -9,7 +9,7 @@ DECLARE old_check text;
 BEGIN
  SELECT conname INTO STRICT old_check FROM pg_constraint
  WHERE conrelid='"BillingDocument"'::regclass AND contype='c'
- AND pg_get_constraintdef(oid) LIKE '%"quantity"%' AND pg_get_constraintdef(oid) LIKE '%"unitPrice"%';
+ AND pg_get_constraintdef(oid) ILIKE '%quantity%' AND pg_get_constraintdef(oid) ILIKE '%unitprice%';
  EXECUTE format('ALTER TABLE "BillingDocument" DROP CONSTRAINT %I',old_check);
 END $$;
 ALTER TABLE "BillingDocument" ADD CONSTRAINT "billing_total_check" CHECK ("subtotal">0 AND "taxTotal">=0 AND "total"::bigint="subtotal"::bigint+"taxTotal"::bigint AND "total"<=2000000000);
