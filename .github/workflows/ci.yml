@@ -111,3 +111,47 @@ jobs:
           bun test prisma/saas/tests/missions.test.ts
           bun test prisma/saas/tests/outbox.test.ts
           bun test prisma/saas/tests/billing.test.ts
+
+  docker-recette:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate isolated recipe configuration
+        run: bash scripts/init-deploy-env.sh rec https://rec.example.invalid
+      - name: Build and start isolated stack
+        run: bash scripts/deploy.sh rec
+      - name: Verify actual runtime and security
+        run: |
+          set -euo pipefail
+          curl -fsS http://127.0.0.1:8401/api/health | jq -e '.status == "ok"'
+          curl -fsS http://127.0.0.1:8401/api/ready | jq -e '.status == "ready"'
+          check_http() {
+            actual=$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8401$1")
+            echo "$1: HTTP $actual (expected $2)"
+            test "$actual" = "$2"
+          }
+          check_http /saas 307
+          check_http /api/saas/billing 401
+          check_http /api/scan 503
+          docker compose --env-file .env.rec exec -T app sh -ec 'test "$(id -u)" != 0 && test -z "${SAAS_DATABASE_URL:-}"'
+          echo "Runtime user and migration-credential isolation verified"
+          db_id=$(docker compose --env-file .env.rec ps -q db)
+          docker inspect --format '{{json .HostConfig.PortBindings}}' "$db_id" | jq -e '(. // {}) | length == 0'
+      - name: Verify secrets and initialization are not overwritten
+        run: |
+          set -euo pipefail
+          before=$(sha256sum .env.rec)
+          if bash scripts/init-deploy-env.sh rec https://other.example.invalid; then exit 1; fi
+          test "$before" = "$(sha256sum .env.rec)"
+          docker compose --env-file .env.rec run --rm provision
+          docker compose --env-file .env.rec run --rm migrate
+          curl -fsS http://127.0.0.1:8401/api/ready | jq -e '.status == "ready"'
+      - name: Diagnostics and cleanup
+        if: always()
+        run: |
+          if test -f .env.rec; then
+            docker compose --env-file .env.rec ps
+            docker compose --env-file .env.rec logs --tail=50 app db
+            docker compose --env-file .env.rec down -v
+          fi

@@ -1,0 +1,73 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: guinee_logistique
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${GL_DB_PASSWORD:?Run scripts/init-deploy-env.sh}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d guinee_logistique"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  provision:
+    profiles: ["ops"]
+    image: postgres:16
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGDATABASE: guinee_logistique
+      PGUSER: postgres
+      PGPASSWORD: ${GL_DB_PASSWORD:?Required}
+      GL_AUTH_PASSWORD: ${GL_AUTH_PASSWORD:?Required}
+      GL_TENANT_PASSWORD: ${GL_TENANT_PASSWORD:?Required}
+    volumes:
+      - ./prisma/saas/provision-role.sql:/provision-role.sql:ro
+      - ./infra/provision-logins.sql:/provision-logins.sql:ro
+    command: ["psql", "-v", "ON_ERROR_STOP=1", "-f", "/provision-role.sql", "-f", "/provision-logins.sql"]
+  migrate:
+    profiles: ["ops"]
+    build:
+      context: .
+      target: migrate
+    environment:
+      SAAS_DATABASE_URL: postgresql://postgres:${GL_DB_PASSWORD:?Required}@db:5432/guinee_logistique
+    depends_on:
+      db:
+        condition: service_healthy
+  app:
+    build:
+      context: .
+      target: app
+    environment:
+      SAAS_AUTH_ENABLED: "true"
+      SAAS_PUBLIC_ORIGIN: ${GL_PUBLIC_ORIGIN:?Required HTTPS origin}
+      SAAS_AUTH_DATABASE_URL: postgresql://gl_auth_runtime:${GL_AUTH_PASSWORD:?Required}@db:5432/guinee_logistique?connect_timeout=5
+      SAAS_TENANT_DATABASE_URL: postgresql://gl_tenant_runtime:${GL_TENANT_PASSWORD:?Required}@db:5432/guinee_logistique?connect_timeout=5
+      DATABASE_URL: file:/tmp/unused-demo.db
+    ports:
+      - "127.0.0.1:${GL_HTTP_PORT:?Required}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=1000,gid=1000
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 8s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+volumes:
+  pgdata:
