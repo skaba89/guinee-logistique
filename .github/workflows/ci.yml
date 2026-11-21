@@ -173,6 +173,12 @@ jobs:
           grep -qx 'organizations=1' <<< "$restored"
           grep -qx 'admins=1' <<< "$restored"
           curl -fsS http://127.0.0.1:8401/api/ready | jq -e '.status == "ready"'
+      - name: Exercise business workflows over HTTP
+        run: |
+          set -euo pipefail
+          docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -v ON_ERROR_STOP=1 < prisma/saas/tests/recette-fixtures.sql
+          organization=$(docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -Atc "SELECT id FROM \"Organization\" WHERE slug='ci-company'")
+          node scripts/recette-http.mjs "$organization"
       - name: Diagnostics and cleanup
         if: always()
         run: |
