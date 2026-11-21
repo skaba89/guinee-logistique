@@ -179,6 +179,26 @@ jobs:
           docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -v ON_ERROR_STOP=1 < prisma/saas/tests/recette-fixtures.sql
           organization=$(docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -Atc "SELECT id FROM \"Organization\" WHERE slug='ci-company'")
           node scripts/recette-http.mjs "$organization"
+      - name: Verify structured logs and availability monitoring
+        run: |
+          set -euo pipefail
+          node scripts/monitor.mjs rec
+          logs=$(docker compose --env-file .env.rec logs --no-log-prefix --no-color app | sed -n '/^{"event":"saas_http"/p')
+          printf '%s\n' "$logs" | jq -se '
+            length > 20 and
+            any(.[]; .route == "/auth/login" and .status == 200) and
+            any(.[]; .route == "/shipments/:id" and .status == 404) and
+            any(.[]; .route == "/customers" and .status == 403) and
+            all(.[]; (.durationMs >= 0) and (.requestId | test("^[0-9a-f-]{36}$")) and
+              (keys == ["durationMs","event","level","method","requestId","route","status","timestamp"]))
+          '
+          if printf '%s\n' "$logs" | grep -Eq 'example\.invalid|CI-only-recipe-password|gl_session|recipe-client-customer'; then exit 1; fi
+          docker compose --env-file .env.rec stop app
+          set +e
+          node scripts/monitor.mjs rec
+          result=$?
+          set -e
+          test "$result" = 1
       - name: Diagnostics and cleanup
         if: always()
         run: |

@@ -3,8 +3,10 @@ import { ZodError } from 'zod';
 import { authEnabled, allowedOrigin, json } from './saas-auth-http';
 import { sessionIdentity, SESSION_COOKIE, type Identity } from './saas-auth';
 import { LogisticsError } from './saas-logistics';
+import { observeSaas } from './saas-observability';
 
 export async function logisticsRequest(request: NextRequest, write: boolean, action: (identity: Identity, body: unknown) => Promise<unknown>, status = 200) {
+  return observeSaas(request, async () => {
   if (!authEnabled()) return json({error:'Service indisponible'},503);
   if (write && !allowedOrigin(request)) return json({error:'Accès refusé'},403);
   try {
@@ -25,4 +27,5 @@ export async function logisticsRequest(request: NextRequest, write: boolean, act
     if (error instanceof ZodError || error instanceof SyntaxError) return json({error:'Données invalides'},400);
     return json({error:'Service indisponible'},503);
   }
+  });
 }

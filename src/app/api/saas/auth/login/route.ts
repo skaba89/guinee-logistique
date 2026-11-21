@@ -2,10 +2,12 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { login, SESSION_COOKIE, SESSION_MAX_AGE } from '@/lib/saas-auth';
 import { authEnabled, allowedOrigin, json } from '@/lib/saas-auth-http';
+import { observeSaas } from '@/lib/saas-observability';
 
 const input = z.object({ email: z.string().email().max(254), password: z.string().min(1).max(128), organizationId: z.string().min(1).max(128) }).strict();
 
 export async function POST(request: NextRequest) {
+  return observeSaas(request, async () => {
   if (!authEnabled()) return json({ error: 'Unavailable' }, 503);
   if (!allowedOrigin(request)) return json({ error: 'Forbidden' }, 403);
   if (!request.headers.get('content-type')?.startsWith('application/json')) return json({ error: 'Invalid request' }, 415);
@@ -24,4 +26,5 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return json({ error: error instanceof SyntaxError ? 'Invalid request' : 'Unavailable' }, error instanceof SyntaxError ? 400 : 503);
   }
+  });
 }

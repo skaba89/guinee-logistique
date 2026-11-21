@@ -1,8 +1,10 @@
 import { NextRequest } from 'next/server';
 import { logout, SESSION_COOKIE } from '@/lib/saas-auth';
 import { authEnabled, allowedOrigin, json } from '@/lib/saas-auth-http';
+import { observeSaas } from '@/lib/saas-observability';
 
 export async function POST(request: NextRequest) {
+  return observeSaas(request, async () => {
   if (!authEnabled()) return json({ error: 'Unavailable' }, 503);
   if (!allowedOrigin(request)) return json({ error: 'Forbidden' }, 403);
   try {
@@ -13,4 +15,5 @@ export async function POST(request: NextRequest) {
   } catch {
     return json({ error: 'Unavailable' }, 503);
   }
+  });
 }
