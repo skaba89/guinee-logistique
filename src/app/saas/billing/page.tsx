@@ -19,6 +19,7 @@ export default async function Billing(){
     <h1 className="text-2xl font-bold">Gestion commerciale</h1>
     <a href="/api/saas/billing/export" download className="underline text-teal-600">Exporter les factures CSV</a>
     <Link href="/saas/billing/journal" prefetch={false} className="block underline text-teal-600">Journal financier</Link>
+    <Link href="/saas/billing/mobile" prefetch={false} className="block underline text-teal-600">Suivi Mobile Money</Link>
     <p className="text-sm">Documents internes en GNF. Les références ne constituent pas une numérotation fiscale validée.</p>
     <dl className="grid gap-3 sm:grid-cols-4">{([['Facturé',overview.totals.invoiced],['Encaissé',overview.totals.paid],['Avoirs',overview.totals.credited],['Reste à recevoir',overview.totals.outstanding]]).map(([label,value])=><div key={label} className="rounded border p-3"><dt>{label}</dt><dd className="font-bold">{gnf(value)}</dd></div>)}</dl>
     <BillingForm kind="quote" customers={customers.map(({id,name})=>({id,name}))}/>

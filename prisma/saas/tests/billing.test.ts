@@ -8,6 +8,7 @@ import {billingPdf,billingCsv,csvCell} from '../../../src/lib/billing-export';
 import {GET as pdfGet} from '../../../src/app/api/saas/billing/[id]/pdf/route';
 import {GET as billingGet} from '../../../src/app/api/saas/billing/route';
 import {NextRequest} from 'next/server';
+import {createMobileIntent,closeMobileIntent,mobileOverview} from '../../../src/lib/mobile-payments';
 import {commercialProfile,commercialInput,updateCommercialProfile} from '../../../src/lib/commercial-profile';
 
 test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent payments',async()=>{
@@ -34,6 +35,19 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await expect(recordPayment(a,quote.id,{amount:100000,reference:'PAY-1',method:'cash',version:0})).rejects.toThrow();
     await expect(issueInvoice(b,quote.id,0)).rejects.toThrow();
     const invoice=await issueInvoice(a,quote.id,0);
+    const mobileInput={documentId:quote.id,reference:'INTENT-1',amount:100000,provider:'orange_money' as const};
+    await expect(createMobileIntent(agent,mobileInput)).rejects.toThrow();
+    await expect(createMobileIntent(b,mobileInput)).rejects.toThrow();
+    await expect(createMobileIntent(a,{...mobileInput,amount:300001})).rejects.toThrow();
+    const intent=await createMobileIntent(a,mobileInput);
+    expect((await createMobileIntent(a,mobileInput)).id).toBe(intent.id);
+    expect(intent.status).toBe('pending');
+    await expect(createMobileIntent(a,{...mobileInput,amount:99999})).rejects.toThrow();
+    const otherIntent=await createMobileIntent(a,{...mobileInput,reference:'INTENT-2'});
+    const wrongProvider=await createMobileIntent(a,{...mobileInput,reference:'INTENT-3',provider:'mtn_momo'});
+    expect((await billingOverview(a)).totals.paid).toBe('0');
+    expect(await restricted.mobilePaymentIntent.count()).toBe(0);
+    expect((await mobileOverview(b)).intents).toEqual([]);
     expect(invoice.invoiceNumber?.startsWith('FAC-')).toBe(true);
     expect((await issueInvoice(a,quote.id,0)).invoiceNumber).toBe(invoice.invoiceNumber);
     expect(await restricted.billingDocument.count()).toBe(0);
@@ -46,6 +60,8 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await expect(recordPayment(a,quote.id,{amount:300001,reference:'TOO-MUCH',method:'cash',version:1})).rejects.toThrow();
     const first={amount:100000,reference:'PAY-1',method:'orange_money' as const,version:1};
     const payment=await recordPayment(a,quote.id,first);
+    await expect(closeMobileIntent(a,intent.id,{action:'match',paymentId:payment.id})).rejects.toThrow();
+    await expect(closeMobileIntent(b,intent.id,{action:'cancel'})).rejects.toThrow();
     expect((await recordPayment(a,quote.id,first)).id).toBe(payment.id);
     await expect(recordPayment(a,quote.id,{...first,amount:99999})).rejects.toThrow();
     const concurrent=await Promise.allSettled(['PAY-2','PAY-3'].map(reference=>recordPayment(a,quote.id,{amount:200000,reference,method:'cash',version:2})));
@@ -58,6 +74,14 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await expect(reconcilePayment(b,payment.id,proof)).rejects.toThrow();
     await expect(reconcilePayment(agent,payment.id,proof)).rejects.toThrow();
     const reconciliation=await reconcilePayment(a,payment.id,proof);
+    await expect(closeMobileIntent(a,wrongProvider.id,{action:'match',paymentId:payment.id})).rejects.toThrow();
+    expect((await mobileOverview(a)).payments.some(p=>p.id===payment.id)).toBe(true);
+    const matched=await closeMobileIntent(a,intent.id,{action:'match',paymentId:payment.id});
+    expect(matched.status).toBe('matched');
+    expect((await closeMobileIntent(a,intent.id,{action:'match',paymentId:payment.id})).id).toBe(matched.id);
+    await expect(closeMobileIntent(a,otherIntent.id,{action:'match',paymentId:payment.id})).rejects.toThrow();
+    expect((await closeMobileIntent(a,otherIntent.id,{action:'cancel'})).status).toBe('cancelled');
+    await expect(closeMobileIntent(a,intent.id,{action:'cancel'})).rejects.toThrow();
     expect((await reconcilePayment(a,payment.id,proof)).id).toBe(reconciliation.id);
     await expect(reconcilePayment(a,payment.id,{...proof,statementReference:'OTHER'})).rejects.toThrow();
     const second=overview.documents[0].payments.find(p=>p.id!==payment.id)!;
@@ -127,6 +151,7 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await admin.membership.update({where:{organizationId_accountId:{organizationId:orgs[0],accountId:a.accountId}},data:{role:'agent'}});
     await expect(billingOverview(a)).rejects.toThrow();
   }finally{
+    await admin.mobilePaymentIntent.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingReconciliation.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingCredit.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingCounter.deleteMany({where:{organizationId:{in:orgs}}});
