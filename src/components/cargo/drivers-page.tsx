@@ -668,7 +668,7 @@ function getDocStatusText(status: string, expiryDate: string) {
 function renderStars(rating: number) {
   const full = Math.floor(rating);
   const half = rating % 1 >= 0.3;
-  const stars = [];
+  const stars: React.ReactNode[] = [];
   for (let i = 0; i < 5; i++) {
     if (i < full) {
       stars.push(<Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />);

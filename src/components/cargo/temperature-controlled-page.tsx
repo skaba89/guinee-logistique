@@ -142,7 +142,7 @@ interface ContainerRF {
   currentTemp: number;
   humidity: number;
   status: ContainerRFStatus;
-  currentVoyage: string;
+  currentVoyage: string | null;
   nextMaintenance: string;
   tempRange: string;
   humidityRange: string;

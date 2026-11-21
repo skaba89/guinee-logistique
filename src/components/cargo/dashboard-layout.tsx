@@ -137,6 +137,8 @@ const pageNameMap: Record<PageType, string> = {
   sustainability: 'Durabilité & RSE',
   rates: 'Gestion des Tarifs',
   'customer-portal': 'Portail Client',
+  'collector-portal': 'Portail Ramasseurs',
+  'route-optimization': 'Optimisation des tournées',
   users: 'Utilisateurs & Rôles',
   chat: 'Messagerie',
   scanner: 'Scanner',

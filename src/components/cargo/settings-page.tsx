@@ -58,6 +58,7 @@ import {
 } from '@/components/ui/select';
 import { useCargoStore } from '@/lib/cargo-store';
 import { useTheme } from 'next-themes';
+import { clients as clientsData } from '@/lib/test-data';
 import {
   type RoleKey,
   type PermissionLevel,
@@ -73,6 +74,10 @@ import {
   savePermissionsConfig,
   resetPermissionsConfig,
   type PermissionsConfig,
+  setClientModuleVisibility,
+  setAllClientModulesVisibility,
+  resetClientModuleVisibility,
+  isModuleVisibleForClient,
 } from '@/lib/permissions';
 import {
   permissionLevelLabels,

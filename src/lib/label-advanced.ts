@@ -274,6 +274,7 @@ export const defaultLabelTemplates: LabelTemplate[] = [
   },
   {
     id: 'tpl-shipping-compact',
+    type: 'shipping',
     name: 'Expédition Compact',
     description: 'Étiquette compacte avec informations essentielles uniquement',
     compatibleFormats: ['4x4', '2-4x4'],
@@ -287,6 +288,7 @@ export const defaultLabelTemplates: LabelTemplate[] = [
   },
   {
     id: 'tpl-return',
+    type: 'return',
     name: 'Retour',
     description: 'Étiquette de retour avec motif pré-imprimé',
     compatibleFormats: ['4x6', '4x4'],
@@ -300,6 +302,7 @@ export const defaultLabelTemplates: LabelTemplate[] = [
   },
   {
     id: 'tpl-warehouse',
+    type: 'warehouse',
     name: 'Entrepôt',
     description: 'Étiquette d\'entrepôt avec emplacement et QR code',
     compatibleFormats: ['2-4x4', '2x1'],
@@ -313,6 +316,7 @@ export const defaultLabelTemplates: LabelTemplate[] = [
   },
   {
     id: 'tpl-qr-only',
+    type: 'qr_only',
     name: 'QR Code uniquement',
     description: 'Mini étiquette avec QR code pour identification rapide',
     compatibleFormats: ['2x1'],
@@ -326,6 +330,7 @@ export const defaultLabelTemplates: LabelTemplate[] = [
   },
   {
     id: 'tpl-pallet',
+    type: 'pallet',
     name: 'Palette',
     description: 'Étiquette grande format pour palettes et conteneurs',
     compatibleFormats: ['4x8', '6x4', 'a4'],
