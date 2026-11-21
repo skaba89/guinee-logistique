@@ -26,6 +26,7 @@ model Organization {
   memberships Membership[]
   customers Customer[]
   shipments Shipment[]
+  billingCounters BillingCounter[]
 }
 
 model Agency {
@@ -207,16 +208,40 @@ model BillingDocument {
   unitPrice Int
   total Int
   paid Int @default(0)
+  credited Int @default(0)
   version Int @default(0)
   createdAt DateTime @default(now())
   issuedAt DateTime?
   customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
   payments BillingPayment[]
+  credits BillingCredit[]
   lines BillingLine[]
   subtotal Int
   taxTotal Int @default(0)
   @@unique([organizationId, id])
   @@index([organizationId, createdAt])
+}
+
+model BillingCounter {
+  organizationId String
+  year Int
+  value Int
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  @@id([organizationId, year])
+}
+
+model BillingCredit {
+  id String @id @default(cuid())
+  organizationId String
+  documentId String
+  reference String
+  reason String
+  amount Int
+  actorId String
+  createdAt DateTime @default(now())
+  document BillingDocument @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, reference])
+  @@index([organizationId, documentId])
 }
 
 model BillingLine {

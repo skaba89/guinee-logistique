@@ -1,6 +1,6 @@
 'use client';
 import {useState,type FormEvent} from 'react';
-type Props={kind:'quote';customers:{id:string;name:string}[]}|{kind:'issue'|'payment';id:string;version:number;balance:number};
+type Props={kind:'quote';customers:{id:string;name:string}[]}|{kind:'issue'|'payment'|'credit';id:string;version:number;balance:number};
 const field='w-full border rounded p-2 bg-transparent';
 export default function BillingForm(props:Props){
   const [pending,setPending]=useState(false),[error,setError]=useState('');
@@ -11,9 +11,9 @@ export default function BillingForm(props:Props){
     let path='/api/saas/billing',body:object;
     if(props.kind==='quote')body={customerId:data.get('customerId'),lines:Array.from({length:lineCount},(_,i)=>({description:data.get('description-'+i),quantity:Number(data.get('quantity-'+i)),unitPrice:Number(data.get('unitPrice-'+i)),taxBps:Number(data.get('tax-'+i))}))};
     else{
-      path+='/'+encodeURIComponent(props.id)+(props.kind==='issue'?'/issue':'/payments');
-      body=props.kind==='issue'?{version:props.version}:{reference:data.get('reference'),amount:Number(data.get('amount')),method:data.get('method'),version:props.version};
-      if(!window.confirm(props.kind==='issue'?'Émettre ce document interne ?':'Enregistrer ce règlement déjà reçu ?'))return;
+      path+='/'+encodeURIComponent(props.id)+(props.kind==='issue'?'/issue':props.kind==='credit'?'/credits':'/payments');
+      body=props.kind==='issue'?{version:props.version}:{reference:data.get('reference'),amount:Number(data.get('amount')),version:props.version,...(props.kind==='credit'?{reason:data.get('reason')}:{method:data.get('method')})};
+      if(!window.confirm(props.kind==='issue'?'Émettre ce document interne ?':props.kind==='credit'?'Réduire définitivement le solde non encaissé ?':'Enregistrer ce règlement déjà reçu ?'))return;
     }
     setPending(true);setError('');
     try{
@@ -39,7 +39,12 @@ export default function BillingForm(props:Props){
       <label className="block">Montant reçu (GNF)<input name="amount" required type="number" step={1} min={1} max={props.balance} className={field}/></label>
       <label className="block">Mode<select name="method" className={field}><option value="cash">Espèces</option><option value="bank">Virement</option><option value="orange_money">Orange Money (manuel)</option><option value="mtn_momo">Mobile Money MTN (manuel)</option></select></label>
     </>}
-    <button disabled={pending||(props.kind==='quote'&&!props.customers.length)} className="rounded bg-teal-700 text-white p-2">{pending?'Enregistrement…':props.kind==='quote'?'Créer le devis':props.kind==='issue'?'Convertir en facture interne':'Enregistrer le règlement'}</button>
+    {props.kind==='credit'&&<>
+      <label className="block">Référence unique de l’avoir<input name="reference" maxLength={100} required className={field}/></label>
+      <label className="block">Montant non encaissé à annuler (GNF)<input name="amount" required type="number" step={1} min={1} max={props.balance} className={field}/></label>
+      <label className="block">Motif<input name="reason" maxLength={300} required className={field}/></label>
+    </>}
+    <button disabled={pending||(props.kind==='quote'&&!props.customers.length)} className="rounded bg-teal-700 text-white p-2">{pending?'Enregistrement…':props.kind==='quote'?'Créer le devis':props.kind==='issue'?'Convertir en facture interne':props.kind==='credit'?'Enregistrer un avoir interne':'Enregistrer le règlement'}</button>
     {error&&<p role="alert" className="text-red-600">{error}</p>}
   </form>;
 }
