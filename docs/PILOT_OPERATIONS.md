@@ -43,6 +43,20 @@ avec sonde locale verte doit être traité séparément (TLS/DNS/proxy).
 
 ## Critères de passage au pilote
 
+La CI exécute 120 lectures concurrentes (8 workers) avec des sessions
+distinctes et vérifie l'isolation des deux organisations, les missions, le
+portail et les totaux financiers. Les latences p50/p95/max et le débit sont
+affichés dans les logs. Les seuils CI (p95 < 5 s, max < 15 s) détectent les
+régressions grossières ; ils ne constituent ni un SLA ni un test de capacité
+de production. Le scénario utilise exclusivement les fixtures jetables.
+
+Chrome headless vérifie les titres des pages réelles, le portail filtré et
+l'affichage des missions à 390 px. Les sessions de test sont provisionnées
+via l'API, donc la saisie du formulaire de connexion et les interactions
+utilisateur complètes restent à valider. Les captures de recette fictive
+sont disponibles sept jours dans l'artifact GitHub Actions
+`guinee-logistique-recette`.
+
 - [ ] CI entièrement verte et version approuvée.
 - [ ] Recette sur le VPS avec domaine HTTPS, DNS et comptes réels autorisés.
 - [ ] Validation d'une sauvegarde chiffrée hors VPS et restauration isolée.
