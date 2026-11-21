@@ -120,6 +120,8 @@ import {
   loadReminders,
   saveReminders,
   generateAutoReminders,
+  generateReminderSubject,
+  generateReminderBody,
   sendReminder,
   getRequiredReminderLevel,
   getDaysLate,
@@ -423,7 +425,6 @@ export default function BillingPage() {
   }, [unpaidInvoices, reminderConfig, reminders, toast]);
 
   const handleSendManualReminder = (invoice: Invoice, level: ReminderLevel, channel: ReminderChannel) => {
-    const { generateReminderSubject, generateReminderBody } = require('@/lib/reminder-system');
     const subject = generateReminderSubject(level, invoice.invoiceNumber);
     const body = generateReminderBody(level, invoice.clientName, invoice.invoiceNumber, invoice.amount, invoice.dateEcheance, symbol);
 
@@ -1318,8 +1319,6 @@ function SendReminderForm({
     return level || 1;
   });
   const [selectedChannel, setSelectedChannel] = useState<ReminderChannel>('email');
-
-  const { generateReminderSubject, generateReminderBody } = require('@/lib/reminder-system');
   const subject = generateReminderSubject(selectedLevel, invoice.invoiceNumber);
   const body = generateReminderBody(selectedLevel, invoice.clientName, invoice.invoiceNumber, invoice.amount, invoice.dateEcheance, symbol);
 

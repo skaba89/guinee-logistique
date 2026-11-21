@@ -80,17 +80,19 @@ export interface UseSidebarCollapseReturn {
 }
 
 export function useSidebarCollapse(): UseSidebarCollapseReturn {
-  const [collapseState, setCollapseState] = useState<CollapseState>(DEFAULT_ALL_OPEN);
+  const [storedState, setCollapseState] = useState<CollapseState | null>(null);
+  const collapseState = storedState ?? DEFAULT_ALL_OPEN;
 
   // Charger l'état depuis localStorage au montage
   useEffect(() => {
-    setCollapseState(loadState());
+    const timer = window.setTimeout(() => setCollapseState(prev => prev ?? loadState()), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Persister chaque changement
   useEffect(() => {
-    saveState(collapseState);
-  }, [collapseState]);
+    if (storedState !== null) saveState(storedState);
+  }, [storedState]);
 
   const isOpen = useCallback(
     (group: NavGroupKey): boolean => {
@@ -102,21 +104,21 @@ export function useSidebarCollapse(): UseSidebarCollapseReturn {
 
   const toggle = useCallback((group: NavGroupKey) => {
     setCollapseState((prev) => ({
-      ...prev,
-      [group]: prev[group] === false ? true : false,
+      ...(prev ?? loadState()),
+      [group]: (prev ?? loadState())[group] === false ? true : false,
     }));
   }, []);
 
   const open = useCallback((group: NavGroupKey) => {
     setCollapseState((prev) => ({
-      ...prev,
+      ...(prev ?? loadState()),
       [group]: true,
     }));
   }, []);
 
   const close = useCallback((group: NavGroupKey) => {
     setCollapseState((prev) => ({
-      ...prev,
+      ...(prev ?? loadState()),
       [group]: false,
     }));
   }, []);
@@ -146,8 +148,8 @@ export function useSidebarCollapse(): UseSidebarCollapseReturn {
 
   const ensureGroupOpen = useCallback((group: NavGroupKey) => {
     setCollapseState((prev) => {
-      if (prev[group] === false) {
-        return { ...prev, [group]: true };
+      if ((prev ?? loadState())[group] === false) {
+        return { ...(prev ?? loadState()), [group]: true };
       }
       return prev; // Pas de changement si déjà ouvert
     });
