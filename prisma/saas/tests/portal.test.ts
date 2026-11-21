@@ -1,7 +1,7 @@
 /// <reference types="bun-types" />
 import { test, expect } from 'bun:test';
 import { PrismaClient } from '../../../generated/saas';
-import { createCustomer,createShipment,createParcel,scanParcel,portalShipments,updateShipment } from '../../../src/lib/saas-logistics';
+import { createCustomer,createShipment,createParcel,scanParcel,portalShipments,updateShipment,operationalFeed } from '../../../src/lib/saas-logistics';
 import { type Identity,hashPassword,login } from '../../../src/lib/saas-auth';
 import { NextRequest } from 'next/server';
 import { GET as portalGet } from '../../../src/app/api/saas/portal/shipments/route';
@@ -46,6 +46,7 @@ test('parcel lifecycle, portal customer isolation and revoked access', async()=>
     await expect(scanParcel(b,parcel.barcode)).rejects.toThrow();
     await expect(scanParcel(c,parcel.barcode)).rejects.toThrow();
     expect(await portalShipments(c)).toEqual([]);
+    expect(await operationalFeed(c)).toEqual([]);
     await admin.customerAccess.create({data:{organizationId:orgs[0],accountId:users[1],customerId:customer.id}});
     await expect(Promise.resolve(admin.customerAccess.create({data:{organizationId:orgs[0],accountId:users[1],customerId:other.id}}))).rejects.toThrow();
     const result=await login(users[1]+'@example.invalid',password,orgs[0]);
@@ -59,6 +60,10 @@ test('parcel lifecycle, portal customer isolation and revoked access', async()=>
     expect(data[0].events.map((e:{status:string})=>e.status)).toEqual(['draft','confirmed']);
     expect(data[0].events[0]).not.toHaveProperty('actorId');
     expect(data[0].parcels[0].barcode).toBe(parcel.barcode);
+    const feed=await operationalFeed(c);
+    expect(feed.length).toBe(2);
+    expect(feed.every(event=>event.reference===first.trackingNumber)).toBe(true);
+    expect((await operationalFeed(b)).every(event=>event.reference===third.trackingNumber)).toBe(true);
     expect((await scanGet(request('/api/saas/parcels/scan?barcode='+parcel.barcode))).status).toBe(403);
     await restricted.$transaction(async tx=>{
       await tx.$queryRaw`SELECT set_config('gl.organization_id',${orgs[0]},true),set_config('gl.portal_account_id',${users[1]},true)`;
@@ -73,6 +78,7 @@ test('parcel lifecycle, portal customer isolation and revoked access', async()=>
     })).rejects.toThrow();
     await admin.customerAccess.deleteMany({where:{accountId:users[1]}});
     expect(await portalShipments(c)).toEqual([]);
+    expect(await operationalFeed(c)).toEqual([]);
   }finally{
     await admin.customerAccess.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.parcel.deleteMany({where:{organizationId:{in:orgs}}});

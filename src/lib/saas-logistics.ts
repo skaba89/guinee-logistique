@@ -182,3 +182,23 @@ export function completeMission(identity:Identity,id:string,input:z.infer<typeof
     return {ok:true};
   },false,true);
 }
+
+// Activity derived from committed operational records.
+export async function operationalFeed(identity:Identity){
+  if(identity.role==='ramasseur'){
+    const missions=await listMissions(identity);
+    return missions.map(m=>({id:m.id,reference:m.shipment.trackingNumber,
+      message:m.status==='assigned'?'Mission affectée':m.status==='completed'?'Remise confirmée':'Mission annulée (date d’affectation)',
+      date:m.completedAt??m.createdAt,kind:m.kind})).sort((a,b)=>b.date.getTime()-a.date.getTime()).slice(0,50);
+  }
+  const portal=identity.role==='client';
+  return tenant(identity,false,async tx=>{
+    const events=await tx.shipmentEvent.findMany({
+      where:{organizationId:identity.organizationId,...(portal?{shipment:{customer:{portalAccess:{some:{accountId:identity.accountId,organizationId:identity.organizationId}}}}}:{})},
+      select:{id:true,status:true,createdAt:true,shipment:{select:{trackingNumber:true}}},
+      orderBy:[{createdAt:'desc'},{id:'asc'}],take:50,
+    });
+    const labels:Record<ShipmentStatus,string>={draft:'Expédition créée',confirmed:'Expédition confirmée',in_transit:'Expédition en transit',delivered:'Expédition livrée',cancelled:'Expédition annulée'};
+    return events.map(e=>({id:e.id,reference:e.shipment.trackingNumber,message:labels[e.status],date:e.createdAt,kind:'shipment'}));
+  },portal);
+}
