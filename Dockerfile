@@ -13,11 +13,11 @@ COPY public ./public
 COPY next.config.ts tsconfig.json tailwind.config.ts postcss.config.mjs ./
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN DATABASE_URL=file:/tmp/unused-demo.db bun run db:generate && \
-    SAAS_DATABASE_URL=postgresql://unused:unused@localhost:5432/unused bunx prisma generate --schema prisma/saas/schema.prisma && \
+    SAAS_DATABASE_URL=postgresql://unused:unused@localhost:5432/unused bun x prisma generate --schema prisma/saas/schema.prisma && \
     DATABASE_URL=file:/tmp/unused-demo.db bun run build
 
 FROM build AS migrate
-CMD ["bunx", "prisma", "migrate", "deploy", "--schema", "prisma/saas/schema.prisma"]
+CMD ["bun", "x", "prisma", "migrate", "deploy", "--schema", "prisma/saas/schema.prisma"]
 
 FROM base AS app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000 SAAS_AUTH_ENABLED=true
