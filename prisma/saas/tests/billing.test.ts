@@ -3,7 +3,7 @@ import {test,expect} from 'bun:test';
 import {PrismaClient} from '../../../generated/saas';
 import {type Identity,hashPassword,login} from '../../../src/lib/saas-auth';
 import {createCustomer} from '../../../src/lib/saas-logistics';
-import {createQuote,issueInvoice,recordPayment,recordCredit,billingOverview,quoteInput,billingDocument,billingExport} from '../../../src/lib/saas-billing';
+import {createQuote,issueInvoice,recordPayment,recordCredit,billingOverview,quoteInput,billingDocument,billingExport,reconcilePayment,financialJournal} from '../../../src/lib/saas-billing';
 import {billingPdf,billingCsv,csvCell} from '../../../src/lib/billing-export';
 import {GET as pdfGet} from '../../../src/app/api/saas/billing/[id]/pdf/route';
 import {GET as billingGet} from '../../../src/app/api/saas/billing/route';
@@ -52,6 +52,32 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     const overview=await billingOverview(a);
     expect(overview.totals).toEqual({invoiced:'300000',paid:'300000',credited:'0',outstanding:'0'});
     expect(overview.documents[0].payments.length).toBe(2);
+    const proof={statementReference:'OM-STATEMENT-1',amount:100000};
+    await expect(reconcilePayment(a,payment.id,{...proof,amount:99999})).rejects.toThrow();
+    await expect(reconcilePayment(b,payment.id,proof)).rejects.toThrow();
+    await expect(reconcilePayment(agent,payment.id,proof)).rejects.toThrow();
+    const reconciliation=await reconcilePayment(a,payment.id,proof);
+    expect((await reconcilePayment(a,payment.id,proof)).id).toBe(reconciliation.id);
+    await expect(reconcilePayment(a,payment.id,{...proof,statementReference:'OTHER'})).rejects.toThrow();
+    const second=overview.documents[0].payments.find(p=>p.id!==payment.id)!;
+    await expect(reconcilePayment(a,second.id,{...proof,amount:second.amount})).rejects.toThrow();
+    expect((await billingOverview(a)).totals).toEqual(overview.totals);
+    expect(await restricted.billingReconciliation.count()).toBe(0);
+    await restricted.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT set_config('gl.organization_id',${orgs[0]},true),set_config('gl.finance','on',true)`;
+      expect(await tx.billingReconciliation.count()).toBe(1);
+    });
+    await expect(restricted.$transaction(async tx=>{
+      await tx.$queryRaw`SELECT set_config('gl.organization_id',${orgs[0]},true),set_config('gl.finance','on',true)`;
+      return tx.billingReconciliation.delete({where:{id:reconciliation.id}});
+    })).rejects.toThrow();
+    const journal=await financialJournal(a);
+    expect(journal.length).toBe(5);
+    expect(journal.find(e=>e.kind==='devis')?.actorId).toBe(a.accountId);
+    expect(journal.find(e=>e.kind==='facture')?.actorId).toBe(a.accountId);
+    expect(journal.find(e=>e.kind==='rapprochement')?.reference).toBe(proof.statementReference);
+    expect(await financialJournal(b)).toEqual([]);
+    await expect(financialJournal(agent)).rejects.toThrow();
     expect((await billingOverview(b)).totals).toEqual({invoiced:'0',paid:'0',credited:'0',outstanding:'0'});
     const multi=await createQuote(a,{customerId:cust.id,lines:[{description:'Fret',quantity:2,unitPrice:100001,taxBps:1800},{description:'Emballage',quantity:1,unitPrice:5000,taxBps:0}]});
     const detail=await billingDocument(a,multi.id);
@@ -80,6 +106,7 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     ]);
     expect(competing.filter(r=>r.status==='fulfilled').length).toBe(1);
     expect((await billingOverview(a)).totals.outstanding).toBe('0');
+    expect((await financialJournal(a)).some(e=>e.kind==='avoir'&&e.reference==='AV-1')).toBe(true);
     expect(await restricted.billingCredit.count()).toBe(0);
     expect(await restricted.billingCounter.count()).toBe(0);
     await restricted.$transaction(async tx=>{
@@ -99,6 +126,7 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await admin.membership.update({where:{organizationId_accountId:{organizationId:orgs[0],accountId:a.accountId}},data:{role:'agent'}});
     await expect(billingOverview(a)).rejects.toThrow();
   }finally{
+    await admin.billingReconciliation.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingCredit.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingCounter.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingPayment.deleteMany({where:{organizationId:{in:orgs}}});

@@ -212,6 +212,8 @@ model BillingDocument {
   version Int @default(0)
   createdAt DateTime @default(now())
   issuedAt DateTime?
+  createdById String?
+  issuedById String?
   customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
   payments BillingPayment[]
   credits BillingCredit[]
@@ -270,6 +272,22 @@ model BillingPayment {
   actorId String
   createdAt DateTime @default(now())
   document BillingDocument @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Restrict)
+  reconciliation BillingReconciliation?
+  @@unique([organizationId, id])
   @@unique([organizationId, reference])
   @@index([organizationId, documentId])
+}
+
+model BillingReconciliation {
+  id String @id @default(cuid())
+  organizationId String
+  paymentId String
+  statementReference String
+  amount Int
+  actorId String
+  createdAt DateTime @default(now())
+  payment BillingPayment @relation(fields: [organizationId, paymentId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, paymentId])
+  @@unique([organizationId, statementReference])
+  @@index([organizationId, createdAt])
 }
