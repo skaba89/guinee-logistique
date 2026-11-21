@@ -99,12 +99,14 @@ export default function MessagingPage() {
 
   // Charger les messages d'une conversation
   useEffect(() => {
-    if (selectedConvId) {
+    if (!selectedConvId) return;
+    const timer = window.setTimeout(() => {
       const msgs = getMessagesForConversation(selectedConvId);
       setMessages(msgs);
       markConversationRead(selectedConvId, userId);
       refreshConversations();
-    }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [selectedConvId, userId, refreshConversations]);
 
   // Filtrer les conversations
