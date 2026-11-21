@@ -248,6 +248,17 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ### Clients et expéditions SaaS
 
+Les colis sont ajoutés aux expéditions en brouillon, avec poids en grammes et code-barres Code 39 unique. L'écran logistique accepte les lecteurs de codes-barres fonctionnant comme clavier ou une saisie manuelle. Le scan retourne le statut enregistré de l'expédition, sans simulation GPS.
+
+Le portail `/saas/portal` et son API GET `/api/saas/portal/shipments` sont réservés au rôle client et affichent uniquement les expéditions explicitement associées par `CustomerAccess`. Le provisionnement initial se fait avec le rôle d'administration PostgreSQL (aucun droit d'écriture sur les associations n'est accordé au runtime) :
+
+```sql
+INSERT INTO "CustomerAccess" ("organizationId","accountId","customerId")
+VALUES ('identifiant-organisation','identifiant-compte-client','identifiant-client');
+```
+
+Vérifier auparavant le rôle client actif dans Membership. Supprimer l'association pour révoquer l'accès. Les clés étrangères composites et les politiques RLS restrictives bloquent les liens inter-organisations et les lectures d'autres clients dans le portail. Le suivi affiche les événements persistés lors de l'actualisation, non une géolocalisation en direct.
+
 Après application des migrations PostgreSQL, configurez aussi `SAAS_TENANT_DATABASE_URL` avec un login non propriétaire membre uniquement de `gl_tenant` (distinct du rôle d'authentification et du rôle de migration). Ne jamais utiliser le superutilisateur pour l'application. L'espace `/saas/logistics` permet de créer des clients, créer des expéditions, modifier un itinéraire à l'état brouillon et suivre l'historique des statuts. Les 100 enregistrements les plus récents sont affichés. Les administrateurs, managers et agents écrivent, les viewers lisent, les clients et ramasseurs n'ont pas accès à ce module interne.
 
 API : GET/POST `/api/saas/customers`, GET/POST `/api/saas/shipments`, GET/PATCH `/api/saas/shipments/:id`. Les mutations JSON nécessitent une session et l'origine HTTPS configurée. PATCH exige la version courante; une version obsolète renvoie 409. Statuts : brouillon → confirmé → en transit → livré, annulation possible avant transit. Les événements de statut sont ajoutés dans la même transaction; aucun droit de modification ou suppression d'événement n'est accordé au rôle runtime.

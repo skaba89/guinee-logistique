@@ -4,6 +4,7 @@ import { pageSession } from '@/lib/saas-page';
 import { canReadLogistics, canWriteLogistics, listCustomers, listShipments } from '@/lib/saas-logistics';
 import Unavailable from '@/components/saas/unavailable';
 import LogisticsForms from '@/components/saas/logistics-forms';
+import ParcelScan from '@/components/saas/parcel-scan';
 
 export default async function Logistics() {
   const session = await pageSession();
@@ -16,6 +17,7 @@ export default async function Logistics() {
   return <section className="space-y-6">
     <Link href="/saas" prefetch={false} className="text-teal-600 underline">Retour à mon espace</Link>
     <h1 className="text-2xl font-bold">Clients et expéditions</h1>
+    <ParcelScan />
     {canWriteLogistics(session.identity) && <LogisticsForms customers={customers.map(({id,name})=>({id,name}))} />}
     <h2 className="text-xl font-semibold">Clients (100 derniers)</h2>
     {customers.length === 0 ? <p>Aucun client enregistré.</p> : <ul className="space-y-2">{customers.map(c=><li key={c.id} className="rounded border p-3">{c.name} — {c.email ?? c.phone ?? 'Sans contact'}</li>)}</ul>}

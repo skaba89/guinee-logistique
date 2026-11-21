@@ -103,3 +103,4 @@ jobs:
         run: |
           docker exec ${{ job.services.postgres.id }} psql -U postgres -d guinee_logistique -v ON_ERROR_STOP=1 -c "CREATE ROLE gl_tenant_ci LOGIN PASSWORD 'ci-only' IN ROLE gl_tenant"
           bun test prisma/saas/tests/logistics.test.ts
+          bun test prisma/saas/tests/portal.test.ts

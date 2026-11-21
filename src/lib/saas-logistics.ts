@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID, randomBytes } from 'node:crypto';
 import { PrismaClient, type Prisma, type ShipmentStatus } from '../../generated/saas';
 import { hasRole, type Identity } from './saas-auth';
 import { z } from 'zod';
@@ -36,12 +36,13 @@ const writers = ['admin', 'manager', 'agent'] as const;
 export function canReadLogistics(identity: Identity) { return hasRole(identity, readers); }
 export function canWriteLogistics(identity: Identity) { return hasRole(identity, writers); }
 
-async function tenant<T>(identity: Identity, write: boolean, action: (tx: Prisma.TransactionClient) => Promise<T>) {
-  if (!(write ? canWriteLogistics(identity) : canReadLogistics(identity))) throw new LogisticsError(403, 'Accès refusé');
+async function tenant<T>(identity: Identity, write: boolean, action: (tx: Prisma.TransactionClient) => Promise<T>, portal = false) {
+  if (!(portal ? !write && identity.role === 'client' : write ? canWriteLogistics(identity) : canReadLogistics(identity))) throw new LogisticsError(403, 'Accès refusé');
   return db().$transaction(async tx => {
     await tx.$queryRaw`SELECT set_config('gl.organization_id', ${identity.organizationId}, true)`;
+    await tx.$queryRaw`SELECT set_config('gl.portal_account_id', ${portal ? identity.accountId : ''}, true)`;
     const membership = await tx.membership.findUnique({ where: { organizationId_accountId: { organizationId: identity.organizationId, accountId: identity.accountId } } });
-    if (!membership?.active || !(write ? writers : readers).some(role => role === membership.role)) throw new LogisticsError(403, 'Accès refusé');
+    if (!membership?.active || !(portal ? membership.role === 'client' : (write ? writers : readers).some(role => role === membership.role))) throw new LogisticsError(403, 'Accès refusé');
     return action(tx);
   });
 }
@@ -57,10 +58,48 @@ export function listShipments(identity: Identity) {
 }
 export function getShipment(identity: Identity, id: string) {
   return tenant(identity, false, async tx => {
-    const shipment = await tx.shipment.findUnique({ where: { organizationId_id: { organizationId: identity.organizationId, id } }, include: { events: { orderBy: {version:'asc'} }, customer: {select:{name:true}} } });
+    const shipment = await tx.shipment.findUnique({ where: { organizationId_id: { organizationId: identity.organizationId, id } }, include: { events: { orderBy: {version:'asc'} }, customer: {select:{name:true}}, parcels: {orderBy:{createdAt:'asc'}} } });
     if (!shipment) throw new LogisticsError(404, 'Expédition introuvable');
     return shipment;
   });
+}
+
+export const parcelInput = z.object({
+  description: z.string().trim().min(1).max(200),
+  weightGrams: z.number().int().min(1).max(100000000),
+  version: z.number().int().min(0).max(2147483646),
+}).strict();
+
+export function createParcel(identity: Identity, shipmentId: string, input: z.infer<typeof parcelInput>) {
+  return tenant(identity,true,async tx=>{
+    const data=parcelInput.parse(input);
+    const shipment=await tx.shipment.findUnique({where:{organizationId_id:{organizationId:identity.organizationId,id:shipmentId}}});
+    if(!shipment)throw new LogisticsError(404,'Expédition introuvable');
+    // Serialize with status transitions using the same optimistic version.
+    const updated=await tx.shipment.updateMany({where:{id:shipmentId,organizationId:identity.organizationId,status:'draft',version:data.version},data:{version:{increment:1}}});
+    if(updated.count!==1)throw new LogisticsError(409,'Expédition non modifiable ou version obsolète');
+    return tx.parcel.create({data:{organizationId:identity.organizationId,shipmentId,description:data.description,weightGrams:data.weightGrams,barcode:randomBytes(8).toString('hex').toUpperCase()}});
+  });
+}
+
+export function scanParcel(identity: Identity, barcode: string) {
+  return tenant(identity,false,async tx=>{
+    const parcel=await tx.parcel.findFirst({where:{organizationId:identity.organizationId,barcode},include:{shipment:{select:{id:true,trackingNumber:true,status:true}}}});
+    if(!parcel)throw new LogisticsError(404,'Colis introuvable');
+    return parcel;
+  });
+}
+
+const portalFields = {
+  trackingNumber:true,origin:true,destination:true,status:true,createdAt:true,
+  events:{orderBy:{version:'asc' as const},select:{status:true,createdAt:true}},
+  parcels:{orderBy:{createdAt:'asc' as const},select:{barcode:true,description:true,weightGrams:true}},
+} as const;
+export function portalShipments(identity: Identity) {
+  return tenant(identity,false,tx=>tx.shipment.findMany({
+    where:{organizationId:identity.organizationId,customer:{portalAccess:{some:{accountId:identity.accountId,organizationId:identity.organizationId}}}},
+    select:portalFields,orderBy:{createdAt:'desc'},take:100,
+  }),true);
 }
 export function createShipment(identity: Identity, input: z.infer<typeof shipmentInput>) {
   return tenant(identity, true, async tx => {
