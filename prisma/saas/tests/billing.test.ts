@@ -3,7 +3,9 @@ import {test,expect} from 'bun:test';
 import {PrismaClient} from '../../../generated/saas';
 import {type Identity,hashPassword,login} from '../../../src/lib/saas-auth';
 import {createCustomer} from '../../../src/lib/saas-logistics';
-import {createQuote,issueInvoice,recordPayment,billingOverview,quoteInput} from '../../../src/lib/saas-billing';
+import {createQuote,issueInvoice,recordPayment,billingOverview,quoteInput,billingDocument,billingExport} from '../../../src/lib/saas-billing';
+import {billingPdf,billingCsv,csvCell} from '../../../src/lib/billing-export';
+import {GET as pdfGet} from '../../../src/app/api/saas/billing/[id]/pdf/route';
 import {GET as billingGet} from '../../../src/app/api/saas/billing/route';
 import {NextRequest} from 'next/server';
 
@@ -51,6 +53,22 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     expect(overview.totals).toEqual({invoiced:'300000',paid:'300000',outstanding:'0'});
     expect(overview.documents[0].payments.length).toBe(2);
     expect((await billingOverview(b)).totals).toEqual({invoiced:'0',paid:'0',outstanding:'0'});
+    const multi=await createQuote(a,{customerId:cust.id,lines:[{description:'Fret',quantity:2,unitPrice:100001,taxBps:1800},{description:'Emballage',quantity:1,unitPrice:5000,taxBps:0}]});
+    const detail=await billingDocument(a,multi.id);
+    expect(detail.lines.length).toBe(2);
+    expect(detail.subtotal).toBe(205002);
+    expect(detail.taxTotal).toBe(36000);
+    expect(detail.total).toBe(241002);
+    expect(new TextDecoder().decode(billingPdf(detail).slice(0,5))).toBe('%PDF-');
+    expect(csvCell('=1+1')).toBe('"\'=1+1"');
+    expect(billingCsv(await billingExport(a))).toContain('300000');
+    expect(await billingExport(b)).toEqual([]);
+    await expect(billingDocument(b,multi.id)).rejects.toThrow();
+    const ownLogin=await login(a.accountId+'@example.invalid',password,orgs[0]);
+    if(ownLogin.status!=='ok')throw new Error('Login failed');
+    const pdfResponse=await pdfGet(new NextRequest(origin+'/api/saas/billing/'+multi.id+'/pdf',{headers:{cookie:'gl_session='+ownLogin.token}}),{params:Promise.resolve({id:multi.id})});
+    expect(pdfResponse.status).toBe(200);
+    expect(pdfResponse.headers.get('content-type')).toBe('application/pdf');
     const logged=await login(agent.accountId+'@example.invalid',password,orgs[0]);
     if(logged.status!=='ok')throw new Error('Login failed');
     expect((await billingGet(new NextRequest(origin+'/api/saas/billing',{headers:{cookie:'gl_session='+logged.token}}))).status).toBe(403);
@@ -58,6 +76,7 @@ test('billing: exact GNF, tenant and role boundaries, overpayment and concurrent
     await expect(billingOverview(a)).rejects.toThrow();
   }finally{
     await admin.billingPayment.deleteMany({where:{organizationId:{in:orgs}}});
+    await admin.billingLine.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.billingDocument.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.customer.deleteMany({where:{organizationId:{in:orgs}}});
     await admin.session.deleteMany({where:{accountId:{in:users}}});

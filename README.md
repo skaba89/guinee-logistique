@@ -248,6 +248,8 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ### Clients et expéditions SaaS
 
+Le module commercial accepte jusqu'à dix lignes de prestations par devis, chacune avec une taxe paramétrable en points de base (100 = 1 %). Le calcul arrondit chaque taxe au franc GNF le plus proche. Les anciennes factures sont migrées à une ligne sans changement des soldes. Les PDF internes et l'export CSV des factures (10 000 maximum, refus explicite au-delà) sont téléchargeables uniquement par les administrateurs/managers de l'organisation. Les taxes ne constituent pas un paramétrage réglementaire validé; les avoirs, la numérotation fiscale et la réconciliation bancaire restent à développer.
+
 La gestion commerciale (`/saas/billing`) est réservée aux administrateurs et managers. Elle propose des devis à une ligne, leur conversion irréversible en documents internes de facturation, les règlements partiels et le solde global en GNF entiers. Le total est calculé côté serveur et le règlement est atomique avec le solde; la référence est unique par organisation. Orange Money/MTN sont des modes de règlement déjà reçu, enregistrés manuellement, et non des intégrations de paiement. Ces documents internes ne sont pas encore des factures fiscales conformes : numérotation réglementaire, taxes, avoirs, clôtures et PDF restent à mettre en place.
 
 L'activité opérationnelle (`/saas/activity`, GET `/api/saas/activity`) est une vue des événements persistés, filtrée par organisation, association client ou ramasseur affecté. Elle est actualisée à la demande, sans alertes push/SMS/e-mail.

@@ -212,8 +212,27 @@ model BillingDocument {
   issuedAt DateTime?
   customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
   payments BillingPayment[]
+  lines BillingLine[]
+  subtotal Int
+  taxTotal Int @default(0)
   @@unique([organizationId, id])
   @@index([organizationId, createdAt])
+}
+
+model BillingLine {
+  id String @id @default(cuid())
+  organizationId String
+  documentId String
+  position Int
+  description String
+  quantity Int
+  unitPrice Int
+  taxBps Int
+  subtotal Int
+  tax Int
+  total Int
+  document BillingDocument @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, documentId, position])
 }
 
 model BillingPayment {

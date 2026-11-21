@@ -18,6 +18,7 @@ export async function logisticsRequest(request: NextRequest, write: boolean, act
       body = JSON.parse(raw);
     }
     const result = await action(identity, body);
+    if (result instanceof Response) return result;
     return json({data:result},status);
   } catch (error) {
     if (error instanceof LogisticsError) return json({error:error.message},error.status);
