@@ -48,6 +48,17 @@ async function tenant<T>(identity: Identity, write: boolean, action: (tx: Prisma
   });
 }
 
+export function canManageFinance(identity:Identity){return hasRole(identity,['admin','manager']);}
+export async function financeTransaction<T>(identity:Identity,action:(tx:Prisma.TransactionClient)=>Promise<T>){
+  if(!canManageFinance(identity))throw new LogisticsError(403,'Accès financier refusé');
+  return tenant(identity,true,async tx=>{
+    const membership=await tx.membership.findUnique({where:{organizationId_accountId:{organizationId:identity.organizationId,accountId:identity.accountId}}});
+    if(!membership?.active||!['admin','manager'].includes(membership.role))throw new LogisticsError(403,'Accès financier refusé');
+    await tx.$queryRaw`SELECT set_config('gl.finance','on',true)`;
+    return action(tx);
+  });
+}
+
 export function listCustomers(identity: Identity) {
   return tenant(identity, false, tx => tx.customer.findMany({ where: { organizationId: identity.organizationId }, orderBy: [{createdAt:'desc'}, {id:'asc'}], take: 100 }));
 }

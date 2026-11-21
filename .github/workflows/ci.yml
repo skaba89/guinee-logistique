@@ -110,3 +110,4 @@ jobs:
           bun test prisma/saas/tests/portal.test.ts
           bun test prisma/saas/tests/missions.test.ts
           bun test prisma/saas/tests/outbox.test.ts
+          bun test prisma/saas/tests/billing.test.ts
