@@ -4,11 +4,12 @@ type Props={kind:'quote';customers:{id:string;name:string}[]}|{kind:'issue'|'pay
 const field='w-full border rounded p-2 bg-transparent';
 export default function BillingForm(props:Props){
   const [pending,setPending]=useState(false),[error,setError]=useState('');
+  const [lineCount,setLineCount]=useState(1);
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();if(pending)return;
     const data=new FormData(e.currentTarget);
     let path='/api/saas/billing',body:object;
-    if(props.kind==='quote')body={customerId:data.get('customerId'),description:data.get('description'),quantity:Number(data.get('quantity')),unitPrice:Number(data.get('unitPrice'))};
+    if(props.kind==='quote')body={customerId:data.get('customerId'),lines:Array.from({length:lineCount},(_,i)=>({description:data.get('description-'+i),quantity:Number(data.get('quantity-'+i)),unitPrice:Number(data.get('unitPrice-'+i)),taxBps:Number(data.get('tax-'+i))}))};
     else{
       path+='/'+encodeURIComponent(props.id)+(props.kind==='issue'?'/issue':'/payments');
       body=props.kind==='issue'?{version:props.version}:{reference:data.get('reference'),amount:Number(data.get('amount')),method:data.get('method'),version:props.version};
@@ -25,9 +26,13 @@ export default function BillingForm(props:Props){
     {props.kind==='quote'&&<>
       <h2 className="font-semibold">Nouveau devis</h2>
       <label className="block">Client<select name="customerId" required defaultValue="" className={field}><option value="" disabled>Choisir</option>{props.customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-      <label className="block">Prestation<input name="description" required maxLength={300} className={field}/></label>
-      <label className="block">Quantité<input name="quantity" type="number" min={1} max={100000} defaultValue={1} required className={field}/></label>
-      <label className="block">Prix unitaire (GNF)<input name="unitPrice" type="number" min={1} max={2000000000} step={1} required className={field}/></label>
+      {Array.from({length:lineCount},(_,i)=><fieldset key={i} className="border rounded p-2 space-y-2"><legend>Prestation {i+1}</legend>
+        <label className="block">Description<input name={'description-'+i} required maxLength={300} className={field}/></label>
+        <label className="block">Quantité<input name={'quantity-'+i} type="number" min={1} max={100000} defaultValue={1} required className={field}/></label>
+        <label className="block">Prix unitaire (GNF)<input name={'unitPrice-'+i} type="number" min={1} max={2000000000} step={1} required className={field}/></label>
+        <label className="block">Taxe (points de base, 100 = 1 %)<input name={'tax-'+i} type="number" min={0} max={10000} step={1} defaultValue={0} required className={field}/></label>
+      </fieldset>)}
+      <div className="flex gap-2"><button type="button" disabled={lineCount>=10} onClick={()=>setLineCount(n=>n+1)} className="border rounded p-2">Ajouter une ligne</button><button type="button" disabled={lineCount<=1} onClick={()=>setLineCount(n=>n-1)} className="border rounded p-2">Retirer la dernière</button></div>
     </>}
     {props.kind==='payment'&&<>
       <label className="block">Référence unique du règlement<input name="reference" maxLength={100} required className={field}/></label>
