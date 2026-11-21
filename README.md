@@ -248,6 +248,8 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ### Clients et expéditions SaaS
 
+La gestion commerciale (`/saas/billing`) est réservée aux administrateurs et managers. Elle propose des devis à une ligne, leur conversion irréversible en documents internes de facturation, les règlements partiels et le solde global en GNF entiers. Le total est calculé côté serveur et le règlement est atomique avec le solde; la référence est unique par organisation. Orange Money/MTN sont des modes de règlement déjà reçu, enregistrés manuellement, et non des intégrations de paiement. Ces documents internes ne sont pas encore des factures fiscales conformes : numérotation réglementaire, taxes, avoirs, clôtures et PDF restent à mettre en place.
+
 L'activité opérationnelle (`/saas/activity`, GET `/api/saas/activity`) est une vue des événements persistés, filtrée par organisation, association client ou ramasseur affecté. Elle est actualisée à la demande, sans alertes push/SMS/e-mail.
 
 Sur un appareil de confiance, le ramasseur peut choisir de conserver une confirmation non envoyée en cas d'échec réseau. La file est limitée à 100 éléments dans `sessionStorage`, dans l'onglet actif; elle est isolée par compte et organisation et effacée à la déconnexion. Le retour du réseau ou le bouton de synchronisation déclenche une vérification de session, puis l'envoi via l'API idempotente. Une réponse 409 reste en attente pour résolution explicite, aucune preuve n'est écrasée. La fermeture de l'onglet peut perdre les confirmations non synchronisées. Aucune page authentifiée n'est mise en cache; il ne s'agit pas encore d'une PWA hors connexion complète.

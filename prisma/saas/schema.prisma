@@ -94,6 +94,7 @@ model Customer {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   shipments Shipment[]
   portalAccess CustomerAccess[]
+  billingDocuments BillingDocument[]
   @@unique([organizationId, id])
   @@index([organizationId, createdAt])
 }
@@ -179,4 +180,52 @@ model Mission {
   assignee Membership @relation(fields: [organizationId, assigneeId], references: [organizationId, accountId], onDelete: Restrict)
   @@index([organizationId, assigneeId, status])
   @@index([organizationId, shipmentId])
+}
+
+enum BillingStatus {
+  quote
+  invoice
+}
+
+enum PaymentMethod {
+  cash
+  bank
+  orange_money
+  mtn_momo
+}
+
+model BillingDocument {
+  id String @id @default(cuid())
+  organizationId String
+  customerId String
+  customerName String
+  quoteNumber String @unique
+  invoiceNumber String? @unique
+  status BillingStatus @default(quote)
+  description String
+  quantity Int
+  unitPrice Int
+  total Int
+  paid Int @default(0)
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  issuedAt DateTime?
+  customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
+  payments BillingPayment[]
+  @@unique([organizationId, id])
+  @@index([organizationId, createdAt])
+}
+
+model BillingPayment {
+  id String @id @default(cuid())
+  organizationId String
+  documentId String
+  reference String
+  amount Int
+  method PaymentMethod
+  actorId String
+  createdAt DateTime @default(now())
+  document BillingDocument @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, reference])
+  @@index([organizationId, documentId])
 }

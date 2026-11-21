@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { pageSession } from '@/lib/saas-page';
 import { hasRole } from '@/lib/saas-auth';
-import { canReadLogistics } from '@/lib/saas-logistics';
+import { canReadLogistics, canManageFinance } from '@/lib/saas-logistics';
 import LogoutButton from '@/components/saas/logout-button';
 import Unavailable from '@/components/saas/unavailable';
 
@@ -24,6 +24,7 @@ export default async function SaaSHome() {
     {identity.role==='client' && <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/portal">Mes expéditions</Link></p>}
     {identity.role==='ramasseur' && <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/missions">Mes missions</Link></p>}
     <p><Link prefetch={false} className="text-teal-600 underline" href="/saas/activity">Activité opérationnelle</Link></p>
+    {canManageFinance(identity)&&<p><Link prefetch={false} className="text-teal-600 underline" href="/saas/billing">Gestion commerciale</Link></p>}
     <p className="text-sm text-slate-500">Les autres modules seront disponibles après leur migration vers les données réelles.</p>
   </section>;
 }
