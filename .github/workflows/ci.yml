@@ -117,6 +117,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Generate isolated recipe configuration
         run: bash scripts/init-deploy-env.sh rec https://rec.example.invalid
       - name: Build and start isolated stack
@@ -179,6 +182,25 @@ jobs:
           docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -v ON_ERROR_STOP=1 < prisma/saas/tests/recette-fixtures.sql
           organization=$(docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -Atc "SELECT id FROM \"Organization\" WHERE slug='ci-company'")
           node scripts/recette-http.mjs "$organization"
+      - name: Run bounded concurrent read-only workload
+        run: |
+          set -euo pipefail
+          organization=$(docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -Atc "SELECT id FROM \"Organization\" WHERE slug='ci-company'")
+          node scripts/recette-load.mjs "$organization"
+      - name: Verify real browser screens
+        run: |
+          set -euo pipefail
+          google-chrome --version
+          organization=$(docker compose --env-file .env.rec exec -T db psql -U postgres -d guinee_logistique -Atc "SELECT id FROM \"Organization\" WHERE slug='ci-company'")
+          node scripts/recette-browser.mjs "$organization"
+      - name: Upload screenshots of actual recipe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guinee-logistique-recette
+          path: recipe-screenshots/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Verify structured logs and availability monitoring
         run: |
           set -euo pipefail
