@@ -5,6 +5,7 @@ const origin = 'https://rec.example.invalid';
 const organizationId = process.argv[2];
 assert.ok(organizationId, 'CI organization ID required');
 const api = '/api/saas';
+const requestIds = new Set();
 
 async function request(path, { cookie, method = 'GET', body, status = 200, from = origin } = {}) {
   const response = await fetch(base + path, {
@@ -16,6 +17,12 @@ async function request(path, { cookie, method = 'GET', body, status = 200, from 
   });
   console.log(method, path, response.status);
   assert.equal(response.status, status, `${method} ${path}`);
+  if (path.startsWith(api + '/')) {
+    const id = response.headers.get('x-request-id');
+    assert.match(id ?? '', /^[0-9a-f-]{36}$/);
+    assert.ok(!requestIds.has(id), 'Repeated request ID');
+    requestIds.add(id);
+  }
   return response;
 }
 async function data(path, options) {

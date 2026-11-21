@@ -13,6 +13,11 @@ services:
       timeout: 5s
       retries: 20
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
   provision:
     profiles: ["ops"]
     image: postgres:16
@@ -62,6 +67,11 @@ services:
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s

@@ -26,6 +26,9 @@ Le service HTTP écoute uniquement sur 127.0.0.1 côté hôte, PostgreSQL n'est 
 
 ## Exploitation
 
+Voir [la procédure de supervision et de pilote](PILOT_OPERATIONS.md) pour
+les sondes de disponibilité, les journaux structurés et les critères de passage en production.
+
 ```bash
 docker compose --env-file .env.rec logs --tail=100 app
 docker compose --env-file .env.rec stop app
