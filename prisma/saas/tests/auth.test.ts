@@ -1,3 +1,4 @@
+/// <reference types="bun-types" />
 import { test, expect } from 'bun:test';
 import { PrismaClient } from '../../../generated/saas';
 import { hashPassword, verifyPassword, login, sessionIdentity, logout, hasRole } from '../../../src/lib/saas-auth';
