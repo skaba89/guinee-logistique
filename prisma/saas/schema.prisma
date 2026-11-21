@@ -27,6 +27,7 @@ model Organization {
   customers Customer[]
   shipments Shipment[]
   billingCounters BillingCounter[]
+  commercialProfile CommercialProfile?
 }
 
 model Agency {
@@ -200,6 +201,11 @@ model BillingDocument {
   organizationId String
   customerId String
   customerName String
+  sellerName String?
+  sellerAddress String?
+  sellerEmail String?
+  sellerPhone String?
+  sellerTaxId String?
   quoteNumber String @unique
   invoiceNumber String? @unique
   status BillingStatus @default(quote)
@@ -222,6 +228,18 @@ model BillingDocument {
   taxTotal Int @default(0)
   @@unique([organizationId, id])
   @@index([organizationId, createdAt])
+}
+
+model CommercialProfile {
+  organizationId String @id
+  legalName String
+  address String
+  email String
+  phone String
+  taxId String
+  updatedById String
+  updatedAt DateTime @updatedAt
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
 }
 
 model BillingCounter {
