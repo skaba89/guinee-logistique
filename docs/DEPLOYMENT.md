@@ -32,8 +32,25 @@ docker compose --env-file .env.rec stop app
 docker compose --env-file .env.rec up -d --wait app
 ```
 
-Ne pas exécuter `down -v` sur un environnement contenant des données. La CI utilise exclusivement une recette éphémère. Les migrations sont additives à ce stade, mais une sauvegarde restaurable et une fenêtre de maintenance sont obligatoires avant chaque mise à jour d'une base réelle. Les procédures de sauvegarde et de restauration isolée seront livrées au lot suivant.
+Ne pas exécuter `down -v` sur un environnement contenant des données. La CI utilise exclusivement une recette éphémère. Le script de déploiement sauvegarde automatiquement une base déjà migrée avant de lancer les nouvelles migrations ; en PROD il teste aussi la restauration en conteneur isolé avant de poursuivre. Une fenêtre de maintenance reste obligatoire avant chaque mise à jour réelle.
 
 `/api/health` teste le processus ; `/api/ready` vérifie les deux connexions restreintes, leurs rôles et la présence du schéma métier. Il renvoie 503 sans exposer les erreurs ou les secrets. L'indicateur ne certifie ni la conformité fiscale ni la disponibilité des opérateurs Mobile Money.
 
-Aucun compte par défaut n'est créé. Le provisionnement de la première organisation et de son administrateur demeure une opération contrôlée distincte. Ne pas ouvrir PROD au trafic réel avant cette étape, la recette métier, les sauvegardes et la validation du proxy HTTPS.
+Aucun compte par défaut n'est créé. Après déploiement, provisionner une nouvelle organisation et son premier administrateur depuis le serveur :
+
+```bash
+bash scripts/bootstrap-admin.sh rec "Ma société" ma-societe "Administrateur" admin@votre-domaine.com
+```
+
+Le mot de passe est demandé sans écho, haché par le même mécanisme que l'application et transmis via stdin. L'opération est atomique et refuse un slug ou email existant ; elle ne modifie aucun compte. Conserver l'identifiant d'organisation affiché pour la connexion.
+
+## Sauvegardes et restauration de vérification
+
+```bash
+backup=$(bash scripts/backup.sh rec)
+bash scripts/verify-restore.sh "$backup"
+```
+
+Le dump PostgreSQL custom et son empreinte SHA-256 sont stockés sous `backups/rec/` (ignoré par Git, accès restreint). Le test vérifie l'empreinte et restaure intégralement dans un conteneur PostgreSQL neuf sans réseau ni montage hôte, puis contrôle le schéma et les volumes d'organisations/administrateurs. Le conteneur de test est supprimé après vérification. Le dump inclut des informations privées et des sessions : le chiffrer avant copie hors site et appliquer une politique de conservation. Lors d'une récupération réelle, prévoir la réinitialisation des sessions et la reprovision des logins runtime à partir des secrets de l'environnement. Le script de vérification ne restaure jamais sur la base active.
+
+Ne pas ouvrir PROD au trafic réel avant la recette métier, une restauration testée, l'organisation des sauvegardes hors site et la validation du proxy HTTPS.

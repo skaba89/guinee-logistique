@@ -147,6 +147,32 @@ jobs:
           docker compose --env-file .env.rec run --rm provision
           docker compose --env-file .env.rec run --rm migrate
           curl -fsS http://127.0.0.1:8401/api/ready | jq -e '.status == "ready"'
+      - name: Bootstrap real administrator and verify login
+        run: |
+          set -euo pipefail
+          password='CI-only-recipe-password-2026'
+          created=$(printf '%s\n' "$password" | bash scripts/bootstrap-admin.sh rec "CI Company" ci-company "CI Admin" ci-admin@example.invalid)
+          organization=$(printf '%s' "$created" | jq -er '.organizationId')
+          if printf '%s\n' "$password" | bash scripts/bootstrap-admin.sh rec "Duplicate" ci-company "CI Admin" ci-admin@example.invalid; then exit 1; fi
+          if printf 'short\n' | bash scripts/bootstrap-admin.sh rec "Invalid" invalid-company "CI Admin" invalid@example.invalid; then exit 1; fi
+          headers=$(mktemp)
+          trap 'rm -f "$headers"' EXIT
+          jq -n --arg email ci-admin@example.invalid --arg password "$password" --arg organizationId "$organization" '{email:$email,password:$password,organizationId:$organizationId}' |
+            curl -fsS -D "$headers" -H 'Origin: https://rec.example.invalid' -H 'Content-Type: application/json' --data-binary @- http://127.0.0.1:8401/api/saas/auth/login | jq -e '.ok == true'
+          cookie=$(sed -n 's/^[Ss]et-[Cc]ookie: \(gl_session=[^;]*\);.*/\1/p' "$headers")
+          test -n "$cookie"
+          curl -fsS -H "Cookie: $cookie" http://127.0.0.1:8401/api/saas/auth/me | jq -e --arg org "$organization" '.role == "admin" and .organizationId == $org'
+      - name: Backup and restore in isolated container
+        run: |
+          set -euo pipefail
+          backup=$(bash scripts/backup.sh rec)
+          test -s "$backup"
+          test -s "$backup.sha256"
+          restored=$(bash scripts/verify-restore.sh "$backup")
+          printf '%s\n' "$restored"
+          grep -qx 'organizations=1' <<< "$restored"
+          grep -qx 'admins=1' <<< "$restored"
+          curl -fsS http://127.0.0.1:8401/api/ready | jq -e '.status == "ready"'
       - name: Diagnostics and cleanup
         if: always()
         run: |
