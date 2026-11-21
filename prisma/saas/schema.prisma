@@ -24,6 +24,8 @@ model Organization {
   createdAt   DateTime     @default(now())
   agencies    Agency[]
   memberships Membership[]
+  customers Customer[]
+  shipments Shipment[]
 }
 
 model Agency {
@@ -70,4 +72,55 @@ model LoginAttempt {
   key          String   @id
   count        Int
   windowStart  DateTime
+}
+
+enum ShipmentStatus {
+  draft
+  confirmed
+  in_transit
+  delivered
+  cancelled
+}
+
+model Customer {
+  id String @id @default(cuid())
+  organizationId String
+  name String
+  email String?
+  phone String?
+  createdAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  shipments Shipment[]
+  @@unique([organizationId, id])
+  @@index([organizationId, createdAt])
+}
+
+model Shipment {
+  id String @id @default(cuid())
+  organizationId String
+  customerId String
+  trackingNumber String @unique
+  origin String
+  destination String
+  status ShipmentStatus @default(draft)
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
+  events ShipmentEvent[]
+  @@unique([organizationId, id])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, customerId])
+}
+
+model ShipmentEvent {
+  id String @id @default(cuid())
+  organizationId String
+  shipmentId String
+  actorId String
+  status ShipmentStatus
+  version Int
+  createdAt DateTime @default(now())
+  shipment Shipment @relation(fields: [organizationId, shipmentId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, shipmentId, version])
 }
