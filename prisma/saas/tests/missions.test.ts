@@ -2,7 +2,7 @@
 import {test,expect} from 'bun:test';
 import {PrismaClient} from '../../../generated/saas';
 import {type Identity,hashPassword,login} from '../../../src/lib/saas-auth';
-import {createCustomer,createShipment,updateShipment,assignMission,listMissions,completeMission,cancelMission,getShipment} from '../../../src/lib/saas-logistics';
+import {createCustomer,createShipment,updateShipment,assignMission,listMissions,completeMission,cancelMission,getShipment,operationalFeed} from '../../../src/lib/saas-logistics';
 import {POST as completeRoute} from '../../../src/app/api/saas/missions/[id]/complete/route';
 import {NextRequest} from 'next/server';
 
@@ -26,6 +26,8 @@ test('missions: assignment, isolation, proof, cancellation, idempotent completio
     const pickup=await assignMission(a,s.id,{version:1,assigneeId:d.accountId,kind:'pickup',address:'Conakry'});
     expect((await listMissions(d)).map(m=>m.id)).toEqual([pickup.id]);
     expect(await listMissions(o)).toEqual([]);
+    expect(await operationalFeed(o)).toEqual([]);
+    expect((await operationalFeed(d)).map(e=>e.id)).toEqual([pickup.id]);
     expect(await listMissions(f)).toEqual([]);
     await expect(updateShipment(a,s.id,{version:2,status:'in_transit'})).rejects.toThrow();
     await expect(completeMission(o,pickup.id,{recipient:'Other'})).rejects.toThrow();
@@ -51,6 +53,7 @@ test('missions: assignment, isolation, proof, cancellation, idempotent completio
     const proof=(await listMissions(a)).find(m=>m.id===delivery.id);
     expect(proof?.recipient).toBe('Recipient');
     expect(proof?.completedAt).not.toBeNull();
+    expect((await operationalFeed(o)).map(e=>e.message)).toEqual(['Remise confirmée']);
     await restricted.$transaction(async tx=>{
       await tx.$queryRaw`SELECT set_config('gl.organization_id',${orgs[0]},true),set_config('gl.collector_id',${o.accountId},true)`;
       expect(await tx.mission.count()).toBe(1);

@@ -248,6 +248,10 @@ L'application comprend **46 modules** organisés en **9 groupes** :
 
 ### Clients et expéditions SaaS
 
+L'activité opérationnelle (`/saas/activity`, GET `/api/saas/activity`) est une vue des événements persistés, filtrée par organisation, association client ou ramasseur affecté. Elle est actualisée à la demande, sans alertes push/SMS/e-mail.
+
+Sur un appareil de confiance, le ramasseur peut choisir de conserver une confirmation non envoyée en cas d'échec réseau. La file est limitée à 100 éléments dans `sessionStorage`, dans l'onglet actif; elle est isolée par compte et organisation et effacée à la déconnexion. Le retour du réseau ou le bouton de synchronisation déclenche une vérification de session, puis l'envoi via l'API idempotente. Une réponse 409 reste en attente pour résolution explicite, aucune preuve n'est écrasée. La fermeture de l'onglet peut perdre les confirmations non synchronisées. Aucune page authentifiée n'est mise en cache; il ne s'agit pas encore d'une PWA hors connexion complète.
+
 Les agents, managers et administrateurs peuvent affecter une mission de ramassage (expédition confirmée) ou de livraison (en transit) à un membre actif de rôle ramasseur, depuis la fiche expédition. Le ramasseur consulte ses seules missions à `/saas/missions`. Une remise déclarée enregistre le nom du réceptionnaire, une observation facultative, la date serveur et l'identifiant du ramasseur; elle fait progresser l'expédition et ajoute un événement dans la même transaction. Ce justificatif déclaratif n'est pas une signature électronique certifiée. Une mission active empêche la modification manuelle du statut, et peut être annulée par un agent pour réaffectation. Une répétition à l'identique d'une confirmation déjà enregistrée est idempotente. La synchronisation hors connexion et les notifications externes restent à implémenter.
 
 Les colis sont ajoutés aux expéditions en brouillon, avec poids en grammes et code-barres Code 39 unique. L'écran logistique accepte les lecteurs de codes-barres fonctionnant comme clavier ou une saisie manuelle. Le scan retourne le statut enregistré de l'expédition, sans simulation GPS.
