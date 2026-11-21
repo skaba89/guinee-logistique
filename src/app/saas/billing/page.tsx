@@ -4,6 +4,7 @@ import {pageSession} from '@/lib/saas-page';
 import {canManageFinance,listCustomers} from '@/lib/saas-logistics';
 import {billingOverview} from '@/lib/saas-billing';
 import BillingForm from '@/components/saas/billing-form';
+import ReconciliationForm from '@/components/saas/reconciliation-form';
 import Unavailable from '@/components/saas/unavailable';
 const gnf=(value:number|string)=>BigInt(value).toLocaleString('fr-FR')+' GNF';
 export default async function Billing(){
@@ -17,6 +18,7 @@ export default async function Billing(){
     <Link href="/saas" prefetch={false} className="underline">Retour à mon espace</Link>
     <h1 className="text-2xl font-bold">Gestion commerciale</h1>
     <a href="/api/saas/billing/export" download className="underline text-teal-600">Exporter les factures CSV</a>
+    <Link href="/saas/billing/journal" prefetch={false} className="block underline text-teal-600">Journal financier</Link>
     <p className="text-sm">Documents internes en GNF. Les références ne constituent pas une numérotation fiscale validée.</p>
     <dl className="grid gap-3 sm:grid-cols-4">{([['Facturé',overview.totals.invoiced],['Encaissé',overview.totals.paid],['Avoirs',overview.totals.credited],['Reste à recevoir',overview.totals.outstanding]]).map(([label,value])=><div key={label} className="rounded border p-3"><dt>{label}</dt><dd className="font-bold">{gnf(value)}</dd></div>)}</dl>
     <BillingForm kind="quote" customers={customers.map(({id,name})=>({id,name}))}/>
@@ -29,7 +31,9 @@ export default async function Billing(){
       <a href={'/api/saas/billing/'+doc.id+'/pdf'} download className="underline text-teal-600">Télécharger le PDF</a>
       <p>Total : {gnf(doc.total)}{doc.status==='invoice'&&<> · Encaissé : {gnf(doc.paid)} · Avoirs : {gnf(doc.credited)} · Solde : {gnf(doc.total-doc.paid-doc.credited)}</>}</p>
       {doc.status==='quote'?<BillingForm kind="issue" id={doc.id} version={doc.version} balance={doc.total}/>:doc.paid+doc.credited<doc.total?<><BillingForm kind="payment" id={doc.id} version={doc.version} balance={doc.total-doc.paid-doc.credited}/><BillingForm kind="credit" id={doc.id} version={doc.version} balance={doc.total-doc.paid-doc.credited}/></>:<p className="text-green-700">Soldée</p>}
-      {doc.payments.length>0&&<ul>{doc.payments.map(p=><li key={p.id}>{p.reference} · {gnf(p.amount)} · {p.method} · {p.createdAt.toISOString()}</li>)}</ul>}
+      {doc.payments.length>0&&<ul className="space-y-2">{doc.payments.map(p=><li key={p.id}>{p.reference} · {gnf(p.amount)} · {p.method} · {p.createdAt.toISOString()}
+        {p.reconciliation?<p className="text-green-700">Rapproché manuellement · {p.reconciliation.statementReference} · {p.reconciliation.createdAt.toISOString()} · Auteur {p.reconciliation.actorId}</p>:<ReconciliationForm id={p.id} amount={p.amount}/>}
+      </li>)}</ul>}
       {doc.credits.length>0&&<ul>{doc.credits.map(c=><li key={c.id}>Avoir {c.reference} · {gnf(c.amount)} · {c.reason} · {c.createdAt.toISOString()} · Auteur {c.actorId}</li>)}</ul>}
     </article>)}
   </section>;

@@ -15,6 +15,7 @@ export const quoteInput=z.union([
 export const issueInput=z.object({version:z.number().int().min(0).max(2147483646)}).strict();
 export const paymentInput=z.object({reference:z.string().trim().min(1).max(100),amount:money,method:z.enum(['cash','bank','orange_money','mtn_momo']),version:z.number().int().min(0).max(2147483646)}).strict();
 export const creditInput=z.object({reference:z.string().trim().min(1).max(100),amount:money,reason:z.string().trim().min(1).max(300),version:z.number().int().min(0).max(2147483646)}).strict();
+export const reconciliationInput=z.object({statementReference:z.string().trim().min(1).max(150),amount:money}).strict();
 
 export function createQuote(identity:Identity,input:z.infer<typeof quoteInput>){
   return financeTransaction(identity,async tx=>{
@@ -27,7 +28,7 @@ export function createQuote(identity:Identity,input:z.infer<typeof quoteInput>){
     });
     const subtotal=lines.reduce((sum,l)=>sum+l.subtotal,0),taxTotal=lines.reduce((sum,l)=>sum+l.tax,0);
     const first=lines[0];
-    const document=await tx.billingDocument.create({data:{customerId:customer.id,description:first.description,quantity:first.quantity,unitPrice:first.unitPrice,organizationId:identity.organizationId,customerName:customer.name,quoteNumber:'DEV-'+randomUUID().toUpperCase(),subtotal,taxTotal,total:subtotal+taxTotal}});
+    const document=await tx.billingDocument.create({data:{customerId:customer.id,description:first.description,quantity:first.quantity,unitPrice:first.unitPrice,organizationId:identity.organizationId,customerName:customer.name,quoteNumber:'DEV-'+randomUUID().toUpperCase(),subtotal,taxTotal,total:subtotal+taxTotal,createdById:identity.accountId}});
     await tx.billingLine.createMany({data:lines.map(line=>({...line,organizationId:identity.organizationId,documentId:document.id}))});
     return document;
   });
@@ -41,7 +42,7 @@ export function issueInvoice(identity:Identity,id:string,version:number){
     const issuedAt=new Date(),year=issuedAt.getUTCFullYear();
     const [counter]=await tx.$queryRaw<{value:number}[]>`INSERT INTO "BillingCounter" ("organizationId","year","value") VALUES (${identity.organizationId},${year},1) ON CONFLICT ("organizationId","year") DO UPDATE SET "value"="BillingCounter"."value"+1 RETURNING "value"`;
     const invoiceNumber='FAC-'+identity.organizationId+'-'+year+'-'+String(counter.value).padStart(6,'0');
-    const result=await tx.billingDocument.updateMany({where:{id,organizationId:identity.organizationId,status:'quote',version},data:{status:'invoice',invoiceNumber,issuedAt,version:{increment:1}}});
+    const result=await tx.billingDocument.updateMany({where:{id,organizationId:identity.organizationId,status:'quote',version},data:{status:'invoice',invoiceNumber,issuedAt,issuedById:identity.accountId,version:{increment:1}}});
     if(result.count!==1)throw new LogisticsError(409,'Version obsolète');
     return tx.billingDocument.findUniqueOrThrow({where});
   });
@@ -88,10 +89,43 @@ export function recordCredit(identity:Identity,id:string,input:z.infer<typeof cr
 export function billingOverview(identity:Identity){
   return financeTransaction(identity,async tx=>{
     const where={organizationId:identity.organizationId};
-    const documents=await tx.billingDocument.findMany({where,orderBy:[{createdAt:'desc'},{id:'asc'}],take:100,include:{lines:{orderBy:{position:'asc'}},payments:{orderBy:{createdAt:'desc'},take:100},credits:{orderBy:{createdAt:'desc'},take:100}}});
+    const documents=await tx.billingDocument.findMany({where,orderBy:[{createdAt:'desc'},{id:'asc'}],take:100,include:{lines:{orderBy:{position:'asc'}},payments:{orderBy:{createdAt:'desc'},take:100,include:{reconciliation:true}},credits:{orderBy:{createdAt:'desc'},take:100}}});
     // Integer SQL aggregation avoids floating-point rounding and covers all invoices, not just the visible page.
     const [totals]=await tx.$queryRaw<{invoiced:string;paid:string;credited:string;outstanding:string}[]>`SELECT COALESCE(sum("total"),0)::text AS invoiced, COALESCE(sum("paid"),0)::text AS paid, COALESCE(sum("credited"),0)::text AS credited, COALESCE(sum("total"::bigint-"paid"-"credited"),0)::text AS outstanding FROM "BillingDocument" WHERE "organizationId"=${identity.organizationId} AND "status"='invoice'`;
     return {documents,totals};
+  });
+}
+
+export function reconcilePayment(identity:Identity,paymentId:string,input:z.infer<typeof reconciliationInput>){
+  return financeTransaction(identity,async tx=>{
+    const data=reconciliationInput.parse(input),organizationId=identity.organizationId;
+    const payment=await tx.billingPayment.findUnique({where:{organizationId_id:{organizationId,id:paymentId}}});
+    if(!payment)throw new LogisticsError(404,'Règlement introuvable');
+    if(data.amount!==payment.amount)throw new LogisticsError(409,'Montant du justificatif différent du règlement');
+    const existing=await tx.billingReconciliation.findUnique({where:{organizationId_paymentId:{organizationId,paymentId}}});
+    if(existing){
+      if(existing.statementReference===data.statementReference&&existing.amount===data.amount)return existing;
+      throw new LogisticsError(409,'Règlement déjà rapproché');
+    }
+    return tx.billingReconciliation.create({data:{organizationId,paymentId,...data,actorId:identity.accountId}});
+  }).catch(error=>{
+    if(error instanceof Prisma.PrismaClientKnownRequestError&&error.code==='P2002')throw new LogisticsError(409,'Règlement ou justificatif déjà rapproché');
+    throw error;
+  });
+}
+
+export type FinancialEvent={kind:string;id:string;documentId:string;reference:string;amount:number;actorId:string|null;createdAt:Date};
+export function financialJournal(identity:Identity){
+  return financeTransaction(identity,async tx=>{
+    const org=identity.organizationId;
+    return tx.$queryRaw<FinancialEvent[]>`
+      SELECT * FROM (
+        SELECT 'devis' AS kind,"id","id" AS "documentId","quoteNumber" AS reference,"total" AS amount,"createdById" AS "actorId","createdAt" FROM "BillingDocument" WHERE "organizationId"=${org}
+        UNION ALL SELECT 'facture',"id","id","invoiceNumber","total","issuedById","issuedAt" FROM "BillingDocument" WHERE "organizationId"=${org} AND "status"='invoice'
+        UNION ALL SELECT 'règlement',"id","documentId","reference","amount","actorId","createdAt" FROM "BillingPayment" WHERE "organizationId"=${org}
+        UNION ALL SELECT 'avoir',"id","documentId","reference","amount","actorId","createdAt" FROM "BillingCredit" WHERE "organizationId"=${org}
+        UNION ALL SELECT 'rapprochement',r."id",p."documentId",r."statementReference",r."amount",r."actorId",r."createdAt" FROM "BillingReconciliation" r JOIN "BillingPayment" p ON p."organizationId"=r."organizationId" AND p."id"=r."paymentId" WHERE r."organizationId"=${org}
+      ) events ORDER BY "createdAt" DESC,kind,id LIMIT 100`;
   });
 }
 
